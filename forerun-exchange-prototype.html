@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forerun Exchange — prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.7.0/dist/tabler-icons.min.css">
+<style>
+  :root{
+    --paper:#F4F6F2; --panel:#FFFFFF; --ink:#16181C; --muted:#585D63; --faint:#8A8F95;
+    --rule:#DBDFD7; --rule-soft:#E8EBE4; --brand:#0F8A6E; --brand-soft:#E1F5EE;
+    --good:#0F8A6E; --warn:#A06A12; --danger:#B23B3B; --win:#3B6D11;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#111316; --panel:#191B1F; --ink:#ECEEEA; --muted:#9CA1A7; --faint:#6C7178;
+      --rule:#2A2E33; --rule-soft:#22262B; --brand:#3FC4A1; --brand-soft:#16302A;
+      --good:#3FC4A1; --warn:#E0A24E; --danger:#E27A7A; --win:#97C459;
+    }
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--paper); color:var(--ink); font-family:"IBM Plex Sans",system-ui,sans-serif; font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased; padding:16px;}
+  .mono{font-family:"IBM Plex Mono",monospace;}
+  h3{font-family:"Archivo",sans-serif; font-weight:700; letter-spacing:-.01em;}
+
+  .app{display:flex; max-width:1080px; margin:0 auto; min-height:620px; border:0.5px solid var(--rule); border-radius:14px; overflow:hidden; background:var(--panel);}
+  /* sidebar */
+  .side{width:208px; background:var(--paper); border-right:0.5px solid var(--rule); padding:14px 12px; flex-shrink:0; transition:width .2s;}
+  .app.collapsed .side{width:64px;}
+  .shead{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;}
+  .brand{display:flex; align-items:center; gap:9px; overflow:hidden; white-space:nowrap;}
+  .brand .lg{width:26px; height:26px; border-radius:7px; background:var(--brand); flex-shrink:0; display:flex; align-items:center; justify-content:center; color:#fff; font-family:"Archivo"; font-weight:800; font-size:15px;}
+  .brand .nm{font-family:"Archivo",sans-serif; font-weight:700; font-size:15px; letter-spacing:-.01em;}
+  .app.collapsed .brand .nm{display:none;}
+  .cbtn{background:transparent; border:none; cursor:pointer; color:var(--muted); padding:3px; display:flex; font-size:18px;}
+  .app.collapsed .cbtn i{transform:rotate(180deg);}
+  .roletoggle{display:flex; background:var(--rule-soft); border-radius:8px; padding:3px; margin-bottom:14px;}
+  .roletoggle button{flex:1; border:none; background:transparent; font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.04em; padding:6px 4px; border-radius:6px; cursor:pointer; color:var(--muted);}
+  .roletoggle button.on{background:var(--panel); color:var(--ink); box-shadow:0 1px 2px rgba(0,0,0,.06);}
+  .app.collapsed .roletoggle{display:none;}
+  .nav{display:flex; flex-direction:column; gap:2px;}
+  .nav .grp{display:none; flex-direction:column; gap:2px;}
+  .app[data-role="supplier"] .nav .sup{display:flex;}
+  .app[data-role="buyer"] .nav .buy{display:flex;}
+  .nav a{display:flex; align-items:center; gap:11px; padding:9px 10px; border-radius:8px; font-size:13.5px; color:var(--muted); cursor:pointer; white-space:nowrap; overflow:hidden;}
+  .nav a i{font-size:18px; flex-shrink:0;}
+  .nav a:hover{background:var(--rule-soft);}
+  .nav a.on{background:var(--brand-soft); color:var(--brand); font-weight:500;}
+  .app.collapsed .nav .lbl{display:none;}
+
+  /* main */
+  .main{flex:1; min-width:0; display:flex; flex-direction:column;}
+  .tbar{display:flex; align-items:center; justify-content:space-between; padding:13px 20px; border-bottom:0.5px solid var(--rule);}
+  .tbar h3{font-size:17px;}
+  .tbar .right{display:flex; align-items:center; gap:10px;}
+  .persona{font-size:12.5px; color:var(--muted); display:flex; align-items:center; gap:8px;}
+  .av{width:28px; height:28px; border-radius:50%; background:var(--brand-soft); color:var(--brand); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:500;}
+  .body{padding:18px 20px; overflow-y:auto;}
+  .view{display:none;} .view.on{display:block;}
+
+  /* shared bits */
+  .tag{font-size:10.5px; padding:2px 8px; border-radius:6px;}
+  .kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:11px; margin-bottom:14px;}
+  .k{background:var(--paper); border:0.5px solid var(--rule); border-radius:9px; padding:12px;}
+  .k .l{font-size:11.5px; color:var(--muted);} .k .v{font-size:22px; font-weight:500; margin-top:2px; font-family:"Archivo";}
+  .k .d{font-size:11px; margin-top:2px; color:var(--muted);} .k .up{color:var(--win);}
+  .trend{background:var(--paper); border:0.5px solid var(--rule); border-radius:9px; padding:12px 14px; margin-bottom:18px;}
+  .trend .th{display:flex; justify-content:space-between; font-size:12.5px; color:var(--muted); margin-bottom:10px;}
+  .chart{display:flex; align-items:flex-end; gap:7px; height:56px;}
+  .chart .bar{flex:1; background:var(--brand); border-radius:3px 3px 0 0; min-height:4px; opacity:.88;}
+  .sec{display:flex; align-items:baseline; justify-content:space-between; margin:4px 0 11px;}
+  .sec h3{font-size:15px;} .sec .v{font-size:12px; color:var(--muted);}
+
+  .feed{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:11px;}
+  .card{position:relative; background:var(--panel); border:0.5px solid var(--rule); border-radius:11px; padding:12px 13px; display:flex; flex-direction:column; gap:7px; cursor:pointer; transition:border-color .15s, box-shadow .15s;}
+  .card:hover{border-color:color-mix(in srgb,var(--brand) 45%,var(--rule)); box-shadow:0 0 0 1px color-mix(in srgb,var(--brand) 28%,transparent);}
+  .card .arr{position:absolute; top:11px; right:12px; color:var(--brand); font-size:15px; opacity:0; transition:opacity .15s;}
+  .card:hover .arr{opacity:1;}
+  .card .ti2{font-size:14px; font-weight:500; line-height:1.3; padding-right:16px;}
+  .card .pn{font-size:11.5px; color:var(--faint);}
+  .card .meta{display:flex; justify-content:space-between; font-size:12px; color:var(--muted); border-top:0.5px solid var(--rule-soft); padding-top:7px;}
+  .soon{color:var(--danger); font-weight:500;}
+
+  .list{border:0.5px solid var(--rule); border-radius:11px; overflow:hidden;}
+  .li{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 14px; border-top:0.5px solid var(--rule-soft); cursor:pointer;}
+  .li:first-child{border-top:none;} .li:hover{background:var(--paper);}
+  .li .lt{font-size:14px; font-weight:500;} .li .lm{font-size:12px; color:var(--muted); margin-top:2px;}
+  .li .lr{display:flex; align-items:center; gap:14px; font-size:12.5px; color:var(--muted);}
+  .pill{font-size:10.5px; font-family:"IBM Plex Mono",monospace; padding:2px 8px; border-radius:11px; white-space:nowrap;}
+  .st-good{background:var(--brand-soft); color:var(--brand);} .st-warn{background:#FAEEDA; color:#854F0B;}
+  .st-win{background:#EAF3DE; color:#3B6D11;} .st-muted{background:var(--rule-soft); color:var(--muted);}
+  .st-danger{background:#FCEBEB; color:#A32D2D;}
+
+  table{width:100%; border-collapse:collapse; font-size:13.5px;}
+  th{text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--faint); font-weight:400; padding:8px 10px;}
+  td{padding:12px 10px; border-top:0.5px solid var(--rule-soft);}
+  tr.best td{background:var(--paper);}
+  .minip{font-size:10px; padding:1px 7px; border-radius:5px; margin-left:7px;}
+
+  .panelcard{background:var(--panel); border:0.5px solid var(--rule); border-radius:12px; padding:16px 18px; margin-bottom:14px;}
+  .vault{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; border-left:3px solid var(--brand); padding-left:13px;}
+  .vault .t{font-weight:500; font-size:14px;} .vault .n{font-size:12.5px; color:var(--muted); margin-top:2px;}
+  label{display:block; font-size:12.5px; color:var(--muted); margin:0 0 5px;}
+  .field{margin-bottom:13px;} .row2{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  input,select,textarea{width:100%; font-family:inherit; font-size:14px; color:var(--ink); background:var(--panel); border:0.5px solid var(--rule); border-radius:8px; padding:9px 11px;}
+  input:focus,select:focus,textarea:focus{outline:none; border-color:var(--brand); box-shadow:0 0 0 2px color-mix(in srgb,var(--brand) 22%,transparent);}
+  textarea{min-height:62px; resize:vertical;}
+  .hint{font-size:11.5px; color:var(--faint); margin-top:5px;}
+  .actions{display:flex; justify-content:flex-end; gap:10px; margin-top:4px;}
+  .btn{font-family:"IBM Plex Sans"; font-size:13px; padding:8px 15px; border-radius:8px; border:0.5px solid var(--rule); background:var(--panel); color:var(--ink); cursor:pointer;}
+  .btn:hover{border-color:var(--faint);}
+  .btn-primary{background:var(--brand); border-color:var(--brand); color:#fff;}
+  .btn-primary:hover{opacity:.92;}
+  .back{font-size:13px; color:var(--muted); cursor:pointer; margin-bottom:12px; display:inline-flex; align-items:center; gap:5px;}
+  .meta-row{display:flex; flex-wrap:wrap; gap:8px 16px; font-size:13px; color:var(--muted); margin:8px 0 18px;}
+  .award{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-top:16px; padding:14px 16px; background:var(--paper); border:0.5px solid var(--rule); border-radius:10px;}
+  .award .n{font-size:12.5px; color:var(--muted);}
+  .banner{font-size:12.5px; color:var(--warn); background:#FAEEDA; border-radius:8px; padding:9px 12px; margin-bottom:14px;}
+  @media (prefers-color-scheme:dark){.banner{background:#2A2113;} .st-warn{background:#2A2113; color:#E0A24E;} .st-win{background:#1B2A10; color:#97C459;} .st-danger{background:#2A1414; color:#E27A7A;}}
+
+  .sc-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-bottom:18px;}
+  .sc{background:var(--paper); border:0.5px solid var(--rule); border-radius:10px; padding:14px;}
+  .sc .l{font-size:12px; color:var(--muted);} .sc .v{font-size:26px; font-weight:500; font-family:"Archivo"; margin-top:3px;}
+  .sc .bar{height:5px; border-radius:3px; background:var(--rule-soft); margin-top:9px; overflow:hidden;}
+  .sc .bar span{display:block; height:100%; background:var(--brand);}
+
+  .kanban{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px;}
+  .kcol{background:var(--paper); border:0.5px solid var(--rule); border-radius:11px; padding:10px;}
+  .khead{display:flex; align-items:center; justify-content:space-between; font-size:12.5px; font-weight:500; margin-bottom:10px; padding:0 2px;}
+  .kl{display:flex; align-items:center; gap:7px;}
+  .kdot{width:8px; height:8px; border-radius:50%; display:inline-block;}
+  .kc{font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--muted); background:var(--panel); border-radius:10px; padding:1px 8px;}
+  .kcard{position:relative; background:var(--panel); border:0.5px solid var(--rule); border-radius:9px; padding:10px 11px; margin-bottom:8px; cursor:pointer; transition:border-color .15s, box-shadow .15s;}
+  .bm{position:absolute; top:9px; right:9px; background:transparent; border:none; cursor:pointer; color:var(--faint); font-size:16px; line-height:1; padding:2px; z-index:2;}
+  .bm:hover{color:var(--brand);}
+  .bm.on{color:var(--brand);}
+  .kcard:hover{border-color:color-mix(in srgb,var(--brand) 45%,var(--rule)); box-shadow:0 0 0 1px color-mix(in srgb,var(--brand) 26%,transparent);}
+  .kcard .kt{font-size:13.5px; font-weight:500; line-height:1.3; margin-top:7px;}
+  .kcard .km{font-size:11.5px; color:var(--muted); margin-top:7px; display:flex; justify-content:space-between; align-items:center; gap:8px;}
+  .kempty{font-size:12px; color:var(--faint); padding:6px 2px;}
+  @media (max-width:640px){ .kanban{grid-template-columns:1fr;} }
+  .prof{display:grid; grid-template-columns:1fr 250px; gap:18px;}
+  @media (max-width:760px){ .prof{grid-template-columns:1fr;} }
+  .phead{display:flex; align-items:center; gap:14px; margin-bottom:14px;}
+  .pav{width:50px; height:50px; border-radius:12px; background:var(--brand-soft); color:var(--brand); display:flex; align-items:center; justify-content:center; font-family:"Archivo"; font-weight:800; font-size:18px; flex-shrink:0;}
+  .pname{font-family:"Archivo",sans-serif; font-weight:700; font-size:20px; letter-spacing:-.01em;}
+  .pmeta{font-size:12.5px; color:var(--muted); margin-top:3px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+  .block{background:var(--panel); border:0.5px solid var(--rule); border-radius:12px; padding:16px 18px; margin-bottom:14px;}
+  .block.agent{border-color:color-mix(in srgb,var(--brand) 40%,var(--rule)); box-shadow:inset 3px 0 0 var(--brand);}
+  .blabel{display:inline-flex; align-items:center; gap:6px; font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; padding:3px 9px; border-radius:6px; margin-bottom:12px;}
+  .bl-self{background:var(--rule-soft); color:var(--muted);}
+  .bl-agent{background:var(--brand-soft); color:var(--brand);}
+  .kv{display:flex; flex-wrap:wrap; gap:12px 26px; font-size:13.5px;}
+  .kv .item .l{font-size:11px; color:var(--faint);} .kv .item .v{font-weight:500;}
+  .chips{display:flex; flex-wrap:wrap; gap:6px;}
+  .chip2{font-size:11.5px; padding:3px 9px; border-radius:7px; background:var(--paper); border:0.5px solid var(--rule);}
+  .seclbl{font-size:11px; color:var(--faint); margin:14px 0 5px; text-transform:uppercase; letter-spacing:.05em;}
+  .find{display:flex; gap:11px; padding:11px 0; border-top:0.5px solid var(--rule-soft);}
+  .find:first-of-type{border-top:none;}
+  .find .fi{margin-top:1px; font-size:17px; flex-shrink:0;}
+  .find .fk{font-size:13.5px; font-weight:500;}
+  .find .fd{font-size:12.5px; color:var(--muted); margin-top:2px;}
+  .find .fsrc{font-size:11px; color:var(--faint); margin-top:3px;}
+  .stat{font-size:9.5px; font-family:"IBM Plex Mono",monospace; text-transform:uppercase; letter-spacing:.05em; padding:1px 7px; border-radius:5px; margin-left:8px; vertical-align:1px;}
+  .conf{display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted);}
+  .confbar{flex:1; max-width:140px; height:5px; border-radius:3px; background:var(--rule-soft); overflow:hidden;}
+  .confbar span{display:block; height:100%; background:var(--brand);}
+  .disc{font-size:11px; color:var(--faint); margin-top:12px; line-height:1.5;}
+  .flagbox{background:#FAEEDA; border-radius:8px; padding:9px 12px; font-size:12.5px; color:#854F0B; margin-top:10px; display:flex; gap:8px;}
+  @media (prefers-color-scheme:dark){ .flagbox{background:#2A2113; color:#E0A24E;} }
+  .rcard{background:var(--paper); border:0.5px solid var(--rule); border-radius:11px; padding:14px; margin-bottom:12px;}
+  .rf{display:flex; justify-content:space-between; font-size:12.5px; padding:6px 0; border-top:0.5px solid var(--rule-soft);}
+  .rf:first-child{border-top:none;}
+  .link{color:var(--brand); cursor:pointer; text-decoration:underline; text-underline-offset:2px;}
+  .link:hover{text-decoration:underline;}
+  tr.bidrow{cursor:pointer;}
+  tr.bidrow:hover td{background:var(--paper);}
+  .toast{position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(12px); background:var(--ink); color:var(--paper); font-size:13px; padding:11px 18px; border-radius:10px; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; z-index:50; display:flex; align-items:center; gap:8px;}
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  @media (max-width:640px){ .row2{grid-template-columns:1fr;} .side{width:64px;} .side .nm,.roletoggle{display:none;} }
+</style>
+</head>
+<body>
+<div class="app" id="app" data-role="supplier">
+  <aside class="side">
+    <div class="shead">
+      <div class="brand"><span class="lg">F</span><span class="nm">Forerun</span></div>
+      <button class="cbtn" onclick="document.getElementById('app').classList.toggle('collapsed')" aria-label="Toggle navigation"><i class="ti ti-chevron-left"></i></button>
+    </div>
+    <div class="roletoggle">
+      <button id="role-sup" class="on" onclick="setRole('supplier')">Supplier</button>
+      <button id="role-buy" onclick="setRole('buyer')">Buyer</button>
+    </div>
+    <nav class="nav">
+      <div class="grp sup">
+        <a data-view="opportunities" class="on" onclick="go('opportunities')"><i class="ti ti-layout-grid"></i><span class="lbl">Opportunities</span></a>
+        <a data-view="mybids" onclick="go('mybids')"><i class="ti ti-gavel"></i><span class="lbl">My bids</span></a>
+        <a data-view="scorecard" onclick="go('scorecard')"><i class="ti ti-star"></i><span class="lbl">Scorecard</span></a>
+      </div>
+      <div class="grp buy">
+        <a data-view="rfqs" onclick="go('rfqs')"><i class="ti ti-file-text"></i><span class="lbl">My RFQs</span></a>
+        <a data-view="createrfq" onclick="go('createrfq')"><i class="ti ti-plus"></i><span class="lbl">New request</span></a>
+        <a data-view="suppliers" onclick="go('suppliers')"><i class="ti ti-users"></i><span class="lbl">Suppliers</span></a>
+      </div>
+    </nav>
+  </aside>
+
+  <section class="main">
+    <div class="tbar">
+      <h3 id="view-title">Opportunities</h3>
+      <div class="right"><span class="persona" id="persona">Acme Precision · supplier</span><span class="av" id="avatar">AP</span></div>
+    </div>
+    <div class="body">
+
+      <!-- SUPPLIER: opportunities -->
+      <div class="view on" id="view-opportunities">
+        <div class="kpis">
+          <div class="k"><div class="l">Open</div><div class="v">8</div><div class="d">in your categories</div></div>
+          <div class="k"><div class="l">Active bids</div><div class="v">3</div><div class="d">2 closing today</div></div>
+          <div class="k"><div class="l">Win rate</div><div class="v">28%</div><div class="d up">▲ 4%</div></div>
+          <div class="k"><div class="l">Turnaround</div><div class="v">11d</div><div class="d up">▼ 1.5d</div></div>
+        </div>
+        <div class="trend">
+          <div class="th"><span>Bids submitted — last 8 weeks</span><span>92 total</span></div>
+          <div class="chart"><div class="bar" style="height:38%"></div><div class="bar" style="height:52%"></div><div class="bar" style="height:45%"></div><div class="bar" style="height:64%"></div><div class="bar" style="height:58%"></div><div class="bar" style="height:78%"></div><div class="bar" style="height:70%"></div><div class="bar" style="height:92%"></div></div>
+        </div>
+        <div class="sec"><h3>Open opportunities</h3><span class="v">tap a card to view &amp; bid</span></div>
+        <div class="feed" id="opp-feed"></div>
+      </div>
+
+      <!-- SHARED: opportunity detail + bid -->
+      <div class="view" id="view-opportunity"><div id="opp-detail"></div></div>
+
+      <!-- SUPPLIER: my bids -->
+      <div class="view" id="view-mybids">
+        <div class="sec"><h3>My bids</h3><span class="v">6 total · grouped by stage</span></div>
+        <div class="kanban" id="mybids-kanban"></div>
+      </div>
+
+      <!-- SUPPLIER: scorecard -->
+      <div class="view" id="view-scorecard">
+        <div class="sec"><h3>Annual supplier scorecard</h3><span class="v">2025 · Acme Precision</span></div>
+        <div class="sc-grid">
+          <div class="sc"><div class="l">Overall</div><div class="v">4.6</div><div class="bar"><span style="width:92%"></span></div></div>
+          <div class="sc"><div class="l">Collaboration</div><div class="v">4.7</div><div class="bar"><span style="width:94%"></span></div></div>
+          <div class="sc"><div class="l">Turnaround</div><div class="v">4.4</div><div class="bar"><span style="width:88%"></span></div></div>
+          <div class="sc"><div class="l">Cost</div><div class="v">4.2</div><div class="bar"><span style="width:84%"></span></div></div>
+        </div>
+        <div class="panelcard"><div class="vault" style="border-color:var(--brand)"><div><div class="t">Why this matters</div><div class="n">Your scorecard is visible to buyers' supply-chain teams and weighs into award decisions alongside price and lead time.</div></div></div></div>
+      </div>
+
+      <!-- BUYER: RFQs -->
+      <div class="view" id="view-rfqs">
+        <div class="kpis">
+          <div class="k"><div class="l">Open RFQs</div><div class="v">3</div></div>
+          <div class="k"><div class="l">Awaiting award</div><div class="v">1</div><div class="d">window closed</div></div>
+          <div class="k"><div class="l">Awarded (qtr)</div><div class="v">9</div></div>
+          <div class="k"><div class="l">R&amp;D spend</div><div class="v">$148k</div><div class="d">across 3 cost centers</div></div>
+        </div>
+        <div class="sec"><h3>My requests</h3><span class="v"><button class="btn btn-primary" onclick="go('createrfq')">+ New request</button></span></div>
+        <div class="list" id="rfq-list"></div>
+      </div>
+
+      <!-- BUYER: create RFQ -->
+      <div class="view" id="view-createrfq">
+        <span class="back" onclick="go('rfqs')"><i class="ti ti-arrow-left"></i> My RFQs</span>
+        <div class="sec"><h3>New part request</h3><span class="v">posts to qualified suppliers in the category</span></div>
+        <div class="panelcard">
+          <div class="field"><label>Title</label><input type="text" value="Vacuum flange, 6061-T6"></div>
+          <div class="row2">
+            <div class="field"><label>Part number</label><input type="text" value="VF-6061-204"></div>
+            <div class="field"><label>Category</label><select id="cat-select"></select></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label>Quantity</label><input type="text" value="12"></div>
+            <div class="field"><label>Cost center</label><select><option>RND-LITHO-204</option><option>RND-ETCH-118</option><option>RND-DEP-330</option></select></div>
+          </div>
+          <div class="field"><label>Requirements</label><textarea>Tolerance ±0.05mm. Anodized. Test batch ahead of production qualification.</textarea></div>
+          <div class="field"><label>Drawings (vault link)</label><input type="text" value="scv://northvale-vault/rfq/VF-6061-204"><div class="hint">Files stay in your vault — Forerun stores the link only.</div></div>
+          <div class="field" style="max-width:220px"><label>Bid window</label><select><option>3 days</option><option>2 days</option><option>5 days</option></select></div>
+          <div class="actions"><button class="btn" onclick="go('rfqs')">Save draft</button><button class="btn btn-primary" onclick="publishRFQ()">Publish RFQ</button></div>
+        </div>
+      </div>
+
+      <!-- BUYER: suppliers -->
+      <div class="view" id="view-suppliers">
+        <div class="sec"><h3>Qualified suppliers</h3><span class="v">by category</span></div>
+        <div class="list" id="sup-list"></div>
+      </div>
+
+      <!-- SHARED: bid comparison + award -->
+      <div class="view" id="view-bidcompare"><div id="bidcompare"></div></div>
+
+      <!-- SHARED: supplier profile (buyer diligence) -->
+      <div class="view" id="view-supplier-profile"><div id="supplier-profile"></div></div>
+
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toast-msg"></span></div>
+
+<script>
+const CATS = {
+  cnc:{label:'CNC machining', bg:'#E6F1FB', fg:'#0C447C'},
+  sheet:{label:'Sheet metal', bg:'#E1F5EE', fg:'#085041'},
+  gas:{label:'Gas & rough lines', bg:'#FAEEDA', fg:'#633806'},
+  quartz:{label:'Quartz & ceramics', bg:'#EEEDFE', fg:'#3C3489'},
+  rework:{label:'Reworks', bg:'#FAECE7', fg:'#712B13'}
+};
+function tag(c){const x=CATS[c]; return `<span class="tag" style="background:${x.bg};color:${x.fg}">${x.label}</span>`;}
+
+const OPPS = [
+  {id:'VF-6061-204', title:'Vacuum flange, 6061-T6', cat:'cnc', qty:12, closes:'2d 4h', bids:7, soon:false, customer:'Customer #A1', reqs:'Tolerance ±0.05mm. Hard anodized. Test batch ahead of production qualification.'},
+  {id:'QV-110', title:'Quartz viewport window', cat:'quartz', qty:4, closes:'5h', bids:9, soon:true, customer:'Customer #C3', reqs:'Optical-grade fused silica. Scratch-dig 40-20. Edges chamfered.'},
+  {id:'CMB-330', title:'Chamber mounting bracket', cat:'sheet', qty:20, closes:'1d 9h', bids:4, soon:false, customer:'Customer #A1', reqs:'304 SS, 3mm. Bead-blast finish. Weldment per drawing.'},
+  {id:'GM-512', title:'Process gas manifold', cat:'gas', qty:6, closes:'3d', bids:2, soon:false, customer:'Customer #B2', reqs:'316L electropolished. Orbital welds. Helium leak test to 1e-9.'},
+  {id:'EA-204R', title:'Electrode assembly rework', cat:'rework', qty:8, closes:'4d 6h', bids:1, soon:false, customer:'Customer #B2', reqs:'Re-machine seat and re-plate. Existing parts supplied by buyer.'},
+  {id:'LP-088', title:'Lift pin housing', cat:'cnc', qty:30, closes:'2d', bids:5, soon:false, customer:'Customer #A1', reqs:'Aluminum 6061. Hard anodize. Bore concentricity 0.01mm.'},
+  {id:'AI-076', title:'Alumina insulator ring', cat:'quartz', qty:15, closes:'1d 2h', bids:3, soon:false, customer:'Customer #C3', reqs:'99.5% alumina, fired. Ground flat both faces.'},
+  {id:'CT-450', title:'Cable tray weldment', cat:'sheet', qty:10, closes:'5d', bids:2, soon:false, customer:'Customer #B2', reqs:'Aluminum 5052. TIG welded. Powder coat.'}
+];
+const MYBIDS = [
+  {id:'VF-6061-204', title:'Vacuum flange, 6061-T6', cat:'cnc', price:1240, lead:9, status:['Leading','st-good']},
+  {id:'GM-512', title:'Process gas manifold', cat:'gas', price:880, lead:12, status:['Submitted','st-muted']},
+  {id:'LP-088', title:'Lift pin housing', cat:'cnc', price:2100, lead:8, status:['Outbid','st-warn']},
+  {id:'SV-300', title:'Slit valve plate', cat:'cnc', price:1650, lead:7, status:['Won','st-win']},
+  {id:'HB-211', title:'Heater bracket', cat:'sheet', price:540, lead:6, status:['Won','st-win']},
+  {id:'QV-090', title:'Quartz boat', cat:'quartz', price:980, lead:14, status:['Lost','st-danger']}
+];
+const RFQS = [
+  {id:'VF-6061-204', title:'Vacuum flange, 6061-T6', cat:'cnc', status:['Open','st-good'], bids:7, closes:'2d 4h', open:true},
+  {id:'CMB-330', title:'Chamber mounting bracket', cat:'sheet', status:['Open','st-good'], bids:4, closes:'1d 9h', open:true},
+  {id:'SV-300', title:'Slit valve plate', cat:'cnc', status:['Closed · review bids','st-warn'], bids:6, closes:'closed', open:false},
+  {id:'GM-512', title:'Process gas manifold', cat:'gas', status:['Open','st-good'], bids:2, closes:'3d', open:true},
+  {id:'EA-204R', title:'Electrode assembly rework', cat:'rework', status:['Awarded','st-win'], bids:3, closes:'awarded', open:false, awarded:true}
+];
+const BIDS = [
+  {supplier:'Nord Fab', price:1180, lead:14, score:4.1, best:'price'},
+  {supplier:'Titan Machining', price:1310, lead:7, score:4.8, best:'fast'},
+  {supplier:'Acme Precision', price:1240, lead:9, score:4.6},
+  {supplier:'Westline Tool', price:1295, lead:11, score:3.9}
+];
+const SUPS = [
+  {name:'Acme Precision', cats:['cnc'], score:4.6},
+  {name:'Nord Fab', cats:['sheet','cnc'], score:4.1},
+  {name:'Titan Machining', cats:['cnc','rework'], score:4.8},
+  {name:'Lumen Quartz', cats:['quartz'], score:4.5},
+  {name:'Flowtek Lines', cats:['gas'], score:4.3}
+];
+const TITLES = {opportunities:'Opportunities', opportunity:'Opportunity', mybids:'My bids', scorecard:'Scorecard', rfqs:'My RFQs', createrfq:'New request', suppliers:'Suppliers', bidcompare:'Review bids', 'supplier-profile':'Supplier profile'};
+const NAVKEY = {opportunity:'opportunities', bidcompare:'rfqs', createrfq:'createrfq', 'supplier-profile':'rfqs'};
+
+const STAT = {
+  verified:['Verified','st-good','ti-circle-check','var(--good)'],
+  clear:['Clear','st-good','ti-circle-check','var(--good)'],
+  strong:['Strong','st-good','ti-circle-check','var(--good)'],
+  attention:['Review','st-warn','ti-alert-triangle','var(--warn)'],
+  flag:['Flag','st-danger','ti-alert-octagon','var(--danger)'],
+  unverified:['Unverified','st-muted','ti-help-circle','var(--faint)']
+};
+const PROFILES = {
+ 'Acme Precision':{ id:'SUP-0007', cats:['cnc'], score:4.6,
+   provided:{about:'Family-owned precision machine shop specializing in tight-tolerance aluminum and stainless components for semiconductor capital equipment.', founded:2009, location:'San Jose, CA', employees:48, leadtime:'7–10 days', capacity:'~30 active jobs',
+     capabilities:['5-axis CNC milling','CNC turning','Hard anodizing','In-house CMM'], materials:['6061/7075 aluminum','304/316 stainless','Titanium'], certs:['ISO 9001:2015','AS9100D']},
+   research:{confidence:88, summary:'Established, well-reviewed shop with verified certifications and a strong on-platform delivery record. No risk flags identified.',
+     findings:[
+       {key:'Certifications', status:'verified', detail:'ISO 9001:2015 and AS9100D confirmed active with registrar (exp. 2026).', source:'NSF-ISR registry'},
+       {key:'Financial stability', status:'strong', detail:'15+ years operating; no liens or bankruptcies on record.', source:'D&B summary'},
+       {key:'Denied-party screening', status:'clear', detail:'No matches on OFAC / BIS / DDTC lists.', source:'Consolidated Screening List'},
+       {key:'Compliance history', status:'clear', detail:'No quality disputes or compliance actions found.', source:'Forerun history'},
+       {key:'Delivery performance', status:'strong', detail:'96% on-time across 41 platform orders.', source:'Forerun history'},
+       {key:'Corporate & ownership', status:'clear', detail:'US-incorporated, US-owned. No deemed-export exposure indicated.', source:'CA SoS filings'}
+     ], flags:[]}},
+ 'Nord Fab':{ id:'SUP-0014', cats:['sheet','cnc'], score:4.1,
+   provided:{about:'Sheet-metal fabrication shop expanding into CNC, serving industrial and semiconductor enclosures and brackets.', founded:2015, location:'Portland, OR', employees:30, leadtime:'12–16 days', capacity:'~18 active jobs',
+     capabilities:['Laser cutting','Press brake','Welding','3-axis CNC'], materials:['Aluminum','304 stainless','Cold-rolled steel'], certs:['ISO 9001:2015']},
+   research:{confidence:64, summary:'Verified certification and clean screening, but a newer company with a softer delivery record. Worth confirming capacity before high-priority work.',
+     findings:[
+       {key:'Certifications', status:'verified', detail:'ISO 9001:2015 confirmed active (exp. 2025).', source:'registrar lookup'},
+       {key:'Financial stability', status:'attention', detail:'Founded 2015; thin public financials and limited credit history. Not adverse, but unestablished.', source:'D&B summary'},
+       {key:'Denied-party screening', status:'clear', detail:'No denied-party matches.', source:'Consolidated Screening List'},
+       {key:'Compliance history', status:'clear', detail:'No disputes found.', source:'Forerun history'},
+       {key:'Delivery performance', status:'attention', detail:'88% on-time across 12 orders; two recent late deliveries.', source:'Forerun history'},
+       {key:'Corporate & ownership', status:'clear', detail:'US-incorporated, US-owned.', source:'OR SoS filings'}
+     ], flags:['Lower on-time rate and limited track record — confirm capacity for the quantity before awarding.']}},
+ 'Titan Machining':{ id:'SUP-0003', cats:['cnc','rework'], score:4.8,
+   provided:{about:'Full-service precision machining and rework house with defense-grade controls, serving semiconductor and aerospace primes.', founded:2001, location:'Austin, TX', employees:75, leadtime:'5–8 days', capacity:'~60 active jobs',
+     capabilities:['5-axis CNC','Swiss turning','Reworks & refurb','EDM','CMM + laser scan'], materials:['Aluminum','Stainless','Inconel','Titanium'], certs:['ISO 9001:2015','AS9100D','ITAR registered']},
+   research:{confidence:91, summary:'Strong, well-established supplier with verified certifications including ITAR registration — relevant for controlled or defense-adjacent work. No flags.',
+     findings:[
+       {key:'Certifications', status:'verified', detail:'ISO 9001:2015 and AS9100D active; ITAR registration confirmed with DDTC.', source:'DDTC + registrar'},
+       {key:'Financial stability', status:'strong', detail:'20+ years; healthy credit profile, no adverse filings.', source:'D&B summary'},
+       {key:'Denied-party screening', status:'clear', detail:'No denied-party matches.', source:'Consolidated Screening List'},
+       {key:'Compliance history', status:'clear', detail:'No disputes; ITAR-compliant handling on record.', source:'Forerun history'},
+       {key:'Delivery performance', status:'strong', detail:'97% on-time across 58 orders.', source:'Forerun history'},
+       {key:'Corporate & ownership', status:'clear', detail:'US-incorporated, US-owned; cleared for controlled technical data.', source:'TX SoS filings'}
+     ], flags:[]}},
+ 'Westline Tool':{ id:'SUP-0021', cats:['cnc'], score:3.9,
+   provided:{about:'General CNC machining shop serving industrial and electronics customers.', founded:2012, location:'Phoenix, AZ', employees:40, leadtime:'10–14 days', capacity:'~22 active jobs',
+     capabilities:['3- and 4-axis CNC','Anodizing (outsourced)','Manual machining'], materials:['Aluminum','Mild steel','Stainless'], certs:['ISO 9001:2015']},
+   research:{confidence:52, summary:'Two findings warrant review before award: the claimed ISO certificate appears lapsed, and corporate records indicate partial foreign ownership — relevant to deemed-export controls for sharing controlled drawings.',
+     findings:[
+       {key:'Certifications', status:'flag', detail:'Claimed ISO 9001:2015 appears LAPSED — registrar shows certificate expired 2024 and not renewed.', source:'registrar lookup'},
+       {key:'Financial stability', status:'attention', detail:'Adequate but modest; one tax lien resolved 2023.', source:'D&B summary'},
+       {key:'Denied-party screening', status:'clear', detail:'No denied-party matches.', source:'Consolidated Screening List'},
+       {key:'Compliance history', status:'attention', detail:'One quality dispute on platform (2024), resolved with rework.', source:'Forerun history'},
+       {key:'Delivery performance', status:'attention', detail:'90% on-time across 19 orders.', source:'Forerun history'},
+       {key:'Corporate & ownership', status:'flag', detail:'Records indicate ~30% ownership by an overseas parent. Sharing controlled technical data may trigger deemed-export review.', source:'AZ SoS + corporate filings'}
+     ], flags:['ISO certificate appears lapsed — confirm current quality system before award.','Partial foreign ownership — assess deemed-export exposure before sharing controlled drawings.']}},
+ 'Lumen Quartz':{ id:'SUP-0009', cats:['quartz'], score:4.5,
+   provided:{about:'Specialist in optical-grade fused silica and technical ceramics for semiconductor process equipment.', founded:2008, location:'Fremont, CA', employees:35, leadtime:'12–18 days', capacity:'~25 active jobs',
+     capabilities:['Quartz fabrication','Flame working','Precision grinding','Ceramic machining'], materials:['Fused silica','Quartz','Alumina','Sapphire'], certs:['ISO 9001:2015']},
+   research:{confidence:84, summary:'Well-regarded quartz and ceramics specialist with verified certification and clean screening.',
+     findings:[
+       {key:'Certifications', status:'verified', detail:'ISO 9001:2015 active.', source:'registrar lookup'},
+       {key:'Financial stability', status:'strong', detail:'Stable; no adverse filings.', source:'D&B summary'},
+       {key:'Denied-party screening', status:'clear', detail:'No matches.', source:'Consolidated Screening List'},
+       {key:'Delivery performance', status:'strong', detail:'94% on-time across 27 orders.', source:'Forerun history'},
+       {key:'Corporate & ownership', status:'clear', detail:'US-incorporated, US-owned.', source:'CA SoS filings'}
+     ], flags:[]}},
+ 'Flowtek Lines':{ id:'SUP-0017', cats:['gas'], score:4.3,
+   provided:{about:'Ultra-high-purity gas line and manifold fabrication with orbital welding and helium leak testing.', founded:2006, location:'Hillsboro, OR', employees:52, leadtime:'10–15 days', capacity:'~30 active jobs',
+     capabilities:['Orbital welding','UHP cleaning','Helium leak test','Electropolishing'], materials:['316L SS','Electropolished tube'], certs:['ISO 9001:2015','ASME B31.3']},
+   research:{confidence:86, summary:'Established UHP line fabricator with verified certifications and strong delivery history.',
+     findings:[
+       {key:'Certifications', status:'verified', detail:'ISO 9001:2015 active; ASME B31.3 process qualified.', source:'registrar lookup'},
+       {key:'Financial stability', status:'strong', detail:'Stable; no adverse filings.', source:'D&B summary'},
+       {key:'Denied-party screening', status:'clear', detail:'No matches.', source:'Consolidated Screening List'},
+       {key:'Delivery performance', status:'strong', detail:'95% on-time across 33 orders.', source:'Forerun history'},
+       {key:'Corporate & ownership', status:'clear', detail:'US-incorporated, US-owned.', source:'OR SoS filings'}
+     ], flags:[]}}
+};
+let profileReturn = 'bidcompare';
+function openSupplier(name, ret){
+  profileReturn = ret || 'bidcompare';
+  const pr = PROFILES[name]; if(!pr){ toast('No profile available'); return; }
+  const p = pr.provided, r = pr.research;
+  const bid = (typeof BIDS!=='undefined') ? BIDS.find(b=>b.supplier===name) : null;
+  const initials = name.split(' ').map(w=>w[0]).slice(0,2).join('');
+  const chips = a => a.map(c=>`<span class="chip2">${c}</span>`).join('');
+  const findings = r.findings.map(f=>{const s=STAT[f.status]; return `<div class="find"><i class="ti ${s[2]} fi" style="color:${s[3]}"></i><div><div class="fk">${f.key}<span class="stat ${s[1]}">${s[0]}</span></div><div class="fd">${f.detail}</div>${f.source?`<div class="fsrc">Source: ${f.source}</div>`:''}</div></div>`;}).join('');
+  const flags = r.flags.map(f=>`<div class="flagbox"><i class="ti ti-alert-triangle" style="flex-shrink:0;margin-top:1px"></i><span>${f}</span></div>`).join('');
+  const certStat = r.findings[0].status==='verified' ? '<span style="color:var(--good)">Verified</span>' : (r.findings[0].status==='flag' ? '<span style="color:var(--danger)">Lapsed</span>' : 'Check');
+  document.getElementById('supplier-profile').innerHTML = `
+    <span class="back" onclick="go('${profileReturn}')"><i class="ti ti-arrow-left"></i> Back</span>
+    <div class="phead"><span class="pav">${initials}</span><div><div class="pname">${name}</div><div class="pmeta">${pr.cats.map(c=>tag(c)).join(' ')}<span class="pill st-good">Qualified</span><span>★ ${pr.score}</span><span class="mono">${pr.id}</span></div></div></div>
+    ${bid?`<div class="block" style="padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><span style="font-size:13px;color:var(--muted)">Bid under review</span><span style="font-weight:500">$${bid.price.toLocaleString()} · ${bid.lead} days · ★ ${bid.score}</span></div>`:''}
+    <div class="prof">
+      <div class="pmain">
+        <div class="block">
+          <span class="blabel bl-self"><i class="ti ti-building"></i> Supplier-provided</span>
+          <div style="font-size:13.5px;margin-bottom:14px">${p.about}</div>
+          <div class="kv">
+            <div class="item"><div class="l">Founded</div><div class="v">${p.founded}</div></div>
+            <div class="item"><div class="l">Location</div><div class="v">${p.location}</div></div>
+            <div class="item"><div class="l">Employees</div><div class="v">${p.employees}</div></div>
+            <div class="item"><div class="l">Lead time</div><div class="v">${p.leadtime}</div></div>
+            <div class="item"><div class="l">Capacity</div><div class="v">${p.capacity}</div></div>
+          </div>
+          <div class="seclbl">Capabilities</div><div class="chips">${chips(p.capabilities)}</div>
+          <div class="seclbl">Materials</div><div class="chips">${chips(p.materials)}</div>
+          <div class="seclbl">Certifications (claimed)</div><div class="chips">${chips(p.certs)}</div>
+        </div>
+        <div class="block agent">
+          <span class="blabel bl-agent"><i class="ti ti-sparkles"></i> Forerun Research Agent</span>
+          <div style="font-size:13.5px;margin-bottom:10px">${r.summary}</div>
+          <div class="conf">Confidence<span class="confbar"><span style="width:${r.confidence}%"></span></span>${r.confidence}%</div>
+          <div style="margin-top:12px">${findings}</div>
+          ${flags}
+          <div class="disc"><i class="ti ti-info-circle" style="vertical-align:-1px"></i> Compiled automatically from public and private sources for diligence reference. Verify critical findings before relying on them.</div>
+        </div>
+      </div>
+      <div class="rail">
+        <div class="rcard">
+          <div style="font-size:12.5px;font-weight:500;margin-bottom:8px">At a glance</div>
+          <div class="rf"><span>Scorecard</span><span>★ ${pr.score}</span></div>
+          <div class="rf"><span>Denied-party</span><span style="color:var(--good)">Clear</span></div>
+          <div class="rf"><span>Certs</span>${certStat}</div>
+          <div class="rf"><span>Risk flags</span><span style="color:${r.flags.length?'var(--warn)':'var(--good)'}">${r.flags.length||'None'}</span></div>
+        </div>
+        <div class="rcard">
+          ${bid?`<button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="acceptBid('${name}')">Accept this bid</button>`:''}
+          <button class="btn" style="width:100%;margin-bottom:8px" onclick="toast('Info request sent to supplier')">Request more info</button>
+          <button class="btn" style="width:100%" onclick="go('${profileReturn}')">Back</button>
+        </div>
+      </div>
+    </div>`;
+  go('supplier-profile');
+}
+function acceptBid(name){ toast('Bid from '+name+' accepted — sign-off requested'); go('rfqs'); }
+
+function go(view){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+  document.getElementById('view-'+view).classList.add('on');
+  const navk = NAVKEY[view]||view;
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on', a.dataset.view===navk));
+  document.getElementById('view-title').textContent = TITLES[view]||'';
+  document.querySelector('.body').scrollTop = 0;
+}
+function setRole(r){
+  const app=document.getElementById('app'); app.dataset.role=r;
+  document.getElementById('role-sup').classList.toggle('on', r==='supplier');
+  document.getElementById('role-buy').classList.toggle('on', r==='buyer');
+  if(r==='supplier'){ document.getElementById('persona').textContent='Acme Precision · supplier'; document.getElementById('avatar').textContent='AP'; go('opportunities'); }
+  else { document.getElementById('persona').textContent='Northvale Semiconductor · buyer'; document.getElementById('avatar').textContent='NS'; go('rfqs'); }
+}
+function toast(msg){ const t=document.getElementById('toast'); document.getElementById('toast-msg').textContent=msg; t.classList.add('show'); clearTimeout(window._tt); window._tt=setTimeout(()=>t.classList.remove('show'),2600); }
+
+function openOpp(id){
+  const o = OPPS.find(x=>x.id===id) || RFQS.find(x=>x.id===id);
+  const el = document.getElementById('opp-detail');
+  el.innerHTML = `
+    <span class="back" onclick="go('opportunities')"><i class="ti ti-arrow-left"></i> Opportunities</span>
+    <div class="sec"><h3>${o.title}</h3></div>
+    <div class="meta-row">${tag(o.cat)}<span>${o.id}</span><span>Qty ${o.qty||'—'}</span><span>${o.customer||'Customer'}</span><span>Closes in ${o.closes}</span></div>
+    <div class="panelcard"><div class="vault">
+      <div><div class="t"><i class="ti ti-lock" style="font-size:15px;vertical-align:-2px;margin-right:5px"></i>Drawings — IP-protected</div><div class="n">Files stay in the customer vault. Your access is logged and expires at bid close.</div></div>
+      <button class="btn" onclick="toast('Opening vault link · access logged')">Open in vault ↗</button>
+    </div></div>
+    <div class="panelcard">
+      <div style="font-size:12.5px;color:var(--muted);margin-bottom:12px">${o.reqs||''}</div>
+      <div class="row2">
+        <div class="field"><label>Your price (USD)</label><input type="text" placeholder="$ 0.00"></div>
+        <div class="field"><label>Lead time (days)</label><input type="text" placeholder="e.g. 10"></div>
+      </div>
+      <div class="field"><label>Notes (optional)</label><textarea placeholder="Anything the engineer should know…"></textarea></div>
+      <div class="actions"><span style="flex:1;font-size:12.5px;color:var(--muted);align-self:center">${o.bids} bids so far · other amounts hidden</span><button class="btn btn-primary" onclick="submitBid()">Submit bid</button></div>
+    </div>`;
+  go('opportunity');
+}
+function submitBid(){ toast('Bid submitted'); go('mybids'); }
+function publishRFQ(){ toast('RFQ published to qualified suppliers'); go('rfqs'); }
+
+function openRFQ(id){
+  const r = RFQS.find(x=>x.id===id);
+  if(r.awarded){ toast('Already awarded'); return; }
+  const el = document.getElementById('bidcompare');
+  const rows = BIDS.map(b=>`<tr class="bidrow ${b.best==='price'?'best':''}" onclick="openSupplier('${b.supplier}','bidcompare')"><td><span class="link">${b.supplier} <i class="ti ti-external-link" style="font-size:11px;vertical-align:-1px"></i></span></td><td>$${b.price.toLocaleString()}${b.best==='price'?'<span class="minip" style="background:#E1F5EE;color:#085041">best price</span>':''}</td><td>${b.lead} days${b.best==='fast'?'<span class="minip" style="background:#E6F1FB;color:#0C447C">fastest</span>':''}</td><td>★ ${b.score}</td><td><button class="btn" onclick="event.stopPropagation();award('${b.supplier}')">Select</button></td></tr>`).join('');
+  el.innerHTML = `
+    <span class="back" onclick="go('rfqs')"><i class="ti ti-arrow-left"></i> My RFQs</span>
+    <div class="sec"><h3>${r.title} — bids</h3><span class="v">${r.bids} bids · tap a row to view the supplier's profile</span></div>
+    ${r.open?'<div class="banner">Window still open — award becomes available after it closes.</div>':''}
+    <div class="meta-row">${tag(r.cat)}<span>${r.id}</span></div>
+    <div class="list" style="padding:0"><table><thead><tr><th>Supplier</th><th>Price</th><th>Lead time</th><th>Scorecard</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="award"><span class="n"><i class="ti ti-shield-check" style="font-size:15px;vertical-align:-2px;margin-right:5px"></i>Awarding requires internal sign-off before the PO is issued.</span><button class="btn btn-primary" ${r.open?'disabled style="opacity:.5;cursor:not-allowed"':''} onclick="award()">Award &amp; request sign-off</button></div>`;
+  go('bidcompare');
+}
+function award(sup){ toast(sup?('Selected '+sup+' — sign-off requested'):'Award sent for sign-off'); go('rfqs'); }
+
+const SAVED = new Set(['AI-076']);
+const MYIDS = new Set(MYBIDS.map(b=>b.id));
+const bidStage = b => b.status[0]==='Won'?'won':b.status[0]==='Lost'?'lost':'active';
+
+function toggleSave(id, ev){
+  if(ev) ev.stopPropagation();
+  const adding = !SAVED.has(id);
+  if(adding) SAVED.add(id); else SAVED.delete(id);
+  renderOpps(); renderKanban();
+  toast(adding ? 'Saved to your pipeline' : 'Removed from saved');
+}
+function bmBtn(id){
+  const on = SAVED.has(id);
+  return `<button class="bm ${on?'on':''}" onclick="toggleSave('${id}',event)" aria-label="${on?'Saved':'Save'}"><i class="ti ti-bookmark"></i></button>`;
+}
+function renderOpps(){
+  document.getElementById('opp-feed').innerHTML = OPPS.map(o=>`<div class="card" onclick="openOpp('${o.id}')">${bmBtn(o.id)}${tag(o.cat)}<span class="ti2">${o.title}</span><span class="pn">${o.id} · qty ${o.qty}</span><div class="meta"><span class="${o.soon?'soon':''}">${o.closes}</span><span>${o.bids} bids</span></div></div>`).join('');
+}
+function renderKanban(){
+  const savedItems = OPPS.filter(o=>SAVED.has(o.id) && !MYIDS.has(o.id))
+    .map(o=>({id:o.id, title:o.title, cat:o.cat, sub:`${o.closes} · ${o.bids} bids`, saved:true}));
+  const mk = key => MYBIDS.filter(b=>bidStage(b)===key).map(b=>({id:b.id, title:b.title, cat:b.cat, sub:`$${b.price.toLocaleString()} · ${b.lead}d`}));
+  const stages = [
+    {label:'Saved', dot:'var(--warn)', items:savedItems},
+    {label:'Submitted', dot:'var(--brand)', items:mk('active')},
+    {label:'Won', dot:'var(--win)', items:mk('won')},
+    {label:'Lost', dot:'var(--danger)', items:mk('lost')}
+  ];
+  document.getElementById('mybids-kanban').innerHTML = stages.map(st=>{
+    const cards = st.items.map(it=>`<div class="kcard" onclick="openOpp('${it.id}')">${it.saved?bmBtn(it.id):''}${tag(it.cat)}<div class="kt">${it.title}</div><div class="km"><span>${it.sub}</span>${it.pill?`<span class="pill ${it.pill[1]}">${it.pill[0]}</span>`:''}</div></div>`).join('') || '<div class="kempty">None</div>';
+    return `<div class="kcol"><div class="khead"><span class="kl"><span class="kdot" style="background:${st.dot}"></span>${st.label}</span><span class="kc">${st.items.length}</span></div>${cards}</div>`;
+  }).join('');
+}
+
+function renderLists(){
+  renderOpps();
+  renderKanban();
+  document.getElementById('rfq-list').innerHTML = RFQS.map(r=>`<div class="li" onclick="openRFQ('${r.id}')"><div><div class="lt">${r.title}</div><div class="lm">${CATS[r.cat].label} · ${r.id}</div></div><div class="lr"><span>${r.bids} bids</span><span>${r.closes!=='closed'&&r.closes!=='awarded'?r.closes:''}</span><span class="pill ${r.status[1]}">${r.status[0]}</span></div></div>`).join('');
+  document.getElementById('sup-list').innerHTML = SUPS.map(s=>`<div class="li" onclick="openSupplier('${s.name}','suppliers')"><div><div class="lt">${s.name}</div><div class="lm">${s.cats.map(c=>CATS[c].label).join(' · ')}</div></div><div class="lr"><span>★ ${s.score}</span><span class="pill st-good">Qualified</span></div></div>`).join('');
+  document.getElementById('cat-select').innerHTML = Object.keys(CATS).map(k=>`<option>${CATS[k].label}</option>`).join('');
+}
+renderLists();
+</script>
+</body>
+</html>
