@@ -21,6 +21,14 @@
       --good:#3FC4A1; --warn:#E0A24E; --danger:#E27A7A; --win:#97C459;
     }
   }
+  /* per-role brand accent — Supplier: green, Buyer: indigo */
+  .app[data-role="supplier"]{ --brand:#0F8A6E; --brand-soft:#E1F5EE; }
+  .app[data-role="buyer"]{ --brand:#3A5CCC; --brand-soft:#E6EAFB; }
+  @media (prefers-color-scheme:dark){
+    .app[data-role="supplier"]{ --brand:#3FC4A1; --brand-soft:#16302A; }
+    .app[data-role="buyer"]{ --brand:#7C93F0; --brand-soft:#1C2340; }
+  }
+  .app,.app .lg,.nav a,.btn-primary,.confbar span,.sc .bar span{transition:background-color .25s, color .25s, border-color .25s;}
   *{box-sizing:border-box; margin:0; padding:0;}
   body{background:var(--paper); color:var(--ink); font-family:"IBM Plex Sans",system-ui,sans-serif; font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased; padding:16px;}
   .mono{font-family:"IBM Plex Mono",monospace;}
