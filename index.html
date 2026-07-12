@@ -34,9 +34,9 @@
   .mono{font-family:"IBM Plex Mono",monospace;}
   h3{font-family:"Archivo",sans-serif; font-weight:700; letter-spacing:-.01em;}
 
-  .app{display:flex; max-width:1080px; margin:0 auto; min-height:620px; border:0.5px solid var(--rule); border-radius:14px; overflow:hidden; background:var(--panel);}
+  .app{display:flex; max-width:1120px; margin:0 auto; min-height:640px; border:0.5px solid var(--rule); border-radius:14px; overflow:hidden; background:var(--panel);}
   /* sidebar */
-  .side{width:208px; background:var(--paper); border-right:0.5px solid var(--rule); padding:14px 12px; flex-shrink:0; transition:width .2s;}
+  .side{width:216px; background:var(--paper); border-right:0.5px solid var(--rule); padding:14px 12px; flex-shrink:0; transition:width .2s;}
   .app.collapsed .side{width:64px;}
   .shead{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;}
   .brand{display:flex; align-items:center; gap:9px; overflow:hidden; white-space:nowrap;}
@@ -45,32 +45,37 @@
   .app.collapsed .brand .nm{display:none;}
   .cbtn{background:transparent; border:none; cursor:pointer; color:var(--muted); padding:3px; display:flex; font-size:18px;}
   .app.collapsed .cbtn i{transform:rotate(180deg);}
-  .roletoggle{display:flex; background:var(--rule-soft); border-radius:8px; padding:3px; margin-bottom:14px;}
+  .roletoggle{display:flex; background:var(--rule-soft); border-radius:8px; padding:3px; margin-bottom:12px;}
   .roletoggle button{flex:1; border:none; background:transparent; font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.04em; padding:6px 4px; border-radius:6px; cursor:pointer; color:var(--muted);}
   .roletoggle button.on{background:var(--panel); color:var(--ink); box-shadow:0 1px 2px rgba(0,0,0,.06);}
   .app.collapsed .roletoggle{display:none;}
+  .app.collapsed .persona-pick{display:none;}
+  .persona-pick{margin-bottom:14px;}
+  .persona-pick .pl{font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--faint); margin:0 2px 5px;}
+  .segrole{display:flex; gap:4px;}
+  .segrole button{flex:1; border:0.5px solid var(--rule); background:var(--panel); font-size:11px; padding:5px 3px; border-radius:6px; cursor:pointer; color:var(--muted);}
+  .segrole button.on{border-color:var(--brand); color:var(--brand); background:var(--brand-soft);}
   .nav{display:flex; flex-direction:column; gap:2px;}
-  .nav .grp{display:none; flex-direction:column; gap:2px;}
-  .app[data-role="supplier"] .nav .sup{display:flex;}
-  .app[data-role="buyer"] .nav .buy{display:flex;}
   .nav a{display:flex; align-items:center; gap:11px; padding:9px 10px; border-radius:8px; font-size:13.5px; color:var(--muted); cursor:pointer; white-space:nowrap; overflow:hidden;}
   .nav a i{font-size:18px; flex-shrink:0;}
   .nav a:hover{background:var(--rule-soft);}
   .nav a.on{background:var(--brand-soft); color:var(--brand); font-weight:500;}
-  .app.collapsed .nav .lbl{display:none;}
+  .nav a .nbadge{margin-left:auto; background:var(--brand); color:#fff; font-size:10px; font-family:"IBM Plex Mono"; border-radius:9px; padding:0 6px; line-height:16px; min-width:16px; text-align:center;}
+  .app.collapsed .nav .lbl,.app.collapsed .nav .nbadge{display:none;}
 
   /* main */
   .main{flex:1; min-width:0; display:flex; flex-direction:column;}
-  .tbar{display:flex; align-items:center; justify-content:space-between; padding:13px 20px; border-bottom:0.5px solid var(--rule);}
+  .tbar{display:flex; align-items:center; justify-content:space-between; padding:13px 20px; border-bottom:0.5px solid var(--rule); gap:12px;}
   .tbar h3{font-size:17px;}
   .tbar .right{display:flex; align-items:center; gap:10px;}
-  .persona{font-size:12.5px; color:var(--muted); display:flex; align-items:center; gap:8px;}
-  .av{width:28px; height:28px; border-radius:50%; background:var(--brand-soft); color:var(--brand); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:500;}
+  .persona{font-size:12.5px; color:var(--muted); display:flex; align-items:center; gap:8px; white-space:nowrap;}
+  .av{width:28px; height:28px; border-radius:50%; background:var(--brand-soft); color:var(--brand); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:500; flex-shrink:0;}
   .body{padding:18px 20px; overflow-y:auto;}
   .view{display:none;} .view.on{display:block;}
 
   /* shared bits */
   .tag{font-size:10.5px; padding:2px 8px; border-radius:6px;}
+  .cotag{font-size:10.5px; padding:2px 8px; border-radius:6px; background:var(--rule-soft); color:var(--muted); display:inline-flex; align-items:center; gap:4px;}
   .kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:11px; margin-bottom:14px;}
   .k{background:var(--paper); border:0.5px solid var(--rule); border-radius:9px; padding:12px;}
   .k .l{font-size:11.5px; color:var(--muted);} .k .v{font-size:22px; font-weight:500; margin-top:2px; font-family:"Archivo";}
@@ -79,10 +84,13 @@
   .trend .th{display:flex; justify-content:space-between; font-size:12.5px; color:var(--muted); margin-bottom:10px;}
   .chart{display:flex; align-items:flex-end; gap:7px; height:56px;}
   .chart .bar{flex:1; background:var(--brand); border-radius:3px 3px 0 0; min-height:4px; opacity:.88;}
-  .sec{display:flex; align-items:baseline; justify-content:space-between; margin:4px 0 11px;}
+  .sec{display:flex; align-items:baseline; justify-content:space-between; margin:4px 0 11px; gap:12px; flex-wrap:wrap;}
   .sec h3{font-size:15px;} .sec .v{font-size:12px; color:var(--muted);}
+  .toolbar{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:12px;}
+  .fchip{font-size:12px; padding:5px 11px; border-radius:16px; border:0.5px solid var(--rule); background:var(--panel); color:var(--muted); cursor:pointer; white-space:nowrap;}
+  .fchip.on{background:var(--brand-soft); border-color:var(--brand); color:var(--brand);}
 
-  .feed{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:11px;}
+  .feed{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:11px;}
   .card{position:relative; background:var(--panel); border:0.5px solid var(--rule); border-radius:11px; padding:12px 13px; display:flex; flex-direction:column; gap:7px; cursor:pointer; transition:border-color .15s, box-shadow .15s;}
   .card:hover{border-color:color-mix(in srgb,var(--brand) 45%,var(--rule)); box-shadow:0 0 0 1px color-mix(in srgb,var(--brand) 28%,transparent);}
   .card .arr{position:absolute; top:11px; right:12px; color:var(--brand); font-size:15px; opacity:0; transition:opacity .15s;}
@@ -100,19 +108,20 @@
   .pill{font-size:10.5px; font-family:"IBM Plex Mono",monospace; padding:2px 8px; border-radius:11px; white-space:nowrap;}
   .st-good{background:var(--brand-soft); color:var(--brand);} .st-warn{background:#FAEEDA; color:#854F0B;}
   .st-win{background:#EAF3DE; color:#3B6D11;} .st-muted{background:var(--rule-soft); color:var(--muted);}
-  .st-danger{background:#FCEBEB; color:#A32D2D;}
+  .st-danger{background:#FCEBEB; color:#A32D2D;} .st-info{background:#E6F1FB; color:#0C447C;}
 
   table{width:100%; border-collapse:collapse; font-size:13.5px;}
   th{text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--faint); font-weight:400; padding:8px 10px;}
   td{padding:12px 10px; border-top:0.5px solid var(--rule-soft);}
   tr.best td{background:var(--paper);}
   .minip{font-size:10px; padding:1px 7px; border-radius:5px; margin-left:7px;}
+  .mask{letter-spacing:2px; color:var(--faint);}
 
   .panelcard{background:var(--panel); border:0.5px solid var(--rule); border-radius:12px; padding:16px 18px; margin-bottom:14px;}
   .vault{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; border-left:3px solid var(--brand); padding-left:13px;}
   .vault .t{font-weight:500; font-size:14px;} .vault .n{font-size:12.5px; color:var(--muted); margin-top:2px;}
   label{display:block; font-size:12.5px; color:var(--muted); margin:0 0 5px;}
-  .field{margin-bottom:13px;} .row2{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  .field{margin-bottom:13px;} .row2{display:grid; grid-template-columns:1fr 1fr; gap:14px;} .row3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px;}
   input,select,textarea{width:100%; font-family:inherit; font-size:14px; color:var(--ink); background:var(--panel); border:0.5px solid var(--rule); border-radius:8px; padding:9px 11px;}
   input:focus,select:focus,textarea:focus{outline:none; border-color:var(--brand); box-shadow:0 0 0 2px color-mix(in srgb,var(--brand) 22%,transparent);}
   textarea{min-height:62px; resize:vertical;}
@@ -122,12 +131,15 @@
   .btn:hover{border-color:var(--faint);}
   .btn-primary{background:var(--brand); border-color:var(--brand); color:#fff;}
   .btn-primary:hover{opacity:.92;}
+  .btn-sm{font-size:12px; padding:6px 11px;}
+  .btn-ghost{background:transparent;}
   .back{font-size:13px; color:var(--muted); cursor:pointer; margin-bottom:12px; display:inline-flex; align-items:center; gap:5px;}
-  .meta-row{display:flex; flex-wrap:wrap; gap:8px 16px; font-size:13px; color:var(--muted); margin:8px 0 18px;}
+  .meta-row{display:flex; flex-wrap:wrap; gap:8px 16px; font-size:13px; color:var(--muted); margin:8px 0 18px; align-items:center;}
   .award{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-top:16px; padding:14px 16px; background:var(--paper); border:0.5px solid var(--rule); border-radius:10px;}
   .award .n{font-size:12.5px; color:var(--muted);}
-  .banner{font-size:12.5px; color:var(--warn); background:#FAEEDA; border-radius:8px; padding:9px 12px; margin-bottom:14px;}
-  @media (prefers-color-scheme:dark){.banner{background:#2A2113;} .st-warn{background:#2A2113; color:#E0A24E;} .st-win{background:#1B2A10; color:#97C459;} .st-danger{background:#2A1414; color:#E27A7A;}}
+  .banner{font-size:12.5px; color:var(--warn); background:#FAEEDA; border-radius:8px; padding:9px 12px; margin-bottom:14px; display:flex; gap:8px;}
+  .banner.info{color:var(--brand); background:var(--brand-soft);}
+  @media (prefers-color-scheme:dark){.banner{background:#2A2113;} .banner.info{background:var(--brand-soft);} .st-warn{background:#2A2113; color:#E0A24E;} .st-win{background:#1B2A10; color:#97C459;} .st-danger{background:#2A1414; color:#E27A7A;} .st-info{background:#14203A; color:#8FB6F0;}}
 
   .sc-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-bottom:18px;}
   .sc{background:var(--paper); border:0.5px solid var(--rule); border-radius:10px; padding:14px;}
@@ -135,7 +147,7 @@
   .sc .bar{height:5px; border-radius:3px; background:var(--rule-soft); margin-top:9px; overflow:hidden;}
   .sc .bar span{display:block; height:100%; background:var(--brand);}
 
-  .kanban{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px;}
+  .kanban{display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px;}
   .kcol{background:var(--paper); border:0.5px solid var(--rule); border-radius:11px; padding:10px;}
   .khead{display:flex; align-items:center; justify-content:space-between; font-size:12.5px; font-weight:500; margin-bottom:10px; padding:0 2px;}
   .kl{display:flex; align-items:center; gap:7px;}
@@ -149,6 +161,7 @@
   .kcard .kt{font-size:13.5px; font-weight:500; line-height:1.3; margin-top:7px;}
   .kcard .km{font-size:11.5px; color:var(--muted); margin-top:7px; display:flex; justify-content:space-between; align-items:center; gap:8px;}
   .kempty{font-size:12px; color:var(--faint); padding:6px 2px;}
+  @media (max-width:820px){ .kanban{grid-template-columns:repeat(2,1fr);} }
   @media (max-width:640px){ .kanban{grid-template-columns:1fr;} }
   .prof{display:grid; grid-template-columns:1fr 250px; gap:18px;}
   @media (max-width:760px){ .prof{grid-template-columns:1fr;} }
@@ -186,14 +199,93 @@
   .link:hover{text-decoration:underline;}
   tr.bidrow{cursor:pointer;}
   tr.bidrow:hover td{background:var(--paper);}
-  .toast{position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(12px); background:var(--ink); color:var(--paper); font-size:13px; padding:11px 18px; border-radius:10px; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; z-index:50; display:flex; align-items:center; gap:8px;}
+  .toast{position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(12px); background:var(--ink); color:var(--paper); font-size:13px; padding:11px 18px; border-radius:10px; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; z-index:80; display:flex; align-items:center; gap:8px;}
   .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
 
-  @media (max-width:640px){ .row2{grid-template-columns:1fr;} .side{width:64px;} .side .nm,.roletoggle{display:none;} }
+  /* tabs */
+  .tabs{display:flex; gap:4px; border-bottom:0.5px solid var(--rule); margin-bottom:16px; flex-wrap:wrap;}
+  .tab{font-size:13px; padding:8px 13px; border:none; background:transparent; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px;}
+  .tab.on{color:var(--brand); border-bottom-color:var(--brand); font-weight:500;}
+  .tab .tcount{font-size:10.5px; font-family:"IBM Plex Mono"; background:var(--rule-soft); border-radius:9px; padding:0 6px; margin-left:6px;}
+
+  /* stepper / timeline (Gantt-lite) */
+  .steps{display:flex; align-items:center; gap:0; margin:10px 0 4px;}
+  .step{display:flex; align-items:center; flex:1;}
+  .step .dot{width:15px; height:15px; border-radius:50%; border:2px solid var(--rule); background:var(--panel); flex-shrink:0; display:flex; align-items:center; justify-content:center;}
+  .step .dot i{font-size:9px; color:#fff;}
+  .step.done .dot{background:var(--brand); border-color:var(--brand);}
+  .step.curr .dot{border-color:var(--brand); box-shadow:0 0 0 3px var(--brand-soft);}
+  .step.late .dot{background:var(--danger); border-color:var(--danger);}
+  .step .segline{flex:1; height:2px; background:var(--rule);}
+  .step.done .segline{background:var(--brand);}
+  .step:last-child{flex:0;}
+  .steplbls{display:flex; font-size:10.5px; color:var(--faint); margin-top:4px;}
+  .steplbls span{flex:1;} .steplbls span:last-child{flex:0; white-space:nowrap;}
+  .gantt-row{background:var(--panel); border:0.5px solid var(--rule); border-radius:11px; padding:13px 15px; margin-bottom:10px;}
+  .gr-head{display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:center;}
+  .gr-t{font-size:14px; font-weight:500;} .gr-m{font-size:12px; color:var(--muted); margin-top:2px;}
+
+  /* chat */
+  .chat{display:grid; grid-template-columns:230px 1fr; gap:0; border:0.5px solid var(--rule); border-radius:12px; overflow:hidden; min-height:440px;}
+  @media (max-width:640px){ .chat{grid-template-columns:1fr;} .chat .thread{display:none;} .chat.showconv .thread{display:none;} .chat.showlist .clist{display:block;} }
+  .clist{border-right:0.5px solid var(--rule); background:var(--paper); overflow-y:auto;}
+  .cli{padding:12px 14px; border-top:0.5px solid var(--rule-soft); cursor:pointer;}
+  .cli:first-child{border-top:none;} .cli:hover{background:var(--rule-soft);}
+  .cli.on{background:var(--brand-soft);}
+  .cli .cn{font-size:13px; font-weight:500; display:flex; justify-content:space-between; align-items:center; gap:6px;}
+  .cli .cp{font-size:11.5px; color:var(--faint); margin-top:2px;}
+  .cli .cprev{font-size:12px; color:var(--muted); margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .cdot{width:8px; height:8px; border-radius:50%; background:var(--brand); flex-shrink:0;}
+  .thread{display:flex; flex-direction:column; min-width:0;}
+  .thhead{padding:12px 16px; border-bottom:0.5px solid var(--rule); font-size:13px;}
+  .thhead .tn{font-weight:500;} .thhead .tp{font-size:11.5px; color:var(--faint); margin-top:1px;}
+  .thbody{flex:1; padding:16px; display:flex; flex-direction:column; gap:10px; overflow-y:auto; background:var(--paper);}
+  .bub{max-width:78%; padding:9px 12px; border-radius:12px; font-size:13px; line-height:1.45;}
+  .bub .bt{font-size:10px; color:var(--faint); margin-top:4px;}
+  .bub.them{background:var(--panel); border:0.5px solid var(--rule); align-self:flex-start; border-bottom-left-radius:3px;}
+  .bub.me{background:var(--brand); color:#fff; align-self:flex-end; border-bottom-right-radius:3px;}
+  .bub.me .bt{color:rgba(255,255,255,.75);}
+  .sysmsg{align-self:center; font-size:11px; color:var(--faint); background:var(--rule-soft); padding:3px 10px; border-radius:10px;}
+  .composer{display:flex; gap:8px; padding:12px 14px; border-top:0.5px solid var(--rule);}
+  .composer input{flex:1;}
+
+  /* modal */
+  .overlay{position:fixed; inset:0; background:rgba(0,0,0,.42); display:none; align-items:center; justify-content:center; z-index:70; padding:20px;}
+  .overlay.on{display:flex;}
+  .modal{background:var(--panel); border:0.5px solid var(--rule); border-radius:14px; padding:20px 22px; max-width:440px; width:100%; max-height:88vh; overflow-y:auto; box-shadow:0 18px 50px rgba(0,0,0,.28);}
+  .modal h3{font-size:16px; margin-bottom:4px;}
+  .modal .msub{font-size:12.5px; color:var(--muted); margin-bottom:14px;}
+  .modal .actions{margin-top:16px;}
+  .stars{display:flex; gap:4px; font-size:22px; color:var(--faint); cursor:pointer;}
+  .stars i.on{color:#E0A24E;}
+  .yn{display:flex; gap:8px;} .yn button{flex:1;}
+  .yn button.on{border-color:var(--brand); background:var(--brand-soft); color:var(--brand);}
+  .toggle{position:relative; width:38px; height:22px; border-radius:12px; background:var(--rule); border:none; cursor:pointer; flex-shrink:0; transition:background .15s;}
+  .toggle::after{content:""; position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%; background:#fff; transition:left .15s;}
+  .toggle.on{background:var(--brand);} .toggle.on::after{left:18px;}
+  .setrow{display:flex; align-items:center; justify-content:space-between; gap:14px; padding:11px 0; border-top:0.5px solid var(--rule-soft);}
+  .setrow:first-child{border-top:none;}
+  .rolebadge{font-size:10.5px; font-family:"IBM Plex Mono"; padding:2px 8px; border-radius:6px;}
+  .rb-admin{background:#EEEDFE; color:#3C3489;} .rb-buyer{background:var(--brand-soft); color:var(--brand);} .rb-engineer{background:#E6F1FB; color:#0C447C;}
+  @media (prefers-color-scheme:dark){.rb-admin{background:#221E42; color:#B7B0F0;} .rb-engineer{background:#14203A; color:#8FB6F0;}}
+  .wizsteps{display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;}
+  .wizstep{font-size:11.5px; padding:5px 10px; border-radius:20px; background:var(--rule-soft); color:var(--muted);}
+  .wizstep.on{background:var(--brand-soft); color:var(--brand);} .wizstep.done{background:var(--brand); color:#fff;}
+  .choice{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:6px;}
+  .choicecard{border:0.5px solid var(--rule); border-radius:11px; padding:14px; cursor:pointer;}
+  .choicecard.on{border-color:var(--brand); background:var(--brand-soft);}
+  .choicecard .ct{font-weight:500; font-size:14px; display:flex; align-items:center; gap:8px;}
+  .choicecard .cd{font-size:12px; color:var(--muted); margin-top:5px;}
+  .catgrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px;}
+  .catopt{display:flex; align-items:center; gap:9px; border:0.5px solid var(--rule); border-radius:9px; padding:10px 12px; cursor:pointer; font-size:13px;}
+  .catopt.on{border-color:var(--brand); background:var(--brand-soft); color:var(--brand);}
+  .catopt i{font-size:16px;}
+
+  @media (max-width:640px){ .row2,.row3{grid-template-columns:1fr;} .side{width:64px;} .side .nm,.roletoggle,.persona-pick{display:none;} }
 </style>
 </head>
 <body>
-<div class="app" id="app" data-role="supplier">
+<div class="app" id="app" data-role="supplier" data-persona="buyer">
   <aside class="side">
     <div class="shead">
       <div class="brand"><span class="lg">F</span><span class="nm">Forerun</span></div>
@@ -203,18 +295,15 @@
       <button id="role-sup" class="on" onclick="setRole('supplier')">Supplier</button>
       <button id="role-buy" onclick="setRole('buyer')">Buyer</button>
     </div>
-    <nav class="nav">
-      <div class="grp sup">
-        <a data-view="opportunities" class="on" onclick="go('opportunities')"><i class="ti ti-layout-grid"></i><span class="lbl">Opportunities</span></a>
-        <a data-view="mybids" onclick="go('mybids')"><i class="ti ti-gavel"></i><span class="lbl">My bids</span></a>
-        <a data-view="scorecard" onclick="go('scorecard')"><i class="ti ti-star"></i><span class="lbl">Scorecard</span></a>
+    <div class="persona-pick" id="persona-pick">
+      <div class="pl">Signed in as</div>
+      <div class="segrole">
+        <button data-p="admin" onclick="setPersona('admin')">Admin</button>
+        <button data-p="buyer" class="on" onclick="setPersona('buyer')">Buyer</button>
+        <button data-p="engineer" onclick="setPersona('engineer')">Engineer</button>
       </div>
-      <div class="grp buy">
-        <a data-view="rfqs" onclick="go('rfqs')"><i class="ti ti-file-text"></i><span class="lbl">My RFQs</span></a>
-        <a data-view="createrfq" onclick="go('createrfq')"><i class="ti ti-plus"></i><span class="lbl">New request</span></a>
-        <a data-view="suppliers" onclick="go('suppliers')"><i class="ti ti-users"></i><span class="lbl">Suppliers</span></a>
-      </div>
-    </nav>
+    </div>
+    <nav class="nav" id="nav"></nav>
   </aside>
 
   <section class="main">
@@ -223,20 +312,16 @@
       <div class="right"><span class="persona" id="persona">Acme Precision · supplier</span><span class="av" id="avatar">AP</span></div>
     </div>
     <div class="body">
-
       <!-- SUPPLIER: opportunities -->
       <div class="view on" id="view-opportunities">
         <div class="kpis">
           <div class="k"><div class="l">Open</div><div class="v">8</div><div class="d">in your categories</div></div>
           <div class="k"><div class="l">Active bids</div><div class="v">3</div><div class="d">2 closing today</div></div>
           <div class="k"><div class="l">Win rate</div><div class="v">28%</div><div class="d up">▲ 4%</div></div>
-          <div class="k"><div class="l">Turnaround</div><div class="v">11d</div><div class="d up">▼ 1.5d</div></div>
-        </div>
-        <div class="trend">
-          <div class="th"><span>Bids submitted — last 8 weeks</span><span>92 total</span></div>
-          <div class="chart"><div class="bar" style="height:38%"></div><div class="bar" style="height:52%"></div><div class="bar" style="height:45%"></div><div class="bar" style="height:64%"></div><div class="bar" style="height:58%"></div><div class="bar" style="height:78%"></div><div class="bar" style="height:70%"></div><div class="bar" style="height:92%"></div></div>
+          <div class="k"><div class="l">On-time</div><div class="v">96%</div><div class="d up">41 orders</div></div>
         </div>
         <div class="sec"><h3>Open opportunities</h3><span class="v">tap a card to view &amp; bid</span></div>
+        <div class="toolbar" id="opp-filters"></div>
         <div class="feed" id="opp-feed"></div>
       </div>
 
@@ -245,9 +330,15 @@
 
       <!-- SUPPLIER: my bids -->
       <div class="view" id="view-mybids">
-        <div class="sec"><h3>My bids</h3><span class="v">6 total · grouped by stage</span></div>
+        <div class="sec"><h3>My bids</h3><span class="v">grouped by stage</span></div>
         <div class="kanban" id="mybids-kanban"></div>
       </div>
+
+      <!-- SHARED: orders & tracking -->
+      <div class="view" id="view-tracking"><div id="tracking-body"></div></div>
+
+      <!-- SHARED: messages / chat -->
+      <div class="view" id="view-messages"><div id="messages-body"></div></div>
 
       <!-- SUPPLIER: scorecard -->
       <div class="view" id="view-scorecard">
@@ -256,20 +347,25 @@
           <div class="sc"><div class="l">Overall</div><div class="v">4.6</div><div class="bar"><span style="width:92%"></span></div></div>
           <div class="sc"><div class="l">Collaboration</div><div class="v">4.7</div><div class="bar"><span style="width:94%"></span></div></div>
           <div class="sc"><div class="l">Turnaround</div><div class="v">4.4</div><div class="bar"><span style="width:88%"></span></div></div>
-          <div class="sc"><div class="l">Cost</div><div class="v">4.2</div><div class="bar"><span style="width:84%"></span></div></div>
+          <div class="sc"><div class="l">Quality</div><div class="v">4.5</div><div class="bar"><span style="width:90%"></span></div></div>
         </div>
-        <div class="panelcard"><div class="vault" style="border-color:var(--brand)"><div><div class="t">Why this matters</div><div class="n">Your scorecard is visible to buyers' supply-chain teams and weighs into award decisions alongside price and lead time.</div></div></div></div>
+        <div class="panelcard"><div class="vault" style="border-color:var(--brand)"><div><div class="t">Why this matters</div><div class="n">Buyers rate every closed job on quality and spec conformance. Scores post here immediately and weigh into award decisions alongside price and lead time.</div></div></div></div>
+        <div class="sec"><h3>Recent job feedback</h3></div>
+        <div class="list" id="supp-feedback"></div>
       </div>
+
+      <!-- SUPPLIER: company profile / onboarding -->
+      <div class="view" id="view-company"><div id="company-body"></div></div>
 
       <!-- BUYER: RFQs -->
       <div class="view" id="view-rfqs">
         <div class="kpis">
           <div class="k"><div class="l">Open RFQs</div><div class="v">3</div></div>
           <div class="k"><div class="l">Awaiting award</div><div class="v">1</div><div class="d">window closed</div></div>
-          <div class="k"><div class="l">Awarded (qtr)</div><div class="v">9</div></div>
-          <div class="k"><div class="l">R&amp;D spend</div><div class="v">$148k</div><div class="d">across 3 cost centers</div></div>
+          <div class="k"><div class="l">In production</div><div class="v">4</div><div class="d">1 late</div></div>
+          <div class="k"><div class="l">R&amp;D spend</div><div class="v">$148k</div><div class="d">across 3 groups</div></div>
         </div>
-        <div class="sec"><h3>My requests</h3><span class="v"><button class="btn btn-primary" onclick="go('createrfq')">+ New request</button></span></div>
+        <div class="sec"><h3>My requests</h3><span class="v"><button class="btn btn-primary btn-sm" onclick="go('createrfq')">+ New request</button></span></div>
         <div class="list" id="rfq-list"></div>
       </div>
 
@@ -283,13 +379,24 @@
             <div class="field"><label>Part number</label><input type="text" value="VF-6061-204"></div>
             <div class="field"><label>Category</label><select id="cat-select"></select></div>
           </div>
-          <div class="row2">
+          <div class="row3">
             <div class="field"><label>Quantity</label><input type="text" value="12"></div>
+            <div class="field"><label>Product / project</label><select><option>Litho stage</option><option>Etch chamber</option><option>Deposition module</option></select></div>
             <div class="field"><label>Cost center</label><select><option>RND-LITHO-204</option><option>RND-ETCH-118</option><option>RND-DEP-330</option></select></div>
           </div>
-          <div class="field"><label>Requirements</label><textarea>Tolerance ±0.05mm. Anodized. Test batch ahead of production qualification.</textarea></div>
-          <div class="field"><label>Drawings (vault link)</label><input type="text" value="scv://northvale-vault/rfq/VF-6061-204"><div class="hint">Files stay in your vault — Forerun stores the link only.</div></div>
-          <div class="field" style="max-width:220px"><label>Bid window</label><select><option>3 days</option><option>2 days</option><option>5 days</option></select></div>
+          <div class="row2">
+            <div class="field"><label>Assign engineer (technical questions route here)</label><select><option>Priya Rao — Litho</option><option>Marcus Vogel — Etch</option></select></div>
+            <div class="field"><label>Assign buyer</label><select><option>You (Sam Ortiz)</option><option>Lena Park</option></select></div>
+          </div>
+          <div class="field"><label>Requirements</label><textarea>Tolerance ±0.05mm on bore ID. Hard anodized. Test batch ahead of production qualification.</textarea></div>
+          <div class="row2">
+            <div class="field"><label>Drawing (vault link — IP stays in your vault)</label><input type="text" value="scv://northvale-vault/rfq/VF-6061-204"><div class="hint">Forerun stores only the part number &amp; link — never the drawing file.</div></div>
+            <div class="field"><label>Bid window</label><select><option>3 days</option><option>2 days</option><option>5 days</option></select></div>
+          </div>
+          <div class="field"><label>NDA required to view drawing</label>
+            <select><option>Category NDA (qualified suppliers)</option><option>Drawing-specific NDA</option><option>None — non-critical / common part</option></select>
+            <div class="hint">New suppliers must accept this before the drawing unlocks.</div>
+          </div>
           <div class="actions"><button class="btn" onclick="go('rfqs')">Save draft</button><button class="btn btn-primary" onclick="publishRFQ()">Publish RFQ</button></div>
         </div>
       </div>
@@ -300,51 +407,65 @@
         <div class="list" id="sup-list"></div>
       </div>
 
+      <!-- BUYER: scorecards -->
+      <div class="view" id="view-scorecards">
+        <div class="sec"><h3>Supplier scorecards</h3><span class="v">quality &amp; delivery, updated on job close</span></div>
+        <div class="list" id="scorecards-list"></div>
+      </div>
+
+      <!-- BUYER: admin -->
+      <div class="view" id="view-admin"><div id="admin-body"></div></div>
+
       <!-- SHARED: bid comparison + award -->
       <div class="view" id="view-bidcompare"><div id="bidcompare"></div></div>
 
       <!-- SHARED: supplier profile (buyer diligence) -->
       <div class="view" id="view-supplier-profile"><div id="supplier-profile"></div></div>
-
     </div>
   </section>
 </div>
+
+<div class="overlay" id="overlay"><div class="modal" id="modal"></div></div>
 <div class="toast" id="toast"><i class="ti ti-check"></i><span id="toast-msg"></span></div>
 
 <script>
+/* ---------------- reference data ---------------- */
 const CATS = {
-  cnc:{label:'CNC machining', bg:'#E6F1FB', fg:'#0C447C'},
-  sheet:{label:'Sheet metal', bg:'#E1F5EE', fg:'#085041'},
-  gas:{label:'Gas & rough lines', bg:'#FAEEDA', fg:'#633806'},
-  quartz:{label:'Quartz & ceramics', bg:'#EEEDFE', fg:'#3C3489'},
-  rework:{label:'Reworks', bg:'#FAECE7', fg:'#712B13'}
+  cnc:{label:'CNC machining', bg:'#E6F1FB', fg:'#0C447C', icon:'ti-tools'},
+  sheet:{label:'Sheet metal', bg:'#E1F5EE', fg:'#085041', icon:'ti-layers-subtract'},
+  gas:{label:'Gas & rough lines', bg:'#FAEEDA', fg:'#633806', icon:'ti-pipe'},
+  quartz:{label:'Quartz & ceramics', bg:'#EEEDFE', fg:'#3C3489', icon:'ti-diamond'},
+  rework:{label:'Reworks', bg:'#FAECE7', fg:'#712B13', icon:'ti-refresh'},
+  plastic:{label:'Plastics', bg:'#E9F3E1', fg:'#3B5B12', icon:'ti-box'}
 };
-function tag(c){const x=CATS[c]; return `<span class="tag" style="background:${x.bg};color:${x.fg}">${x.label}</span>`;}
+function tag(c){const x=CATS[c]; return x?`<span class="tag" style="background:${x.bg};color:${x.fg}">${x.label}</span>`:'';}
+const COMPANIES = ['Northvale Semiconductor','ASML West','Orion Micro'];
+function cotag(name){return `<span class="cotag"><i class="ti ti-building-factory" style="font-size:12px"></i>${name}</span>`;}
 
 const OPPS = [
-  {id:'VF-6061-204', title:'Vacuum flange, 6061-T6', cat:'cnc', qty:12, closes:'2d 4h', bids:7, soon:false, customer:'Customer #A1', reqs:'Tolerance ±0.05mm. Hard anodized. Test batch ahead of production qualification.'},
-  {id:'QV-110', title:'Quartz viewport window', cat:'quartz', qty:4, closes:'5h', bids:9, soon:true, customer:'Customer #C3', reqs:'Optical-grade fused silica. Scratch-dig 40-20. Edges chamfered.'},
-  {id:'CMB-330', title:'Chamber mounting bracket', cat:'sheet', qty:20, closes:'1d 9h', bids:4, soon:false, customer:'Customer #A1', reqs:'304 SS, 3mm. Bead-blast finish. Weldment per drawing.'},
-  {id:'GM-512', title:'Process gas manifold', cat:'gas', qty:6, closes:'3d', bids:2, soon:false, customer:'Customer #B2', reqs:'316L electropolished. Orbital welds. Helium leak test to 1e-9.'},
-  {id:'EA-204R', title:'Electrode assembly rework', cat:'rework', qty:8, closes:'4d 6h', bids:1, soon:false, customer:'Customer #B2', reqs:'Re-machine seat and re-plate. Existing parts supplied by buyer.'},
-  {id:'LP-088', title:'Lift pin housing', cat:'cnc', qty:30, closes:'2d', bids:5, soon:false, customer:'Customer #A1', reqs:'Aluminum 6061. Hard anodize. Bore concentricity 0.01mm.'},
-  {id:'AI-076', title:'Alumina insulator ring', cat:'quartz', qty:15, closes:'1d 2h', bids:3, soon:false, customer:'Customer #C3', reqs:'99.5% alumina, fired. Ground flat both faces.'},
-  {id:'CT-450', title:'Cable tray weldment', cat:'sheet', qty:10, closes:'5d', bids:2, soon:false, customer:'Customer #B2', reqs:'Aluminum 5052. TIG welded. Powder coat.'}
+  {id:'VF-6061-204', title:'Vacuum flange, 6061-T6', cat:'cnc', qty:12, closes:'2d 4h', bids:7, soon:false, customer:'Northvale Semiconductor', reqs:'Tolerance ±0.05mm on bore ID. Hard anodized. Test batch ahead of production qualification.', nda:'category'},
+  {id:'QV-110', title:'Quartz viewport window', cat:'quartz', qty:4, closes:'5h', bids:9, soon:true, customer:'ASML West', reqs:'Optical-grade fused silica. Scratch-dig 40-20. Edges chamfered.', nda:'drawing'},
+  {id:'CMB-330', title:'Chamber mounting bracket', cat:'sheet', qty:20, closes:'1d 9h', bids:4, soon:false, customer:'Northvale Semiconductor', reqs:'304 SS, 3mm. Bead-blast finish. Weldment per drawing.', nda:'category'},
+  {id:'GM-512', title:'Process gas manifold', cat:'gas', qty:6, closes:'3d', bids:2, soon:false, customer:'Orion Micro', reqs:'316L electropolished. Orbital welds. Helium leak test to 1e-9.', nda:'category'},
+  {id:'EA-204R', title:'Electrode assembly rework', cat:'rework', qty:8, closes:'4d 6h', bids:1, soon:false, customer:'Orion Micro', reqs:'Re-machine seat and re-plate. Existing parts supplied by buyer.', nda:'none'},
+  {id:'LP-088', title:'Lift pin housing', cat:'cnc', qty:30, closes:'2d', bids:5, soon:false, customer:'Northvale Semiconductor', reqs:'Aluminum 6061. Hard anodize. Bore concentricity 0.01mm.', nda:'category'},
+  {id:'AI-076', title:'Alumina insulator ring', cat:'quartz', qty:15, closes:'1d 2h', bids:3, soon:false, customer:'ASML West', reqs:'99.5% alumina, fired. Ground flat both faces.', nda:'drawing'},
+  {id:'CT-450', title:'Cable tray weldment', cat:'sheet', qty:10, closes:'5d', bids:2, soon:false, customer:'Northvale Semiconductor', reqs:'Aluminum 5052. TIG welded. Powder coat.', nda:'none'}
 ];
 const MYBIDS = [
-  {id:'VF-6061-204', title:'Vacuum flange, 6061-T6', cat:'cnc', price:1240, lead:9, status:['Leading','st-good']},
-  {id:'GM-512', title:'Process gas manifold', cat:'gas', price:880, lead:12, status:['Submitted','st-muted']},
-  {id:'LP-088', title:'Lift pin housing', cat:'cnc', price:2100, lead:8, status:['Outbid','st-warn']},
-  {id:'SV-300', title:'Slit valve plate', cat:'cnc', price:1650, lead:7, status:['Won','st-win']},
-  {id:'HB-211', title:'Heater bracket', cat:'sheet', price:540, lead:6, status:['Won','st-win']},
-  {id:'QV-090', title:'Quartz boat', cat:'quartz', price:980, lead:14, status:['Lost','st-danger']}
+  {id:'VF-6061-204', title:'Vacuum flange, 6061-T6', cat:'cnc', price:1240, lead:9, status:['Leading','st-good'], stage:'active'},
+  {id:'GM-512', title:'Process gas manifold', cat:'gas', price:880, lead:12, status:['In review','st-info'], stage:'review'},
+  {id:'LP-088', title:'Lift pin housing', cat:'cnc', price:2100, lead:8, status:['Outbid','st-warn'], stage:'active'},
+  {id:'SV-300', title:'Slit valve plate', cat:'cnc', price:1650, lead:7, status:['Won','st-win'], stage:'won'},
+  {id:'HB-211', title:'Heater bracket', cat:'sheet', price:540, lead:6, status:['Won','st-win'], stage:'won'},
+  {id:'QV-090', title:'Quartz boat', cat:'quartz', price:980, lead:14, status:['Lost','st-danger'], stage:'lost'}
 ];
 const RFQS = [
-  {id:'VF-6061-204', title:'Vacuum flange, 6061-T6', cat:'cnc', status:['Open','st-good'], bids:7, closes:'2d 4h', open:true},
-  {id:'CMB-330', title:'Chamber mounting bracket', cat:'sheet', status:['Open','st-good'], bids:4, closes:'1d 9h', open:true},
-  {id:'SV-300', title:'Slit valve plate', cat:'cnc', status:['Closed · review bids','st-warn'], bids:6, closes:'closed', open:false},
-  {id:'GM-512', title:'Process gas manifold', cat:'gas', status:['Open','st-good'], bids:2, closes:'3d', open:true},
-  {id:'EA-204R', title:'Electrode assembly rework', cat:'rework', status:['Awarded','st-win'], bids:3, closes:'awarded', open:false, awarded:true}
+  {id:'VF-6061-204', title:'Vacuum flange, 6061-T6', cat:'cnc', status:['Open','st-good'], bids:7, closes:'2d 4h', open:true, product:'Litho stage'},
+  {id:'CMB-330', title:'Chamber mounting bracket', cat:'sheet', status:['Open','st-good'], bids:4, closes:'1d 9h', open:true, product:'Etch chamber'},
+  {id:'SV-300', title:'Slit valve plate', cat:'cnc', status:['Closed · review bids','st-warn'], bids:6, closes:'closed', open:false, product:'Litho stage'},
+  {id:'GM-512', title:'Process gas manifold', cat:'gas', status:['Open','st-good'], bids:2, closes:'3d', open:true, product:'Deposition module'},
+  {id:'EA-204R', title:'Electrode assembly rework', cat:'rework', status:['Awarded','st-win'], bids:3, closes:'awarded', open:false, awarded:true, product:'Etch chamber'}
 ];
 const BIDS = [
   {supplier:'Nord Fab', price:1180, lead:14, score:4.1, best:'price'},
@@ -353,23 +474,49 @@ const BIDS = [
   {supplier:'Westline Tool', price:1295, lead:11, score:3.9}
 ];
 const SUPS = [
-  {name:'Acme Precision', cats:['cnc'], score:4.6},
-  {name:'Nord Fab', cats:['sheet','cnc'], score:4.1},
-  {name:'Titan Machining', cats:['cnc','rework'], score:4.8},
-  {name:'Lumen Quartz', cats:['quartz'], score:4.5},
-  {name:'Flowtek Lines', cats:['gas'], score:4.3}
+  {name:'Acme Precision', cats:['cnc'], score:4.6, jobs:41, ontime:96, rnd:true},
+  {name:'Nord Fab', cats:['sheet','cnc'], score:4.1, jobs:12, ontime:88, rnd:true},
+  {name:'Titan Machining', cats:['cnc','rework'], score:4.8, jobs:58, ontime:97, rnd:true},
+  {name:'Lumen Quartz', cats:['quartz'], score:4.5, jobs:27, ontime:94, rnd:true},
+  {name:'Flowtek Lines', cats:['gas'], score:4.3, jobs:33, ontime:95, rnd:false}
 ];
-const TITLES = {opportunities:'Opportunities', opportunity:'Opportunity', mybids:'My bids', scorecard:'Scorecard', rfqs:'My RFQs', createrfq:'New request', suppliers:'Suppliers', bidcompare:'Review bids', 'supplier-profile':'Supplier profile'};
-const NAVKEY = {opportunity:'opportunities', bidcompare:'rfqs', createrfq:'createrfq', 'supplier-profile':'rfqs'};
+/* orders in flight (won bids → production → delivery) */
+const ORDERS = [
+  {id:'SV-300', title:'Slit valve plate', cat:'cnc', supplier:'Acme Precision', buyer:'Sam Ortiz', engineer:'Priya Rao', product:'Litho stage', qty:12, price:1650, stage:'manufacturing', due:'Jul 20', tracking:null, delayed:false, delayReason:''},
+  {id:'HB-211', title:'Heater bracket', cat:'sheet', supplier:'Acme Precision', buyer:'Sam Ortiz', engineer:'Marcus Vogel', product:'Etch chamber', qty:20, price:540, stage:'shipped', due:'Jul 14', tracking:'7712 3480 1123', delayed:false, delayReason:''},
+  {id:'EA-204R', title:'Electrode assembly rework', cat:'rework', supplier:'Titan Machining', buyer:'Lena Park', engineer:'Marcus Vogel', product:'Etch chamber', qty:8, price:1310, stage:'manufacturing', due:'Jul 10', tracking:null, delayed:true, delayReason:'Raw material lead time slipped 4 days; new ship date Jul 16.'},
+  {id:'GM-401', title:'Gas manifold (pilot)', cat:'gas', supplier:'Flowtek Lines', buyer:'Sam Ortiz', engineer:'Priya Rao', product:'Deposition module', qty:6, price:920, stage:'delivered', due:'Jul 2', tracking:'5561 9902 7781', delayed:false, delayReason:''}
+];
+const STAGES = ['accepted','manufacturing','shipped','delivered'];
+const STAGE_LBL = {accepted:'Accepted', manufacturing:'In production', shipped:'Shipped', delivered:'Delivered'};
+/* chat threads (perspective-aware) */
+const THREADS = [
+  {id:1, part:'VF-6061-204', partTitle:'Vacuum flange', supplier:'Acme Precision', engineer:'Priya Rao (Engineer)', buyer:'Sam Ortiz (Buyer)', company:'Northvale Semiconductor', unread:1,
+   msgs:[{from:'sup', name:'Acme Precision', text:'Is the ±0.05mm tolerance on the bore ID or the flange face?', t:'9:12'},
+         {from:'eng', name:'Priya Rao', text:'Bore ID. Flange face is ±0.1mm — I updated note 3 on the drawing.', t:'9:20'},
+         {from:'sup', name:'Acme Precision', text:'Got it, thanks. Submitting our bid today.', t:'9:24'}]},
+  {id:2, part:'QV-110', partTitle:'Quartz viewport', supplier:'Lumen Quartz', engineer:'Marcus Vogel (Engineer)', buyer:'Sam Ortiz (Buyer)', company:'ASML West', unread:0,
+   msgs:[{from:'sup', name:'Lumen Quartz', text:'Can the chamfer be 0.3mm x 45° instead of 0.5mm? Better yield on our tooling.', t:'Tue'},
+         {from:'eng', name:'Marcus Vogel', text:'0.3mm is fine functionally. Approved.', t:'Tue'}]},
+  {id:3, part:'EA-204R', partTitle:'Electrode rework', supplier:'Titan Machining', engineer:'Marcus Vogel (Engineer)', buyer:'Lena Park (Buyer)', company:'Orion Micro', unread:0,
+   msgs:[{from:'sup', name:'Titan Machining', text:'Heads-up: material lead time slipped 4 days. Flagging a delay in the tracker.', t:'Mon'},
+         {from:'buy', name:'Lena Park', text:'Acknowledged — let\'s catch up on a call if the new date moves again.', t:'Mon'}]}
+];
+const SUPP_FEEDBACK = [
+  {part:'SV-300', title:'Slit valve plate', rating:5, note:'Met spec, delivered 2 days early. Excellent finish.'},
+  {part:'GM-401', title:'Gas manifold (pilot)', rating:4, note:'Good part; minor cosmetic scuff on one unit, accepted.'}
+];
+/* admin users */
+const USERS = [
+  {name:'Dana Ortiz', email:'dana.ortiz@northvale.com', role:'Admin', group:'Supply Chain', status:'Active'},
+  {name:'Sam Ortiz', email:'sam.ortiz@northvale.com', role:'Buyer', group:'Litho', status:'Active'},
+  {name:'Lena Park', email:'lena.park@northvale.com', role:'Buyer', group:'Etch', status:'Active'},
+  {name:'Priya Rao', email:'priya.rao@northvale.com', role:'Engineer', group:'Litho', status:'Active'},
+  {name:'Marcus Vogel', email:'marcus.vogel@northvale.com', role:'Engineer', group:'Etch', status:'Invited'}
+];
+const GROUPS = ['Supply Chain','Litho','Etch','Deposition'];
+const SETTINGS = {showPricingToEngineers:false};
 
-const STAT = {
-  verified:['Verified','st-good','ti-circle-check','var(--good)'],
-  clear:['Clear','st-good','ti-circle-check','var(--good)'],
-  strong:['Strong','st-good','ti-circle-check','var(--good)'],
-  attention:['Review','st-warn','ti-alert-triangle','var(--warn)'],
-  flag:['Flag','st-danger','ti-alert-octagon','var(--danger)'],
-  unverified:['Unverified','st-muted','ti-help-circle','var(--faint)']
-};
 const PROFILES = {
  'Acme Precision':{ id:'SUP-0007', cats:['cnc'], score:4.6,
    provided:{about:'Family-owned precision machine shop specializing in tight-tolerance aluminum and stainless components for semiconductor capital equipment.', founded:2009, location:'San Jose, CA', employees:48, leadtime:'7–10 days', capacity:'~30 active jobs',
@@ -442,6 +589,413 @@ const PROFILES = {
        {key:'Corporate & ownership', status:'clear', detail:'US-incorporated, US-owned.', source:'OR SoS filings'}
      ], flags:[]}}
 };
+const STAT = {
+  verified:['Verified','st-good','ti-circle-check','var(--good)'],
+  clear:['Clear','st-good','ti-circle-check','var(--good)'],
+  strong:['Strong','st-good','ti-circle-check','var(--good)'],
+  attention:['Review','st-warn','ti-alert-triangle','var(--warn)'],
+  flag:['Flag','st-danger','ti-alert-octagon','var(--danger)'],
+  unverified:['Unverified','st-muted','ti-help-circle','var(--faint)']
+};
+
+/* ---------------- nav / routing ---------------- */
+const NAV = {
+  supplier:[
+    {v:'opportunities', i:'layout-grid', l:'Opportunities'},
+    {v:'mybids', i:'gavel', l:'My bids'},
+    {v:'tracking', i:'truck-delivery', l:'Orders & tracking'},
+    {v:'messages', i:'message-2', l:'Messages', badge:true},
+    {v:'scorecard', i:'star', l:'Scorecard'},
+    {v:'company', i:'building-store', l:'Company profile'}
+  ],
+  buyer:[
+    {v:'rfqs', i:'file-text', l:'My RFQs', roles:['admin','buyer','engineer']},
+    {v:'createrfq', i:'plus', l:'New request', roles:['admin','buyer','engineer']},
+    {v:'tracking', i:'timeline', l:'Tracking', roles:['admin','buyer','engineer']},
+    {v:'suppliers', i:'users', l:'Suppliers', roles:['admin','buyer','engineer']},
+    {v:'messages', i:'message-2', l:'Messages', roles:['admin','buyer','engineer'], badge:true},
+    {v:'scorecards', i:'star', l:'Scorecards', roles:['admin','buyer']},
+    {v:'admin', i:'settings', l:'Admin', roles:['admin']}
+  ]
+};
+const TITLES = {opportunities:'Opportunities', opportunity:'Opportunity', mybids:'My bids', tracking:'Orders & tracking', messages:'Messages', scorecard:'Scorecard', company:'Company profile', rfqs:'My RFQs', createrfq:'New request', suppliers:'Suppliers', scorecards:'Supplier scorecards', admin:'Admin · users & roles', bidcompare:'Review bids', 'supplier-profile':'Supplier profile'};
+const NAVKEY = {opportunity:'opportunities', bidcompare:'rfqs', createrfq:'createrfq', 'supplier-profile':'rfqs'};
+
+let ROLE='supplier', PERSONA='buyer';
+function role(){return document.getElementById('app').dataset.role;}
+function persona(){return document.getElementById('app').dataset.persona;}
+function unreadCount(){return THREADS.reduce((n,t)=>n+(t.unread?1:0),0);}
+function canSeePrice(){ return role()==='supplier' ? true : (persona()!=='engineer' || SETTINGS.showPricingToEngineers); }
+function money(v){ return canSeePrice() ? '$'+v.toLocaleString() : '<span class="mask">$ ••••</span>'; }
+
+function renderNav(){
+  const items = NAV[role()].filter(it=>!it.roles || it.roles.includes(persona()));
+  document.getElementById('nav').innerHTML = items.map(it=>{
+    const badge = it.badge && unreadCount() ? `<span class="nbadge">${unreadCount()}</span>` : '';
+    return `<a data-view="${it.v}" onclick="go('${it.v}')"><i class="ti ti-${it.i}"></i><span class="lbl">${it.l}</span>${badge}</a>`;
+  }).join('');
+}
+
+function go(view){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+  const el = document.getElementById('view-'+view); if(el) el.classList.add('on');
+  const navk = NAVKEY[view]||view;
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on', a.dataset.view===navk));
+  document.getElementById('view-title').textContent = TITLES[view]||'';
+  document.querySelector('.body').scrollTop = 0;
+  if(view==='tracking') renderTracking();
+  if(view==='messages') renderMessages();
+  if(view==='company') renderCompany();
+  if(view==='admin') renderAdmin();
+  if(view==='scorecards') renderScorecards();
+}
+function setRole(r){
+  const app=document.getElementById('app'); app.dataset.role=r;
+  document.getElementById('role-sup').classList.toggle('on', r==='supplier');
+  document.getElementById('role-buy').classList.toggle('on', r==='buyer');
+  document.getElementById('persona-pick').style.display = r==='buyer' ? 'block' : 'none';
+  renderNav();
+  updatePersonaLabel();
+  if(r==='supplier'){ go('opportunities'); }
+  else { go('rfqs'); }
+}
+function setPersona(p){
+  document.getElementById('app').dataset.persona=p;
+  document.querySelectorAll('#persona-pick .segrole button').forEach(b=>b.classList.toggle('on', b.dataset.p===p));
+  renderNav(); updatePersonaLabel();
+  const cur = document.querySelector('.view.on')?.id?.replace('view-','')||'rfqs';
+  // if current view not permitted for persona, bounce to rfqs
+  const allowed = NAV.buyer.find(n=>n.v===(NAVKEY[cur]||cur));
+  if(allowed && allowed.roles && !allowed.roles.includes(p)) go('rfqs'); else go(cur);
+}
+function updatePersonaLabel(){
+  if(role()==='supplier'){ document.getElementById('persona').textContent='Acme Precision · supplier'; document.getElementById('avatar').textContent='AP'; return; }
+  const map={admin:['Dana Ortiz · admin','DO'], buyer:['Sam Ortiz · buyer','SO'], engineer:['Priya Rao · engineer','PR']};
+  const [txt,ini]=map[persona()];
+  document.getElementById('persona').textContent='Northvale Semiconductor — '+txt;
+  document.getElementById('avatar').textContent=ini;
+}
+function toast(msg){ const t=document.getElementById('toast'); document.getElementById('toast-msg').textContent=msg; t.classList.add('show'); clearTimeout(window._tt); window._tt=setTimeout(()=>t.classList.remove('show'),2600); }
+
+/* ---------------- modal ---------------- */
+function openModal(html){ document.getElementById('modal').innerHTML=html; document.getElementById('overlay').classList.add('on'); }
+function closeModal(){ document.getElementById('overlay').classList.remove('on'); }
+document.getElementById('overlay').addEventListener('click', e=>{ if(e.target.id==='overlay') closeModal(); });
+
+/* ---------------- supplier: opportunities ---------------- */
+let oppFilter='all';
+const SAVED = new Set(['AI-076']);
+const MYIDS = new Set(MYBIDS.map(b=>b.id));
+const NDA_SIGNED = new Set();
+
+function renderOppFilters(){
+  const chips = ['all',...COMPANIES];
+  document.getElementById('opp-filters').innerHTML =
+    `<span style="font-size:12px;color:var(--faint)">Customer:</span>` +
+    chips.map(c=>`<span class="fchip ${oppFilter===c?'on':''}" onclick="oppFilter='${c}';renderOppFilters();renderOpps()">${c==='all'?'All':c}</span>`).join('');
+}
+function bmBtn(id){ const on=SAVED.has(id); return `<button class="bm ${on?'on':''}" onclick="toggleSave('${id}',event)" aria-label="${on?'Saved':'Save'}"><i class="ti ti-bookmark"></i></button>`; }
+function toggleSave(id, ev){ if(ev) ev.stopPropagation(); const adding=!SAVED.has(id); adding?SAVED.add(id):SAVED.delete(id); renderOpps(); renderKanban(); toast(adding?'Saved to your pipeline':'Removed from saved'); }
+function renderOpps(){
+  const list = OPPS.filter(o=>oppFilter==='all'||o.customer===oppFilter);
+  document.getElementById('opp-feed').innerHTML = list.map(o=>`<div class="card" onclick="openOpp('${o.id}')">${bmBtn(o.id)}<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">${tag(o.cat)}${cotag(o.customer)}</div><span class="ti2">${o.title}</span><span class="pn">${o.id} · qty ${o.qty}${o.nda!=='none'?' · <i class="ti ti-lock" style="font-size:11px;vertical-align:-1px"></i> NDA':''}</span><div class="meta"><span class="${o.soon?'soon':''}">${o.closes}</span><span>${o.bids} bids</span></div></div>`).join('')
+    || `<div class="kempty">No open opportunities for ${oppFilter}.</div>`;
+}
+
+function openOpp(id){
+  const o = OPPS.find(x=>x.id===id) || RFQS.find(x=>x.id===id);
+  const el = document.getElementById('opp-detail');
+  const ndaReq = o.nda && o.nda!=='none';
+  const signed = NDA_SIGNED.has(o.id) || !ndaReq;
+  el.innerHTML = `
+    <span class="back" onclick="go('opportunities')"><i class="ti ti-arrow-left"></i> Opportunities</span>
+    <div class="sec"><h3>${o.title}</h3></div>
+    <div class="meta-row">${tag(o.cat)}${o.customer?cotag(o.customer):''}<span>${o.id}</span><span>Qty ${o.qty||'—'}</span><span>Closes in ${o.closes}</span></div>
+    <div class="panelcard"><div class="vault">
+      <div><div class="t"><i class="ti ti-lock" style="font-size:15px;vertical-align:-2px;margin-right:5px"></i>Drawings — IP-protected</div><div class="n">${signed?'Files stay in the customer vault. Your access is logged and expires at bid close.':'This drawing requires an NDA before it unlocks. Files never leave the customer vault.'}</div></div>
+      ${signed
+        ? `<button class="btn" onclick="toast('Opening vault link · access logged')">Open in vault ↗</button>`
+        : `<button class="btn btn-primary" onclick="signNDA('${o.id}')"><i class="ti ti-file-pencil" style="font-size:14px;vertical-align:-2px"></i> Sign NDA to view</button>`}
+    </div></div>
+    <div class="panelcard">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-size:12.5px;color:var(--muted)">${o.reqs||''}</div><button class="btn btn-sm btn-ghost" onclick="openThreadFor('${o.id}')"><i class="ti ti-message-2" style="font-size:14px;vertical-align:-2px"></i> Ask engineer</button></div>
+      <div class="row2">
+        <div class="field"><label>Your price (USD)</label><input type="text" placeholder="$ 0.00" ${signed?'':'disabled'}></div>
+        <div class="field"><label>Lead time (days)</label><input type="text" placeholder="e.g. 10" ${signed?'':'disabled'}></div>
+      </div>
+      <div class="field"><label>Notes (optional)</label><textarea placeholder="Anything the engineer should know…" ${signed?'':'disabled'}></textarea></div>
+      <div class="actions"><span style="flex:1;font-size:12.5px;color:var(--muted);align-self:center">${o.bids} bids so far · other amounts hidden</span><button class="btn btn-primary" onclick="submitBid()" ${signed?'':'disabled style="opacity:.5;cursor:not-allowed"'}>Submit bid</button></div>
+    </div>`;
+  go('opportunity');
+}
+function signNDA(id){
+  const o = OPPS.find(x=>x.id===id)||RFQS.find(x=>x.id===id);
+  const kind = o.nda==='drawing' ? 'drawing-specific' : 'category-wide';
+  openModal(`
+    <h3>Sign NDA to view drawing</h3>
+    <div class="msub">${o.customer||'Customer'} requires a ${kind} NDA before this drawing unlocks.</div>
+    <div class="rcard" style="max-height:150px;overflow:auto;font-size:12px;color:var(--muted)">This Non-Disclosure Agreement covers all technical data, drawings, and specifications accessed through Forerun Exchange for ${o.customer||'the customer'}${o.nda==='drawing'?` — specifically part ${o.id}`:` in the ${CATS[o.cat]?.label} category`}. Confidential information may not be shared, reproduced, or used outside the scope of quoting and fulfilling this work…</div>
+    <label style="margin-top:12px"><input type="checkbox" id="nda-ck" style="width:auto;margin-right:8px" onchange="document.getElementById('nda-go').disabled=!this.checked">I have read and agree on behalf of Acme Precision.</label>
+    <div class="actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="nda-go" disabled onclick="NDA_SIGNED.add('${o.id}');closeModal();openOpp('${o.id}');toast('NDA signed · drawing unlocked')">Accept &amp; unlock</button></div>`);
+}
+function submitBid(){ toast('Bid submitted — now in review'); go('mybids'); }
+function publishRFQ(){ toast('RFQ published to qualified suppliers'); go('rfqs'); }
+
+/* ---------------- supplier: kanban ---------------- */
+function renderKanban(){
+  const savedItems = OPPS.filter(o=>SAVED.has(o.id) && !MYIDS.has(o.id)).map(o=>({id:o.id, title:o.title, cat:o.cat, sub:`${o.closes} · ${o.bids} bids`, saved:true}));
+  const mk = key => MYBIDS.filter(b=>b.stage===key).map(b=>({id:b.id, title:b.title, cat:b.cat, sub:`${money(b.price)} · ${b.lead}d`, pill:b.status}));
+  const stages = [
+    {label:'Saved', dot:'var(--warn)', items:savedItems},
+    {label:'Submitted', dot:'var(--brand)', items:mk('active')},
+    {label:'In review', dot:'#0C447C', items:mk('review')},
+    {label:'Won', dot:'var(--win)', items:mk('won')},
+    {label:'Lost', dot:'var(--danger)', items:mk('lost')}
+  ];
+  document.getElementById('mybids-kanban').innerHTML = stages.map(st=>{
+    const cards = st.items.map(it=>`<div class="kcard" onclick="openOpp('${it.id}')">${it.saved?bmBtn(it.id):''}${tag(it.cat)}<div class="kt">${it.title}</div><div class="km"><span>${it.sub}</span>${it.pill?`<span class="pill ${it.pill[1]}">${it.pill[0]}</span>`:''}</div></div>`).join('') || '<div class="kempty">None</div>';
+    return `<div class="kcol"><div class="khead"><span class="kl"><span class="kdot" style="background:${st.dot}"></span>${st.label}</span><span class="kc">${st.items.length}</span></div>${cards}</div>`;
+  }).join('');
+}
+
+/* ---------------- orders & tracking (both roles) ---------------- */
+let trackTab='all';
+function stageIdx(s){ return s==='delivered'?3:s==='shipped'?2:s==='manufacturing'?1:0; }
+function orderStepper(o){
+  const cur = stageIdx(o.stage==='delivered'?'delivered':o.stage);
+  return `<div class="steps">` + STAGES.map((s,i)=>{
+    const done = i<cur || (i===3 && o.stage==='delivered');
+    const isCurr = i===cur && o.stage!=='delivered';
+    const late = o.delayed && i===cur;
+    const cls = late?'late':done?'done':isCurr?'curr':'';
+    const seg = i<STAGES.length-1 ? `<span class="segline"></span>` : '';
+    return `<div class="step ${i<cur?'done':''} ${cls}"><span class="dot">${(done||late)?`<i class="ti ${late?'ti-alert-triangle':'ti-check'}"></i>`:''}</span>${seg}</div>`;
+  }).join('') + `</div><div class="steplbls">${STAGES.map(s=>`<span>${STAGE_LBL[s]}</span>`).join('')}</div>`;
+}
+function renderTracking(){
+  const isBuyer = role()==='buyer';
+  let orders = ORDERS.slice();
+  // supplier only sees own orders
+  if(!isBuyer) orders = orders.filter(o=>o.supplier==='Acme Precision');
+  const counts = {
+    all:orders.length,
+    manufacturing:orders.filter(o=>o.stage==='manufacturing'&&!o.delayed).length,
+    shipped:orders.filter(o=>o.stage==='shipped').length,
+    delayed:orders.filter(o=>o.delayed).length,
+    delivered:orders.filter(o=>o.stage==='delivered').length
+  };
+  const tabs=[['all','All'],['manufacturing','In production'],['shipped','Shipped'],['delayed','Delayed'],['delivered','Delivered']];
+  let filtered = orders;
+  if(trackTab==='delayed') filtered=orders.filter(o=>o.delayed);
+  else if(trackTab!=='all') filtered=orders.filter(o=>o.stage===trackTab && (trackTab!=='manufacturing'||!o.delayed));
+
+  // group by product (buyer's "project holder")
+  const byProduct = {};
+  filtered.forEach(o=>{ (byProduct[o.product]=byProduct[o.product]||[]).push(o); });
+
+  const head = isBuyer
+    ? `<div class="sec"><h3>Where is every RFQ?</h3><span class="v">grouped by product · ${orders.length} active orders</span></div>`
+    : `<div class="sec"><h3>Your won orders</h3><span class="v">update status &amp; add tracking</span></div>`;
+  const late = orders.filter(o=>o.delayed).length;
+  const summary = `<div class="kpis">
+    <div class="k"><div class="l">Active</div><div class="v">${counts.all}</div></div>
+    <div class="k"><div class="l">In production</div><div class="v">${orders.filter(o=>o.stage==='manufacturing').length}</div></div>
+    <div class="k"><div class="l">Shipped</div><div class="v">${counts.shipped}</div></div>
+    <div class="k"><div class="l">Late</div><div class="v" style="color:${late?'var(--danger)':'inherit'}">${late}</div>${late?'<div class="d" style="color:var(--danger)">needs attention</div>':''}</div>
+  </div>`;
+  const tabbar = `<div class="tabs">`+tabs.map(t=>`<button class="tab ${trackTab===t[0]?'on':''}" onclick="trackTab='${t[0]}';renderTracking()">${t[1]}<span class="tcount">${counts[t[0]]}</span></button>`).join('')+`</div>`;
+
+  const rows = Object.keys(byProduct).map(prod=>{
+    const cards = byProduct[prod].map(o=>{
+      const who = isBuyer ? `Supplier: ${o.supplier}` : `Buyer: ${o.buyer}`;
+      const trackBtn = o.tracking
+        ? `<span class="link" onclick="toast('Opening FedEx tracking ${o.tracking}')"><i class="ti ti-brand-fedex" style="font-size:13px;vertical-align:-2px"></i> ${o.tracking}</span>`
+        : (isBuyer?'<span style="color:var(--faint);font-size:12px">no tracking yet</span>':`<button class="btn btn-sm" onclick="addTracking('${o.id}')">Add FedEx tracking</button>`);
+      const delay = o.delayed ? `<div class="banner" style="margin:10px 0 0"><i class="ti ti-clock-exclamation"></i><span><b>Delayed.</b> ${o.delayReason}</span></div>` : '';
+      let supActions='';
+      if(!isBuyer){
+        if(o.stage==='manufacturing') supActions=`<button class="btn btn-sm" onclick="advanceOrder('${o.id}')">Mark shipped</button> <button class="btn btn-sm btn-ghost" onclick="reportDelay('${o.id}')">Report delay</button>`;
+        else if(o.stage==='shipped') supActions=`<button class="btn btn-sm" onclick="advanceOrder('${o.id}')">Mark delivered</button>`;
+      }
+      let buyActions='';
+      if(isBuyer && o.stage==='delivered') buyActions=`<button class="btn btn-sm btn-primary" onclick="qualityReview('${o.id}')">Close &amp; review</button> <button class="btn btn-sm" onclick="reorder('${o.id}')">Reorder</button>`;
+      return `<div class="gantt-row">
+        <div class="gr-head"><div><div class="gr-t">${o.title} <span class="pill st-muted">${o.id}</span></div><div class="gr-m">${tag(o.cat)} · qty ${o.qty} · ${who} · ${money(o.price)} · due ${o.due}</div></div>
+        <div>${o.delayed?'<span class="pill st-danger">Late</span>':`<span class="pill ${o.stage==='delivered'?'st-win':o.stage==='shipped'?'st-info':'st-good'}">${STAGE_LBL[o.stage]}</span>`}</div></div>
+        ${orderStepper(o)}
+        ${delay}
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px">
+          <div>${trackBtn}</div><div style="display:flex;gap:8px">${supActions}${buyActions}<button class="btn btn-sm btn-ghost" onclick="openThreadFor('${o.id}')"><i class="ti ti-message-2" style="font-size:13px;vertical-align:-2px"></i></button></div>
+        </div>
+      </div>`;
+    }).join('');
+    return isBuyer ? `<div class="seclbl" style="margin-top:6px"><i class="ti ti-folder" style="font-size:12px;vertical-align:-1px"></i> ${prod} · ${byProduct[prod].length}</div>${cards}` : cards;
+  }).join('') || '<div class="kempty">Nothing in this stage.</div>';
+
+  document.getElementById('tracking-body').innerHTML = head + summary + tabbar + rows;
+}
+function advanceOrder(id){
+  const o=ORDERS.find(x=>x.id===id);
+  if(o.stage==='manufacturing'){ o.stage='shipped'; o.delayed=false; toast('Marked shipped — buyer & engineer notified'); }
+  else if(o.stage==='shipped'){ o.stage='delivered'; toast('Marked delivered — FedEx confirmation posted'); }
+  renderTracking();
+}
+function addTracking(id){
+  openModal(`<h3>Add FedEx tracking</h3><div class="msub">Buyer sees a live link and delivery updates flow back automatically.</div>
+   <div class="field"><label>FedEx tracking number</label><input id="trk" type="text" placeholder="e.g. 7712 3480 1123"></div>
+   <div class="actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveTracking('${id}')">Save &amp; ship</button></div>`);
+}
+function saveTracking(id){ const v=document.getElementById('trk').value||'7712 3480 1123'; const o=ORDERS.find(x=>x.id===id); o.tracking=v; o.stage='shipped'; o.delayed=false; closeModal(); renderTracking(); toast('Tracking added · marked shipped'); }
+function reportDelay(id){
+  openModal(`<h3>Report a delay</h3><div class="msub">The engineer and buyer are notified with your reason.</div>
+   <div class="field"><label>New expected ship date</label><input type="text" placeholder="e.g. Jul 16"></div>
+   <div class="field"><label>Reason</label><textarea id="dreason" placeholder="What happened?"></textarea></div>
+   <div class="actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveDelay('${id}')">Notify buyer &amp; engineer</button></div>`);
+}
+function saveDelay(id){ const o=ORDERS.find(x=>x.id===id); o.delayed=true; o.delayReason=(document.getElementById('dreason').value||'Timeline slipped.'); closeModal(); trackTab='delayed'; renderTracking(); toast('Delay reported — engineer & buyer notified'); }
+
+/* quality review → scorecard */
+let qrState={rating:0, specs:null, escalate:false};
+function qualityReview(id){
+  const o=ORDERS.find(x=>x.id===id); qrState={rating:0, specs:null, escalate:false};
+  openModal(`<h3>Close job &amp; review — ${o.title}</h3><div class="msub">Your feedback posts to ${o.supplier}'s scorecard immediately.</div>
+   <label>Satisfaction</label><div class="stars" id="qr-stars">${[1,2,3,4,5].map(n=>`<i class="ti ti-star-filled" data-n="${n}" onclick="qrStar(${n})"></i>`).join('')}</div>
+   <label style="margin-top:14px">Meets specifications / works to drawing?</label>
+   <div class="yn"><button class="btn" id="qr-yes" onclick="qrSpecs(true)">Yes, accept</button><button class="btn" id="qr-no" onclick="qrSpecs(false)">No, issue</button></div>
+   <label style="margin-top:14px"><input type="checkbox" style="width:auto;margin-right:8px" onchange="qrState.escalate=this.checked">Escalate a quality finding (loops in quality team)</label>
+   <div class="field" style="margin-top:8px"><textarea placeholder="Notes to the supplier (optional)"></textarea></div>
+   <div class="actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="submitReview('${id}')">Submit &amp; close job</button></div>`);
+}
+function qrStar(n){ qrState.rating=n; document.querySelectorAll('#qr-stars i').forEach(i=>i.classList.toggle('on', +i.dataset.n<=n)); }
+function qrSpecs(v){ qrState.specs=v; document.getElementById('qr-yes').classList.toggle('on',v); document.getElementById('qr-no').classList.toggle('on',!v); }
+function submitReview(id){
+  const o=ORDERS.find(x=>x.id===id);
+  const i=ORDERS.indexOf(o); if(i>-1) ORDERS.splice(i,1);
+  closeModal(); renderTracking();
+  toast(qrState.escalate?'Job closed · quality finding escalated to QA':'Job closed · rating sent to supplier scorecard');
+}
+function reorder(id){
+  const o=ORDERS.find(x=>x.id===id);
+  openModal(`<h3>Reorder — ${o.title}</h3><div class="msub">Repeat with the same supplier, or open a fresh RFQ for competitive bids.</div>
+   <div class="choice">
+     <div class="choicecard" onclick="doReorder('${id}','repeat')"><div class="ct"><i class="ti ti-repeat"></i> Repeat order</div><div class="cd">Same price &amp; supplier (${o.supplier}). Vendor is notified instantly.</div></div>
+     <div class="choicecard" onclick="doReorder('${id}','requote')"><div class="ct"><i class="ti ti-file-plus"></i> Re-quote</div><div class="cd">Reopen as a new RFQ for better pricing from all qualified suppliers.</div></div>
+   </div>
+   <div class="actions"><button class="btn" onclick="closeModal()">Cancel</button></div>`);
+}
+function doReorder(id,mode){ closeModal(); if(mode==='repeat') toast('Repeat order placed — '+ORDERS.find(x=>x.id===id).supplier+' notified'); else { toast('New RFQ opened for competitive bids'); go('rfqs'); } }
+
+/* ---------------- messages / chat ---------------- */
+let activeThread=1;
+function threadCounterpart(t){ return role()==='supplier' ? (t.engineer) : (t.supplier); }
+function openThreadFor(partId){ const t=THREADS.find(x=>x.part===partId); if(t){ activeThread=t.id; t.unread=0; } go('messages'); }
+function renderMessages(){
+  const t = THREADS.find(x=>x.id===activeThread)||THREADS[0];
+  t.unread=0; renderNav();
+  const list = THREADS.map(th=>{
+    const last=th.msgs[th.msgs.length-1];
+    return `<div class="cli ${th.id===t.id?'on':''}" onclick="activeThread=${th.id};renderMessages()">
+      <div class="cn">${threadCounterpart(th)} ${th.unread?'<span class="cdot"></span>':''}</div>
+      <div class="cp">${th.partTitle} · ${th.part}${role()==='buyer'?' · '+th.company:''}</div>
+      <div class="cprev">${last.text}</div></div>`;
+  }).join('');
+  const who = m => role()==='supplier'
+      ? (m.from==='sup'?'me':'them')
+      : (m.from==='sup'?'them':'me');
+  const bubbles = t.msgs.map(m=>{
+    const side=who(m);
+    return `<div class="bub ${side}">${side==='them'?`<div style="font-size:10px;color:var(--faint);margin-bottom:2px">${m.name}</div>`:''}${m.text}<div class="bt">${m.t}</div></div>`;
+  }).join('');
+  document.getElementById('messages-body').innerHTML = `
+    <div class="sec"><h3>Messages</h3><span class="v">technical questions route to the assigned ${role()==='supplier'?'engineer/buyer':'supplier'}</span></div>
+    <div class="chat">
+      <div class="clist">${list}</div>
+      <div class="thread">
+        <div class="thhead"><div class="tn">${threadCounterpart(t)}</div><div class="tp">${t.partTitle} · ${t.part} · ${t.company}</div></div>
+        <div class="thbody" id="thbody"><div class="sysmsg">Conversation started on part ${t.part}</div>${bubbles}</div>
+        <div class="composer"><input id="chat-in" type="text" placeholder="Type a message…" onkeydown="if(event.key==='Enter')sendMsg()"><button class="btn btn-primary" onclick="sendMsg()">Send</button></div>
+      </div>
+    </div>`;
+  const b=document.getElementById('thbody'); if(b) b.scrollTop=b.scrollHeight;
+}
+function sendMsg(){
+  const inp=document.getElementById('chat-in'); const v=(inp.value||'').trim(); if(!v) return;
+  const t=THREADS.find(x=>x.id===activeThread);
+  t.msgs.push({from: role()==='supplier'?'sup':(persona()==='engineer'?'eng':'buy'), name:'You', text:v, t:'now'});
+  renderMessages(); toast('Message sent · notification pushed');
+}
+
+/* ---------------- supplier: company profile / onboarding ---------------- */
+let onboardType=null; const onboardCats=new Set(['cnc']);
+function renderCompany(){
+  const catList = Object.keys(CATS).map(k=>`<div class="catopt ${onboardCats.has(k)?'on':''}" onclick="toggleOnboardCat('${k}')"><i class="ti ${CATS[k].icon}"></i>${CATS[k].label}</div>`).join('');
+  document.getElementById('company-body').innerHTML = `
+    <div class="banner info"><i class="ti ti-info-circle"></i><span>Complete your profile so buyers can qualify you. Everything here is supplier-provided; the Research Agent verifies it independently.</span></div>
+    <div class="wizsteps"><span class="wizstep done">1 · Company</span><span class="wizstep on">2 · R&amp;D capacity</span><span class="wizstep">3 · Categories</span><span class="wizstep">4 · Certifications</span></div>
+    <div class="panelcard">
+      <div class="seclbl" style="margin-top:0">Company details</div>
+      <div class="row2"><div class="field"><label>Company name</label><input type="text" value="Acme Precision"></div><div class="field"><label>Location</label><input type="text" value="San Jose, CA"></div></div>
+      <div class="row3"><div class="field"><label>Founded</label><input type="text" value="2009"></div><div class="field"><label>Employees</label><input type="text" value="48"></div><div class="field"><label>Typical lead time</label><input type="text" value="7–10 days"></div></div>
+      <div class="field"><label>About</label><textarea>Family-owned precision machine shop specializing in tight-tolerance aluminum and stainless components for semiconductor capital equipment.</textarea></div>
+    </div>
+    <div class="panelcard">
+      <div class="seclbl" style="margin-top:0">Do you take on R&amp;D work?</div>
+      <div class="choice">
+        <div class="choicecard ${onboardType==='rnd'?'on':''}" onclick="setOnboard('rnd')"><div class="ct"><i class="ti ti-flask"></i> Yes — R&amp;D + production</div><div class="cd">You have bandwidth for one-off prototypes and test batches, not just volume runs.</div></div>
+        <div class="choicecard ${onboardType==='prod'?'on':''}" onclick="setOnboard('prod')"><div class="ct"><i class="ti ti-building-factory-2"></i> Production only</div><div class="cd">You prefer steady production volume; R&amp;D disrupts your flow.</div></div>
+      </div>
+      ${onboardType==='prod'?'<div class="hint" style="color:var(--warn)">Production-only suppliers won\'t receive R&amp;D bid invitations.</div>':''}
+    </div>
+    <div class="panelcard">
+      <div class="seclbl" style="margin-top:0">Capability categories</div>
+      <div class="catgrid">${catList}</div>
+    </div>
+    <div class="panelcard">
+      <div class="seclbl" style="margin-top:0">Certifications (claimed)</div>
+      <div class="chips" style="margin-bottom:10px"><span class="chip2">ISO 9001:2015</span><span class="chip2">AS9100D</span><span class="chip2">+ Add</span></div>
+      <div class="hint">The Research Agent will confirm these with the registrar during qualification.</div>
+    </div>
+    <div class="actions"><button class="btn" onclick="toast('Draft saved')">Save draft</button><button class="btn btn-primary" onclick="toast('Profile submitted for qualification')">Submit for qualification</button></div>`;
+}
+function setOnboard(t){ onboardType=t; renderCompany(); }
+function toggleOnboardCat(k){ onboardCats.has(k)?onboardCats.delete(k):onboardCats.add(k); renderCompany(); }
+
+/* ---------------- buyer: lists ---------------- */
+function renderRFQs(){
+  document.getElementById('rfq-list').innerHTML = RFQS.map(r=>`<div class="li" onclick="openRFQ('${r.id}')"><div><div class="lt">${r.title}</div><div class="lm">${CATS[r.cat].label} · ${r.id} · ${r.product}</div></div><div class="lr"><span>${r.bids} bids</span><span>${r.closes!=='closed'&&r.closes!=='awarded'?r.closes:''}</span><span class="pill ${r.status[1]}">${r.status[0]}</span></div></div>`).join('');
+}
+function renderSuppliers(){
+  document.getElementById('sup-list').innerHTML = SUPS.map(s=>`<div class="li" onclick="openSupplier('${s.name}','suppliers')"><div><div class="lt">${s.name} ${s.rnd?'<span class="pill st-good" style="margin-left:4px">R&amp;D</span>':'<span class="pill st-muted" style="margin-left:4px">Production only</span>'}</div><div class="lm">${s.cats.map(c=>CATS[c].label).join(' · ')} · ${s.jobs} jobs · ${s.ontime}% on-time</div></div><div class="lr"><span>★ ${s.score}</span><span class="pill st-good">Qualified</span></div></div>`).join('');
+  document.getElementById('cat-select').innerHTML = Object.keys(CATS).map(k=>`<option>${CATS[k].label}</option>`).join('');
+}
+function renderScorecards(){
+  document.getElementById('scorecards-list').innerHTML = SUPS.map(s=>`<div class="li" onclick="openSupplier('${s.name}','scorecards')">
+    <div><div class="lt">${s.name}</div><div class="lm">${s.cats.map(c=>CATS[c].label).join(' · ')}</div></div>
+    <div class="lr"><span>${s.jobs} jobs</span><span>${s.ontime}% on-time</span><span class="pill ${s.ontime>=95?'st-win':s.ontime>=90?'st-good':'st-warn'}">★ ${s.score}</span></div></div>`).join('');
+}
+
+/* ---------------- buyer: bid compare + award ---------------- */
+function openRFQ(id){
+  const r = RFQS.find(x=>x.id===id);
+  if(r.awarded){ toast('Already awarded — see Tracking'); go('tracking'); return; }
+  const el = document.getElementById('bidcompare');
+  const priceHead = canSeePrice()?'Price':'Price 🔒';
+  const rows = BIDS.map(b=>`<tr class="bidrow ${b.best==='price'?'best':''}" onclick="openSupplier('${b.supplier}','bidcompare')"><td><span class="link">${b.supplier} <i class="ti ti-external-link" style="font-size:11px;vertical-align:-1px"></i></span></td><td>${money(b.price)}${b.best==='price'&&canSeePrice()?'<span class="minip" style="background:#E1F5EE;color:#085041">best price</span>':''}</td><td>${b.lead} days${b.best==='fast'?'<span class="minip" style="background:#E6F1FB;color:#0C447C">fastest</span>':''}</td><td>★ ${b.score}</td><td><button class="btn btn-sm" onclick="event.stopPropagation();award('${b.supplier}')">Select</button></td></tr>`).join('');
+  el.innerHTML = `
+    <span class="back" onclick="go('rfqs')"><i class="ti ti-arrow-left"></i> My RFQs</span>
+    <div class="sec"><h3>${r.title} — bids</h3><span class="v">${r.bids} bids · tap a row to view the supplier's profile</span></div>
+    ${persona()==='engineer'&&!SETTINGS.showPricingToEngineers?'<div class="banner"><i class="ti ti-eye-off"></i><span>You\'re viewing as an <b>engineer</b> — pricing is hidden by the admin. Lead time and scorecard are visible.</span></div>':''}
+    ${r.open?'<div class="banner">Window still open — award becomes available after it closes.</div>':''}
+    <div class="meta-row">${tag(r.cat)}<span>${r.id}</span><span>${r.product}</span></div>
+    <div class="list" style="padding:0"><table><thead><tr><th>Supplier</th><th>${priceHead}</th><th>Lead time</th><th>Scorecard</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="hint" style="margin-top:8px">Shipping is quoted separately and not included in lead time.</div>
+    <div class="award"><span class="n"><i class="ti ti-shield-check" style="font-size:15px;vertical-align:-2px;margin-right:5px"></i>Awarding requires internal sign-off before the PO is issued.</span><button class="btn btn-primary" ${r.open?'disabled style="opacity:.5;cursor:not-allowed"':''} onclick="award()">Award &amp; request sign-off</button></div>`;
+  go('bidcompare');
+}
+function award(sup){ toast(sup?('Selected '+sup+' — sign-off requested'):'Award sent for sign-off'); go('rfqs'); }
+function acceptBid(name){ toast('Bid from '+name+' accepted — supplier notified, lead time started'); go('tracking'); }
+
+/* ---------------- supplier profile (buyer diligence) ---------------- */
 let profileReturn = 'bidcompare';
 function openSupplier(name, ret){
   profileReturn = ret || 'bidcompare';
@@ -453,10 +1007,11 @@ function openSupplier(name, ret){
   const findings = r.findings.map(f=>{const s=STAT[f.status]; return `<div class="find"><i class="ti ${s[2]} fi" style="color:${s[3]}"></i><div><div class="fk">${f.key}<span class="stat ${s[1]}">${s[0]}</span></div><div class="fd">${f.detail}</div>${f.source?`<div class="fsrc">Source: ${f.source}</div>`:''}</div></div>`;}).join('');
   const flags = r.flags.map(f=>`<div class="flagbox"><i class="ti ti-alert-triangle" style="flex-shrink:0;margin-top:1px"></i><span>${f}</span></div>`).join('');
   const certStat = r.findings[0].status==='verified' ? '<span style="color:var(--good)">Verified</span>' : (r.findings[0].status==='flag' ? '<span style="color:var(--danger)">Lapsed</span>' : 'Check');
+  const showBid = bid && canSeePrice();
   document.getElementById('supplier-profile').innerHTML = `
     <span class="back" onclick="go('${profileReturn}')"><i class="ti ti-arrow-left"></i> Back</span>
     <div class="phead"><span class="pav">${initials}</span><div><div class="pname">${name}</div><div class="pmeta">${pr.cats.map(c=>tag(c)).join(' ')}<span class="pill st-good">Qualified</span><span>★ ${pr.score}</span><span class="mono">${pr.id}</span></div></div></div>
-    ${bid?`<div class="block" style="padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><span style="font-size:13px;color:var(--muted)">Bid under review</span><span style="font-weight:500">$${bid.price.toLocaleString()} · ${bid.lead} days · ★ ${bid.score}</span></div>`:''}
+    ${showBid?`<div class="block" style="padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><span style="font-size:13px;color:var(--muted)">Bid under review</span><span style="font-weight:500">$${bid.price.toLocaleString()} · ${bid.lead} days · ★ ${bid.score}</span></div>`:''}
     <div class="prof">
       <div class="pmain">
         <div class="block">
@@ -491,7 +1046,8 @@ function openSupplier(name, ret){
           <div class="rf"><span>Risk flags</span><span style="color:${r.flags.length?'var(--warn)':'var(--good)'}">${r.flags.length||'None'}</span></div>
         </div>
         <div class="rcard">
-          ${bid?`<button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="acceptBid('${name}')">Accept this bid</button>`:''}
+          ${showBid?`<button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="acceptBid('${name}')">Accept this bid</button>`:''}
+          <button class="btn" style="width:100%;margin-bottom:8px" onclick="openThreadFor('VF-6061-204')"><i class="ti ti-message-2" style="font-size:14px;vertical-align:-2px"></i> Message</button>
           <button class="btn" style="width:100%;margin-bottom:8px" onclick="toast('Info request sent to supplier')">Request more info</button>
           <button class="btn" style="width:100%" onclick="go('${profileReturn}')">Back</button>
         </div>
@@ -499,108 +1055,44 @@ function openSupplier(name, ret){
     </div>`;
   go('supplier-profile');
 }
-function acceptBid(name){ toast('Bid from '+name+' accepted — sign-off requested'); go('rfqs'); }
 
-function go(view){
-  document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
-  document.getElementById('view-'+view).classList.add('on');
-  const navk = NAVKEY[view]||view;
-  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on', a.dataset.view===navk));
-  document.getElementById('view-title').textContent = TITLES[view]||'';
-  document.querySelector('.body').scrollTop = 0;
-}
-function setRole(r){
-  const app=document.getElementById('app'); app.dataset.role=r;
-  document.getElementById('role-sup').classList.toggle('on', r==='supplier');
-  document.getElementById('role-buy').classList.toggle('on', r==='buyer');
-  if(r==='supplier'){ document.getElementById('persona').textContent='Acme Precision · supplier'; document.getElementById('avatar').textContent='AP'; go('opportunities'); }
-  else { document.getElementById('persona').textContent='Northvale Semiconductor · buyer'; document.getElementById('avatar').textContent='NS'; go('rfqs'); }
-}
-function toast(msg){ const t=document.getElementById('toast'); document.getElementById('toast-msg').textContent=msg; t.classList.add('show'); clearTimeout(window._tt); window._tt=setTimeout(()=>t.classList.remove('show'),2600); }
-
-function openOpp(id){
-  const o = OPPS.find(x=>x.id===id) || RFQS.find(x=>x.id===id);
-  const el = document.getElementById('opp-detail');
-  el.innerHTML = `
-    <span class="back" onclick="go('opportunities')"><i class="ti ti-arrow-left"></i> Opportunities</span>
-    <div class="sec"><h3>${o.title}</h3></div>
-    <div class="meta-row">${tag(o.cat)}<span>${o.id}</span><span>Qty ${o.qty||'—'}</span><span>${o.customer||'Customer'}</span><span>Closes in ${o.closes}</span></div>
-    <div class="panelcard"><div class="vault">
-      <div><div class="t"><i class="ti ti-lock" style="font-size:15px;vertical-align:-2px;margin-right:5px"></i>Drawings — IP-protected</div><div class="n">Files stay in the customer vault. Your access is logged and expires at bid close.</div></div>
-      <button class="btn" onclick="toast('Opening vault link · access logged')">Open in vault ↗</button>
-    </div></div>
-    <div class="panelcard">
-      <div style="font-size:12.5px;color:var(--muted);margin-bottom:12px">${o.reqs||''}</div>
-      <div class="row2">
-        <div class="field"><label>Your price (USD)</label><input type="text" placeholder="$ 0.00"></div>
-        <div class="field"><label>Lead time (days)</label><input type="text" placeholder="e.g. 10"></div>
-      </div>
-      <div class="field"><label>Notes (optional)</label><textarea placeholder="Anything the engineer should know…"></textarea></div>
-      <div class="actions"><span style="flex:1;font-size:12.5px;color:var(--muted);align-self:center">${o.bids} bids so far · other amounts hidden</span><button class="btn btn-primary" onclick="submitBid()">Submit bid</button></div>
+/* ---------------- buyer: admin ---------------- */
+function renderAdmin(){
+  const rb=r=>`<span class="rolebadge rb-${r.toLowerCase()}">${r}</span>`;
+  const rows = USERS.map((u,idx)=>`<tr><td><div style="font-weight:500">${u.name}</div><div style="font-size:11.5px;color:var(--faint)">${u.email}</div></td>
+    <td><select onchange="USERS[${idx}].role=this.value;renderAdmin()" style="padding:5px 8px;font-size:12px;max-width:120px">${['Admin','Buyer','Engineer'].map(r=>`<option ${u.role===r?'selected':''}>${r}</option>`).join('')}</select></td>
+    <td>${u.group}</td><td><span class="pill ${u.status==='Active'?'st-good':'st-warn'}">${u.status}</span></td></tr>`).join('');
+  document.getElementById('admin-body').innerHTML = `
+    <div class="sec"><h3>Users &amp; roles</h3><span class="v"><button class="btn btn-primary btn-sm" onclick="addUser()">+ Invite user</button></span></div>
+    <div class="list" style="padding:0"><table><thead><tr><th>User</th><th>Role</th><th>Group</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="sec" style="margin-top:20px"><h3>Groups</h3><span class="v">buyers &amp; engineers are scoped to a group</span></div>
+    <div class="chips" style="margin-bottom:18px">${GROUPS.map(g=>`<span class="chip2">${g}</span>`).join('')}<span class="chip2 link" onclick="toast('Group added')">+ Add group</span></div>
+    <div class="sec"><h3>Access settings</h3></div>
+    <div class="panelcard" style="padding:6px 18px">
+      <div class="setrow"><div><div style="font-weight:500;font-size:13.5px">Show pricing to engineers</div><div style="font-size:12px;color:var(--muted)">When off, engineers see lead time &amp; scorecards but bid prices are masked.</div></div><button class="toggle ${SETTINGS.showPricingToEngineers?'on':''}" onclick="SETTINGS.showPricingToEngineers=!SETTINGS.showPricingToEngineers;renderAdmin();toast('Setting updated')"></button></div>
+      <div class="setrow"><div><div style="font-weight:500;font-size:13.5px">Buyers can see each other's RFQs</div><div style="font-size:12px;color:var(--muted)">Open forum within the company (recommended).</div></div><button class="toggle on" onclick="toast('Kept on — open forum')"></button></div>
+      <div class="setrow"><div><div style="font-weight:500;font-size:13.5px">Seed suppliers from SAP</div><div style="font-size:12px;color:var(--muted)">Import the existing qualified-supplier list on first setup.</div></div><button class="btn btn-sm" onclick="toast('Imported 128 suppliers from SAP')">Import</button></div>
     </div>`;
-  go('opportunity');
 }
-function submitBid(){ toast('Bid submitted'); go('mybids'); }
-function publishRFQ(){ toast('RFQ published to qualified suppliers'); go('rfqs'); }
+function addUser(){
+  openModal(`<h3>Invite user</h3><div class="msub">They'll get an email invite to join Northvale Semiconductor.</div>
+   <div class="field"><label>Name</label><input id="u-name" type="text" placeholder="Full name"></div>
+   <div class="field"><label>Email</label><input id="u-email" type="text" placeholder="name@northvale.com"></div>
+   <div class="row2"><div class="field"><label>Role</label><select id="u-role"><option>Buyer</option><option>Engineer</option><option>Admin</option></select></div>
+   <div class="field"><label>Group</label><select id="u-group">${GROUPS.map(g=>`<option>${g}</option>`).join('')}</select></div></div>
+   <div class="actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveUser()">Send invite</button></div>`);
+}
+function saveUser(){ USERS.push({name:document.getElementById('u-name').value||'New User', email:document.getElementById('u-email').value||'user@northvale.com', role:document.getElementById('u-role').value, group:document.getElementById('u-group').value, status:'Invited'}); closeModal(); renderAdmin(); toast('Invite sent'); }
 
-function openRFQ(id){
-  const r = RFQS.find(x=>x.id===id);
-  if(r.awarded){ toast('Already awarded'); return; }
-  const el = document.getElementById('bidcompare');
-  const rows = BIDS.map(b=>`<tr class="bidrow ${b.best==='price'?'best':''}" onclick="openSupplier('${b.supplier}','bidcompare')"><td><span class="link">${b.supplier} <i class="ti ti-external-link" style="font-size:11px;vertical-align:-1px"></i></span></td><td>$${b.price.toLocaleString()}${b.best==='price'?'<span class="minip" style="background:#E1F5EE;color:#085041">best price</span>':''}</td><td>${b.lead} days${b.best==='fast'?'<span class="minip" style="background:#E6F1FB;color:#0C447C">fastest</span>':''}</td><td>★ ${b.score}</td><td><button class="btn" onclick="event.stopPropagation();award('${b.supplier}')">Select</button></td></tr>`).join('');
-  el.innerHTML = `
-    <span class="back" onclick="go('rfqs')"><i class="ti ti-arrow-left"></i> My RFQs</span>
-    <div class="sec"><h3>${r.title} — bids</h3><span class="v">${r.bids} bids · tap a row to view the supplier's profile</span></div>
-    ${r.open?'<div class="banner">Window still open — award becomes available after it closes.</div>':''}
-    <div class="meta-row">${tag(r.cat)}<span>${r.id}</span></div>
-    <div class="list" style="padding:0"><table><thead><tr><th>Supplier</th><th>Price</th><th>Lead time</th><th>Scorecard</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
-    <div class="award"><span class="n"><i class="ti ti-shield-check" style="font-size:15px;vertical-align:-2px;margin-right:5px"></i>Awarding requires internal sign-off before the PO is issued.</span><button class="btn btn-primary" ${r.open?'disabled style="opacity:.5;cursor:not-allowed"':''} onclick="award()">Award &amp; request sign-off</button></div>`;
-  go('bidcompare');
-}
-function award(sup){ toast(sup?('Selected '+sup+' — sign-off requested'):'Award sent for sign-off'); go('rfqs'); }
-
-const SAVED = new Set(['AI-076']);
-const MYIDS = new Set(MYBIDS.map(b=>b.id));
-const bidStage = b => b.status[0]==='Won'?'won':b.status[0]==='Lost'?'lost':'active';
-
-function toggleSave(id, ev){
-  if(ev) ev.stopPropagation();
-  const adding = !SAVED.has(id);
-  if(adding) SAVED.add(id); else SAVED.delete(id);
-  renderOpps(); renderKanban();
-  toast(adding ? 'Saved to your pipeline' : 'Removed from saved');
-}
-function bmBtn(id){
-  const on = SAVED.has(id);
-  return `<button class="bm ${on?'on':''}" onclick="toggleSave('${id}',event)" aria-label="${on?'Saved':'Save'}"><i class="ti ti-bookmark"></i></button>`;
-}
-function renderOpps(){
-  document.getElementById('opp-feed').innerHTML = OPPS.map(o=>`<div class="card" onclick="openOpp('${o.id}')">${bmBtn(o.id)}${tag(o.cat)}<span class="ti2">${o.title}</span><span class="pn">${o.id} · qty ${o.qty}</span><div class="meta"><span class="${o.soon?'soon':''}">${o.closes}</span><span>${o.bids} bids</span></div></div>`).join('');
-}
-function renderKanban(){
-  const savedItems = OPPS.filter(o=>SAVED.has(o.id) && !MYIDS.has(o.id))
-    .map(o=>({id:o.id, title:o.title, cat:o.cat, sub:`${o.closes} · ${o.bids} bids`, saved:true}));
-  const mk = key => MYBIDS.filter(b=>bidStage(b)===key).map(b=>({id:b.id, title:b.title, cat:b.cat, sub:`$${b.price.toLocaleString()} · ${b.lead}d`}));
-  const stages = [
-    {label:'Saved', dot:'var(--warn)', items:savedItems},
-    {label:'Submitted', dot:'var(--brand)', items:mk('active')},
-    {label:'Won', dot:'var(--win)', items:mk('won')},
-    {label:'Lost', dot:'var(--danger)', items:mk('lost')}
-  ];
-  document.getElementById('mybids-kanban').innerHTML = stages.map(st=>{
-    const cards = st.items.map(it=>`<div class="kcard" onclick="openOpp('${it.id}')">${it.saved?bmBtn(it.id):''}${tag(it.cat)}<div class="kt">${it.title}</div><div class="km"><span>${it.sub}</span>${it.pill?`<span class="pill ${it.pill[1]}">${it.pill[0]}</span>`:''}</div></div>`).join('') || '<div class="kempty">None</div>';
-    return `<div class="kcol"><div class="khead"><span class="kl"><span class="kdot" style="background:${st.dot}"></span>${st.label}</span><span class="kc">${st.items.length}</span></div>${cards}</div>`;
-  }).join('');
+/* supplier feedback list */
+function renderSuppFeedback(){
+  document.getElementById('supp-feedback').innerHTML = SUPP_FEEDBACK.map(f=>`<div class="li"><div><div class="lt">${f.title} <span class="pill st-muted" style="margin-left:4px">${f.part}</span></div><div class="lm">${f.note}</div></div><div class="lr"><span style="color:#E0A24E">${'★'.repeat(f.rating)}${'☆'.repeat(5-f.rating)}</span></div></div>`).join('');
 }
 
-function renderLists(){
-  renderOpps();
-  renderKanban();
-  document.getElementById('rfq-list').innerHTML = RFQS.map(r=>`<div class="li" onclick="openRFQ('${r.id}')"><div><div class="lt">${r.title}</div><div class="lm">${CATS[r.cat].label} · ${r.id}</div></div><div class="lr"><span>${r.bids} bids</span><span>${r.closes!=='closed'&&r.closes!=='awarded'?r.closes:''}</span><span class="pill ${r.status[1]}">${r.status[0]}</span></div></div>`).join('');
-  document.getElementById('sup-list').innerHTML = SUPS.map(s=>`<div class="li" onclick="openSupplier('${s.name}','suppliers')"><div><div class="lt">${s.name}</div><div class="lm">${s.cats.map(c=>CATS[c].label).join(' · ')}</div></div><div class="lr"><span>★ ${s.score}</span><span class="pill st-good">Qualified</span></div></div>`).join('');
-  document.getElementById('cat-select').innerHTML = Object.keys(CATS).map(k=>`<option>${CATS[k].label}</option>`).join('');
-}
-renderLists();
+/* ---------------- init ---------------- */
+function renderLists(){ renderOppFilters(); renderOpps(); renderKanban(); renderRFQs(); renderSuppliers(); renderSuppFeedback(); }
+renderNav(); renderLists(); updatePersonaLabel();
+document.getElementById('persona-pick').style.display='none';
 </script>
 </body>
 </html>
