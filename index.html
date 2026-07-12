@@ -131,6 +131,8 @@
   .btn:hover{border-color:var(--faint);}
   .btn-primary{background:var(--brand); border-color:var(--brand); color:#fff;}
   .btn-primary:hover{opacity:.92;}
+  .btn:disabled,.btn[disabled]{opacity:.45; cursor:not-allowed;}
+  .btn:disabled:hover{border-color:var(--rule);}
   .btn-sm{font-size:12px; padding:6px 11px;}
   .btn-ghost{background:transparent;}
   .back{font-size:13px; color:var(--muted); cursor:pointer; margin-bottom:12px; display:inline-flex; align-items:center; gap:5px;}
@@ -281,7 +283,35 @@
   .catopt.on{border-color:var(--brand); background:var(--brand-soft); color:var(--brand);}
   .catopt i{font-size:16px;}
 
-  @media (max-width:640px){ .row2,.row3{grid-template-columns:1fr;} .side{width:64px;} .side .nm,.roletoggle,.persona-pick{display:none;} }
+  /* notification bell */
+  .bell{position:relative; background:transparent; border:none; cursor:pointer; color:var(--muted); font-size:19px; padding:4px; display:flex;}
+  .bell:hover{color:var(--ink);}
+  .bell .bdot{position:absolute; top:2px; right:2px; min-width:14px; height:14px; background:var(--danger); color:#fff; border-radius:8px; font-size:9px; line-height:14px; text-align:center; padding:0 3px; font-family:"IBM Plex Mono";}
+  .notifs{position:absolute; top:52px; right:16px; width:330px; max-height:420px; overflow-y:auto; background:var(--panel); border:0.5px solid var(--rule); border-radius:12px; box-shadow:0 14px 40px rgba(0,0,0,.22); z-index:60; display:none;}
+  .notifs.on{display:block;}
+  .nhead{display:flex; justify-content:space-between; align-items:center; padding:12px 14px; border-bottom:0.5px solid var(--rule); font-size:13px; font-weight:500;}
+  .ni{display:flex; gap:10px; padding:11px 14px; border-top:0.5px solid var(--rule-soft); cursor:pointer;}
+  .ni:hover{background:var(--paper);}
+  .ni.unread{background:var(--brand-soft);}
+  .ni i{font-size:16px; margin-top:1px; flex-shrink:0;}
+  .ni .nt{font-size:12.5px;} .ni .nm2{font-size:11px; color:var(--faint); margin-top:2px;}
+  .clickable{cursor:pointer;} .clickable:hover{border-color:color-mix(in srgb,var(--brand) 45%,var(--rule));}
+  /* selectable bid rows */
+  tr.bidrow.sel td{background:var(--brand-soft);}
+  tr.bidrow.sel td:first-child{box-shadow:inset 3px 0 0 var(--brand);}
+  .selradio{width:16px; height:16px; border-radius:50%; border:2px solid var(--rule); display:inline-block; vertical-align:-3px;}
+  tr.bidrow.sel .selradio{border-color:var(--brand); background:radial-gradient(var(--brand) 42%, transparent 46%);}
+  .flagack{background:#FAEEDA; border:0.5px solid #E7C98A; border-radius:9px; padding:12px 14px; margin:12px 0; font-size:12.5px; color:#6b430b;}
+  @media (prefers-color-scheme:dark){ .flagack{background:#2A2113; border-color:#4a3a17; color:#E0A24E;} }
+  .flagack .fl{display:flex; gap:8px; margin-top:7px;} .flagack .fl i{flex-shrink:0; margin-top:1px;}
+  .sumrow{display:flex; justify-content:space-between; font-size:13px; padding:7px 0; border-top:0.5px solid var(--rule-soft);}
+  .sumrow:first-child{border-top:none;} .sumrow .sv{font-weight:500;}
+  .addendum{background:var(--paper); border:0.5px solid var(--rule); border-left:3px solid var(--brand); border-radius:9px; padding:11px 13px; margin-bottom:9px;}
+  .addendum .aq{font-size:12px; color:var(--muted);} .addendum .aa{font-size:13px; margin-top:4px;} .addendum .at{font-size:10.5px; color:var(--faint); margin-top:5px;}
+  .splitrow{display:flex; align-items:center; gap:10px; padding:9px 0; border-top:0.5px solid var(--rule-soft);}
+  .splitrow:first-child{border-top:none;} .splitrow .sn{flex:1; font-size:13px;} .splitrow input{width:74px;}
+  .chk{display:flex; align-items:flex-start; gap:9px; font-size:13px; cursor:pointer;} .chk input{width:auto; margin-top:3px;}
+  @media (max-width:640px){ .row2,.row3{grid-template-columns:1fr;} .side{width:64px;} .side .nm,.roletoggle,.persona-pick{display:none;} .notifs{right:8px; width:calc(100vw - 32px);} }
 </style>
 </head>
 <body>
@@ -309,16 +339,17 @@
   <section class="main">
     <div class="tbar">
       <h3 id="view-title">Opportunities</h3>
-      <div class="right"><span class="persona" id="persona">Acme Precision · supplier</span><span class="av" id="avatar">AP</span></div>
+      <div class="right"><button class="bell" id="bell" onclick="toggleNotifs(event)" aria-label="Notifications"><i class="ti ti-bell"></i><span class="bdot" id="bdot">0</span></button><span class="persona" id="persona">Acme Precision · supplier</span><span class="av" id="avatar">AP</span></div>
     </div>
+    <div class="notifs" id="notifs"></div>
     <div class="body">
       <!-- SUPPLIER: opportunities -->
       <div class="view on" id="view-opportunities">
         <div class="kpis">
-          <div class="k"><div class="l">Open</div><div class="v">8</div><div class="d">in your categories</div></div>
-          <div class="k"><div class="l">Active bids</div><div class="v">3</div><div class="d">2 closing today</div></div>
-          <div class="k"><div class="l">Win rate</div><div class="v">28%</div><div class="d up">▲ 4%</div></div>
-          <div class="k"><div class="l">On-time</div><div class="v">96%</div><div class="d up">41 orders</div></div>
+          <div class="k clickable" onclick="oppFilter='all';oppSoon=false;renderOppFilters();renderOpps()"><div class="l">Open</div><div class="v">8</div><div class="d">in your categories →</div></div>
+          <div class="k clickable" onclick="oppSoon=true;renderOppFilters();renderOpps()"><div class="l">Closing today</div><div class="v">2</div><div class="d">filter →</div></div>
+          <div class="k clickable" onclick="go('mybids')"><div class="l">Active bids</div><div class="v">3</div><div class="d">view board →</div></div>
+          <div class="k clickable" onclick="go('tracking')"><div class="l">On-time</div><div class="v">96%</div><div class="d up">41 orders →</div></div>
         </div>
         <div class="sec"><h3>Open opportunities</h3><span class="v">tap a card to view &amp; bid</span></div>
         <div class="toolbar" id="opp-filters"></div>
@@ -361,9 +392,9 @@
       <div class="view" id="view-rfqs">
         <div class="kpis">
           <div class="k"><div class="l">Open RFQs</div><div class="v">3</div></div>
-          <div class="k"><div class="l">Awaiting award</div><div class="v">1</div><div class="d">window closed</div></div>
-          <div class="k"><div class="l">In production</div><div class="v">4</div><div class="d">1 late</div></div>
-          <div class="k"><div class="l">R&amp;D spend</div><div class="v">$148k</div><div class="d">across 3 groups</div></div>
+          <div class="k clickable" onclick="openRFQ('SV-300')"><div class="l">Awaiting award</div><div class="v">1</div><div class="d">review bids →</div></div>
+          <div class="k clickable" onclick="trackTab='delayed';go('tracking')"><div class="l">In production</div><div class="v">4</div><div class="d" style="color:var(--danger)">1 late →</div></div>
+          <div class="k clickable" onclick="go('tracking')"><div class="l">R&amp;D spend</div><div class="v">$148k</div><div class="d">across 3 groups →</div></div>
         </div>
         <div class="sec"><h3>My requests</h3><span class="v"><button class="btn btn-primary btn-sm" onclick="go('createrfq')">+ New request</button></span></div>
         <div class="list" id="rfq-list"></div>
@@ -416,6 +447,9 @@
       <!-- BUYER: admin -->
       <div class="view" id="view-admin"><div id="admin-body"></div></div>
 
+      <!-- SHARED: audit trail / activity -->
+      <div class="view" id="view-audit"><div id="audit-body"></div></div>
+
       <!-- SHARED: bid comparison + award -->
       <div class="view" id="view-bidcompare"><div id="bidcompare"></div></div>
 
@@ -449,7 +483,7 @@ const OPPS = [
   {id:'GM-512', title:'Process gas manifold', cat:'gas', qty:6, closes:'3d', bids:2, soon:false, customer:'Orion Micro', reqs:'316L electropolished. Orbital welds. Helium leak test to 1e-9.', nda:'category'},
   {id:'EA-204R', title:'Electrode assembly rework', cat:'rework', qty:8, closes:'4d 6h', bids:1, soon:false, customer:'Orion Micro', reqs:'Re-machine seat and re-plate. Existing parts supplied by buyer.', nda:'none'},
   {id:'LP-088', title:'Lift pin housing', cat:'cnc', qty:30, closes:'2d', bids:5, soon:false, customer:'Northvale Semiconductor', reqs:'Aluminum 6061. Hard anodize. Bore concentricity 0.01mm.', nda:'category'},
-  {id:'AI-076', title:'Alumina insulator ring', cat:'quartz', qty:15, closes:'1d 2h', bids:3, soon:false, customer:'ASML West', reqs:'99.5% alumina, fired. Ground flat both faces.', nda:'drawing'},
+  {id:'AI-076', title:'Alumina insulator ring', cat:'quartz', qty:15, closes:'1d 2h', bids:3, soon:true, customer:'ASML West', reqs:'99.5% alumina, fired. Ground flat both faces.', nda:'drawing'},
   {id:'CT-450', title:'Cable tray weldment', cat:'sheet', qty:10, closes:'5d', bids:2, soon:false, customer:'Northvale Semiconductor', reqs:'Aluminum 5052. TIG welded. Powder coat.', nda:'none'}
 ];
 const MYBIDS = [
@@ -461,18 +495,29 @@ const MYBIDS = [
   {id:'QV-090', title:'Quartz boat', cat:'quartz', price:980, lead:14, status:['Lost','st-danger'], stage:'lost'}
 ];
 const RFQS = [
-  {id:'VF-6061-204', title:'Vacuum flange, 6061-T6', cat:'cnc', status:['Open','st-good'], bids:7, closes:'2d 4h', open:true, product:'Litho stage'},
-  {id:'CMB-330', title:'Chamber mounting bracket', cat:'sheet', status:['Open','st-good'], bids:4, closes:'1d 9h', open:true, product:'Etch chamber'},
-  {id:'SV-300', title:'Slit valve plate', cat:'cnc', status:['Closed · review bids','st-warn'], bids:6, closes:'closed', open:false, product:'Litho stage'},
-  {id:'GM-512', title:'Process gas manifold', cat:'gas', status:['Open','st-good'], bids:2, closes:'3d', open:true, product:'Deposition module'},
-  {id:'EA-204R', title:'Electrode assembly rework', cat:'rework', status:['Awarded','st-win'], bids:3, closes:'awarded', open:false, awarded:true, product:'Etch chamber'}
+  {id:'VF-6061-204', title:'Vacuum flange, 6061-T6', cat:'cnc', qty:12, status:['Open','st-good'], bids:7, closes:'2d 4h', open:true, product:'Litho stage', autoExtend:true},
+  {id:'CMB-330', title:'Chamber mounting bracket', cat:'sheet', qty:20, status:['Open','st-good'], bids:4, closes:'1d 9h', open:true, product:'Etch chamber', autoExtend:true},
+  {id:'SV-300', title:'Slit valve plate', cat:'cnc', qty:12, status:['Closed · review bids','st-warn'], bids:6, closes:'closed', open:false, product:'Litho stage', autoExtend:true},
+  {id:'GM-512', title:'Process gas manifold', cat:'gas', qty:6, status:['Open','st-good'], bids:2, closes:'3d', open:true, product:'Deposition module', autoExtend:false},
+  {id:'EA-204R', title:'Electrode assembly rework', cat:'rework', qty:8, status:['Awarded','st-win'], bids:3, closes:'awarded', open:false, awarded:true, product:'Etch chamber', autoExtend:true}
 ];
+/* bids for the SV-300 comparison (qty 12). total = unit*qty + shipping */
+const BID_QTY = 12;
 const BIDS = [
-  {supplier:'Nord Fab', price:1180, lead:14, score:4.1, best:'price'},
-  {supplier:'Titan Machining', price:1310, lead:7, score:4.8, best:'fast'},
-  {supplier:'Acme Precision', price:1240, lead:9, score:4.6},
-  {supplier:'Westline Tool', price:1295, lead:11, score:3.9}
-];
+  {supplier:'Nord Fab', unit:95, ship:40, incoterms:'FOB Origin', lead:14, score:4.1, best:'price'},
+  {supplier:'Titan Machining', unit:105, ship:50, incoterms:'DAP', lead:7, score:4.8, best:'fast'},
+  {supplier:'Acme Precision', unit:100, ship:40, incoterms:'FOB Origin', lead:9, score:4.6, revised:true},
+  {supplier:'Westline Tool', unit:103, ship:59, incoterms:'EXW', lead:11, score:3.9}
+].map(b=>({...b, price:b.unit*BID_QTY+b.ship}));
+/* no-bid / declined — valuable signal for buyers */
+const DECLINED = {
+  'SV-300':[ {supplier:'Coastal CNC', reason:'Capacity — no open slot before your need-by date'},
+             {supplier:'Apex Micro', reason:'Bore tolerance exceeds our process capability'} ]
+};
+/* public Q&A addenda, keyed by part — visible to all bidders */
+let ADDENDA = {
+  'VF-6061-204':[ {q:'Is the ±0.05mm tolerance on the bore ID or the flange face?', a:'Bore ID. Flange face is ±0.1mm — note 3 on the drawing updated.', at:'Jul 10 · Priya Rao', bidders:7} ]
+};
 const SUPS = [
   {name:'Acme Precision', cats:['cnc'], score:4.6, jobs:41, ontime:96, rnd:true},
   {name:'Nord Fab', cats:['sheet','cnc'], score:4.1, jobs:12, ontime:88, rnd:true},
@@ -516,6 +561,29 @@ const USERS = [
 ];
 const GROUPS = ['Supply Chain','Litho','Etch','Deposition'];
 const SETTINGS = {showPricingToEngineers:false};
+
+/* notifications (role-scoped) */
+let NOTIFS = [
+  {id:1, role:'buyer', icon:'ti-gavel', text:'New bid from Titan Machining on Slit valve plate (SV-300)', when:'2h ago', unread:true, act:()=>openRFQ('SV-300')},
+  {id:2, role:'buyer', icon:'ti-clock-exclamation', text:'Electrode rework (EA-204R) reported a 4-day delay', when:'Yesterday', unread:true, act:()=>{trackTab='delayed';go('tracking');}},
+  {id:3, role:'buyer', icon:'ti-message-2', text:'Lumen Quartz asked a question on Quartz viewport (QV-110)', when:'Tue', unread:false, act:()=>openThreadFor('QV-110')},
+  {id:4, role:'supplier', icon:'ti-file-text', text:'New opportunity: Process gas manifold (GM-512) — Orion Micro', when:'1h ago', unread:true, act:()=>openOpp('GM-512')},
+  {id:5, role:'supplier', icon:'ti-check', text:'Your bid on Slit valve plate (SV-300) was accepted', when:'3h ago', unread:true, act:()=>go('tracking')},
+  {id:6, role:'supplier', icon:'ti-clock', text:'Chamber mounting bracket (CMB-330) closes in 1d 9h', when:'today', unread:false, act:()=>openOpp('CMB-330')}
+];
+function pushNotif(role, icon, text, act){ NOTIFS.unshift({id:Date.now(), role, icon, text, when:'just now', unread:true, act:act||function(){}}); }
+/* audit trail */
+let AUDIT = [
+  {t:'Jul 11 · 14:22', actor:'Titan Machining', action:'Submitted bid', target:'SV-300', kind:'bid'},
+  {t:'Jul 11 · 13:48', actor:'Acme Precision', action:'Revised bid', target:'SV-300', kind:'bid'},
+  {t:'Jul 11 · 13:10', actor:'Nord Fab', action:'Viewed drawing in vault', target:'SV-300', kind:'view'},
+  {t:'Jul 11 · 11:32', actor:'Coastal CNC', action:'Declined (no-bid): capacity', target:'SV-300', kind:'decline'},
+  {t:'Jul 10 · 16:40', actor:'Acme Precision', action:'Signed NDA', target:'QV-110', kind:'nda'},
+  {t:'Jul 10 · 15:07', actor:'Priya Rao (Engineer)', action:'Posted addendum to 7 bidders', target:'VF-6061-204', kind:'addendum'},
+  {t:'Jul 10 · 11:05', actor:'Sam Ortiz (Buyer)', action:'Published RFQ', target:'VF-6061-204', kind:'rfq'}
+];
+function actorName(){ if(role()==='supplier') return 'Acme Precision'; const m={admin:'Dana Ortiz (Admin)', buyer:'Sam Ortiz (Buyer)', engineer:'Priya Rao (Engineer)'}; return m[persona()]; }
+function logEvent(action, target, kind){ AUDIT.unshift({t:'just now', actor:actorName(), action, target, kind:kind||'evt'}); }
 
 const PROFILES = {
  'Acme Precision':{ id:'SUP-0007', cats:['cnc'], score:4.6,
@@ -605,6 +673,7 @@ const NAV = {
     {v:'mybids', i:'gavel', l:'My bids'},
     {v:'tracking', i:'truck-delivery', l:'Orders & tracking'},
     {v:'messages', i:'message-2', l:'Messages', badge:true},
+    {v:'audit', i:'history', l:'Activity'},
     {v:'scorecard', i:'star', l:'Scorecard'},
     {v:'company', i:'building-store', l:'Company profile'}
   ],
@@ -615,10 +684,11 @@ const NAV = {
     {v:'suppliers', i:'users', l:'Suppliers', roles:['admin','buyer','engineer']},
     {v:'messages', i:'message-2', l:'Messages', roles:['admin','buyer','engineer'], badge:true},
     {v:'scorecards', i:'star', l:'Scorecards', roles:['admin','buyer']},
+    {v:'audit', i:'history', l:'Activity', roles:['admin','buyer','engineer']},
     {v:'admin', i:'settings', l:'Admin', roles:['admin']}
   ]
 };
-const TITLES = {opportunities:'Opportunities', opportunity:'Opportunity', mybids:'My bids', tracking:'Orders & tracking', messages:'Messages', scorecard:'Scorecard', company:'Company profile', rfqs:'My RFQs', createrfq:'New request', suppliers:'Suppliers', scorecards:'Supplier scorecards', admin:'Admin · users & roles', bidcompare:'Review bids', 'supplier-profile':'Supplier profile'};
+const TITLES = {opportunities:'Opportunities', opportunity:'Opportunity', mybids:'My bids', tracking:'Orders & tracking', messages:'Messages', audit:'Activity & audit', scorecard:'Scorecard', company:'Company profile', rfqs:'My RFQs', createrfq:'New request', suppliers:'Suppliers', scorecards:'Supplier scorecards', admin:'Admin · users & roles', bidcompare:'Review bids', 'supplier-profile':'Supplier profile'};
 const NAVKEY = {opportunity:'opportunities', bidcompare:'rfqs', createrfq:'createrfq', 'supplier-profile':'rfqs'};
 
 let ROLE='supplier', PERSONA='buyer';
@@ -648,6 +718,8 @@ function go(view){
   if(view==='company') renderCompany();
   if(view==='admin') renderAdmin();
   if(view==='scorecards') renderScorecards();
+  if(view==='audit') renderAudit();
+  document.getElementById('notifs').classList.remove('on');
 }
 function setRole(r){
   const app=document.getElementById('app'); app.dataset.role=r;
@@ -656,6 +728,8 @@ function setRole(r){
   document.getElementById('persona-pick').style.display = r==='buyer' ? 'block' : 'none';
   renderNav();
   updatePersonaLabel();
+  updateBell();
+  document.getElementById('notifs').classList.remove('on');
   if(r==='supplier'){ go('opportunities'); }
   else { go('rfqs'); }
 }
@@ -677,13 +751,27 @@ function updatePersonaLabel(){
 }
 function toast(msg){ const t=document.getElementById('toast'); document.getElementById('toast-msg').textContent=msg; t.classList.add('show'); clearTimeout(window._tt); window._tt=setTimeout(()=>t.classList.remove('show'),2600); }
 
+/* notifications bell */
+function myNotifs(){ return NOTIFS.filter(n=>n.role===role()); }
+function updateBell(){ const c=myNotifs().filter(n=>n.unread).length; const d=document.getElementById('bdot'); d.textContent=c; d.style.display=c?'block':'none'; }
+function toggleNotifs(e){ if(e) e.stopPropagation(); const el=document.getElementById('notifs'); if(el.classList.contains('on')){ el.classList.remove('on'); return; } renderNotifs(); el.classList.add('on'); }
+function renderNotifs(){
+  const list=myNotifs();
+  document.getElementById('notifs').innerHTML =
+    `<div class="nhead"><span>Notifications</span><span class="link" onclick="markAllRead()">Mark all read</span></div>` +
+    (list.length ? list.map(n=>`<div class="ni ${n.unread?'unread':''}" onclick="openNotif(${n.id})"><i class="ti ${n.icon}"></i><div><div class="nt">${n.text}</div><div class="nm2">${n.when}</div></div></div>`).join('') : '<div class="ni"><div class="nt">You\'re all caught up</div></div>');
+}
+function openNotif(id){ const n=NOTIFS.find(x=>x.id===id); if(!n) return; n.unread=false; document.getElementById('notifs').classList.remove('on'); updateBell(); try{ n.act && n.act(); }catch(e){} }
+function markAllRead(){ myNotifs().forEach(n=>n.unread=false); renderNotifs(); updateBell(); }
+document.addEventListener('click', e=>{ const nf=document.getElementById('notifs'); if(nf.classList.contains('on') && !nf.contains(e.target) && !e.target.closest('#bell')) nf.classList.remove('on'); });
+
 /* ---------------- modal ---------------- */
 function openModal(html){ document.getElementById('modal').innerHTML=html; document.getElementById('overlay').classList.add('on'); }
 function closeModal(){ document.getElementById('overlay').classList.remove('on'); }
 document.getElementById('overlay').addEventListener('click', e=>{ if(e.target.id==='overlay') closeModal(); });
 
 /* ---------------- supplier: opportunities ---------------- */
-let oppFilter='all';
+let oppFilter='all', oppSoon=false;
 const SAVED = new Set(['AI-076']);
 const MYIDS = new Set(MYBIDS.map(b=>b.id));
 const NDA_SIGNED = new Set();
@@ -692,12 +780,13 @@ function renderOppFilters(){
   const chips = ['all',...COMPANIES];
   document.getElementById('opp-filters').innerHTML =
     `<span style="font-size:12px;color:var(--faint)">Customer:</span>` +
-    chips.map(c=>`<span class="fchip ${oppFilter===c?'on':''}" onclick="oppFilter='${c}';renderOppFilters();renderOpps()">${c==='all'?'All':c}</span>`).join('');
+    chips.map(c=>`<span class="fchip ${oppFilter===c&&!oppSoon?'on':''}" onclick="oppFilter='${c}';oppSoon=false;renderOppFilters();renderOpps()">${c==='all'?'All':c}</span>`).join('') +
+    `<span style="width:8px"></span><span class="fchip ${oppSoon?'on':''}" onclick="oppSoon=!oppSoon;renderOppFilters();renderOpps()"><i class="ti ti-clock" style="font-size:12px;vertical-align:-1px"></i> Closing today</span>`;
 }
 function bmBtn(id){ const on=SAVED.has(id); return `<button class="bm ${on?'on':''}" onclick="toggleSave('${id}',event)" aria-label="${on?'Saved':'Save'}"><i class="ti ti-bookmark"></i></button>`; }
 function toggleSave(id, ev){ if(ev) ev.stopPropagation(); const adding=!SAVED.has(id); adding?SAVED.add(id):SAVED.delete(id); renderOpps(); renderKanban(); toast(adding?'Saved to your pipeline':'Removed from saved'); }
 function renderOpps(){
-  const list = OPPS.filter(o=>oppFilter==='all'||o.customer===oppFilter);
+  const list = OPPS.filter(o=>(oppFilter==='all'||o.customer===oppFilter) && (!oppSoon||o.soon));
   document.getElementById('opp-feed').innerHTML = list.map(o=>`<div class="card" onclick="openOpp('${o.id}')">${bmBtn(o.id)}<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">${tag(o.cat)}${cotag(o.customer)}</div><span class="ti2">${o.title}</span><span class="pn">${o.id} · qty ${o.qty}${o.nda!=='none'?' · <i class="ti ti-lock" style="font-size:11px;vertical-align:-1px"></i> NDA':''}</span><div class="meta"><span class="${o.soon?'soon':''}">${o.closes}</span><span>${o.bids} bids</span></div></div>`).join('')
     || `<div class="kempty">No open opportunities for ${oppFilter}.</div>`;
 }
@@ -707,6 +796,7 @@ function openOpp(id){
   const el = document.getElementById('opp-detail');
   const ndaReq = o.nda && o.nda!=='none';
   const signed = NDA_SIGNED.has(o.id) || !ndaReq;
+  const qty = o.qty||1, hasBid = MYIDS.has(o.id);
   el.innerHTML = `
     <span class="back" onclick="go('opportunities')"><i class="ti ti-arrow-left"></i> Opportunities</span>
     <div class="sec"><h3>${o.title}</h3></div>
@@ -714,20 +804,43 @@ function openOpp(id){
     <div class="panelcard"><div class="vault">
       <div><div class="t"><i class="ti ti-lock" style="font-size:15px;vertical-align:-2px;margin-right:5px"></i>Drawings — IP-protected</div><div class="n">${signed?'Files stay in the customer vault. Your access is logged and expires at bid close.':'This drawing requires an NDA before it unlocks. Files never leave the customer vault.'}</div></div>
       ${signed
-        ? `<button class="btn" onclick="toast('Opening vault link · access logged')">Open in vault ↗</button>`
+        ? `<button class="btn" onclick="viewVault('${o.id}')">Open in vault ↗</button>`
         : `<button class="btn btn-primary" onclick="signNDA('${o.id}')"><i class="ti ti-file-pencil" style="font-size:14px;vertical-align:-2px"></i> Sign NDA to view</button>`}
     </div></div>
+    ${(ADDENDA[o.id]||[]).length?`<div class="panelcard"><div class="seclbl" style="margin-top:0"><i class="ti ti-speakerphone" style="font-size:12px;vertical-align:-1px"></i> Addenda — buyer answers shared with all bidders</div>${(ADDENDA[o.id]).map(a=>`<div class="addendum"><div class="aq">Q: ${a.q}</div><div class="aa">A: ${a.a}</div><div class="at">${a.at} · posted to ${a.bidders} bidders</div></div>`).join('')}</div>`:''}
     <div class="panelcard">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-size:12.5px;color:var(--muted)">${o.reqs||''}</div><button class="btn btn-sm btn-ghost" onclick="openThreadFor('${o.id}')"><i class="ti ti-message-2" style="font-size:14px;vertical-align:-2px"></i> Ask engineer</button></div>
+      ${hasBid?'<div class="banner info" style="margin-bottom:12px"><i class="ti ti-info-circle"></i><span>You have an active bid here — you can revise it until the window closes.</span></div>':''}
       <div class="row2">
-        <div class="field"><label>Your price (USD)</label><input type="text" placeholder="$ 0.00" ${signed?'':'disabled'}></div>
+        <div class="field"><label>Unit price (USD)</label><input id="bid-unit" type="text" placeholder="$ 0.00" oninput="calcTotal(${qty})" ${signed?'':'disabled'}></div>
         <div class="field"><label>Lead time (days)</label><input type="text" placeholder="e.g. 10" ${signed?'':'disabled'}></div>
       </div>
+      <div class="row3">
+        <div class="field"><label>Shipping (USD)</label><input id="bid-ship" type="text" placeholder="$ 0.00" oninput="calcTotal(${qty})" ${signed?'':'disabled'}></div>
+        <div class="field"><label>Incoterms</label><select id="bid-inco" ${signed?'':'disabled'}><option>EXW</option><option>FOB Origin</option><option>DAP</option><option>DDP</option></select></div>
+        <div class="field"><label>Total (× ${qty} + shipping)</label><input id="bid-total" type="text" value="—" readonly></div>
+      </div>
       <div class="field"><label>Notes (optional)</label><textarea placeholder="Anything the engineer should know…" ${signed?'':'disabled'}></textarea></div>
-      <div class="actions"><span style="flex:1;font-size:12.5px;color:var(--muted);align-self:center">${o.bids} bids so far · other amounts hidden</span><button class="btn btn-primary" onclick="submitBid()" ${signed?'':'disabled style="opacity:.5;cursor:not-allowed"'}>Submit bid</button></div>
+      <div class="actions" style="justify-content:space-between">
+        <button class="btn btn-ghost" onclick="declineBid('${o.id}')" ${signed?'':'disabled'}>Decline (no-bid)</button>
+        <div style="display:flex;gap:10px;align-items:center"><span style="font-size:12.5px;color:var(--muted)">${o.bids} bids · amounts hidden</span><button class="btn btn-primary" onclick="submitBid('${o.id}')" ${signed?'':'disabled style="opacity:.5;cursor:not-allowed"'}>${hasBid?'Revise bid':'Submit bid'}</button></div>
+      </div>
     </div>`;
   go('opportunity');
 }
+function calcTotal(qty){
+  const num = el => parseFloat((document.getElementById(el).value||'').replace(/[^0-9.]/g,''))||0;
+  const t = num('bid-unit')*qty + num('bid-ship');
+  document.getElementById('bid-total').value = t ? '$'+t.toLocaleString() : '—';
+}
+function viewVault(id){ logEvent('Viewed drawing in vault', id, 'view'); toast('Opening vault link · access logged'); }
+function declineBid(id){
+  openModal(`<h3>Decline to bid (no-bid)</h3><div class="msub">Your reason helps the buyer plan — logged for them, never shown to competitors.</div>
+    <div class="field"><label>Reason</label><select id="nb-reason"><option>Capacity — no open slot before need-by date</option><option>Outside our process capability</option><option>Material not available in time</option><option>Pricing not competitive for this work</option><option>Other</option></select></div>
+    <div class="field"><label>Notes (optional)</label><textarea placeholder="Anything else the buyer should know"></textarea></div>
+    <div class="actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="doDecline('${id}')">Submit no-bid</button></div>`);
+}
+function doDecline(id){ const reason=document.getElementById('nb-reason').value; logEvent('Declined (no-bid): '+reason, id, 'decline'); pushNotif('buyer','ti-ban',`Acme Precision declined ${id}: ${reason}`); closeModal(); toast('No-bid recorded — buyer notified'); go('opportunities'); }
 function signNDA(id){
   const o = OPPS.find(x=>x.id===id)||RFQS.find(x=>x.id===id);
   const kind = o.nda==='drawing' ? 'drawing-specific' : 'category-wide';
@@ -738,7 +851,7 @@ function signNDA(id){
     <label style="margin-top:12px"><input type="checkbox" id="nda-ck" style="width:auto;margin-right:8px" onchange="document.getElementById('nda-go').disabled=!this.checked">I have read and agree on behalf of Acme Precision.</label>
     <div class="actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="nda-go" disabled onclick="NDA_SIGNED.add('${o.id}');closeModal();openOpp('${o.id}');toast('NDA signed · drawing unlocked')">Accept &amp; unlock</button></div>`);
 }
-function submitBid(){ toast('Bid submitted — now in review'); go('mybids'); }
+function submitBid(id){ const revise=MYIDS.has(id); logEvent(revise?'Revised bid':'Submitted bid', id||'', 'bid'); pushNotif('buyer','ti-gavel',`${revise?'Revised':'New'} bid on ${id||'RFQ'} from Acme Precision`, ()=>openRFQ('SV-300')); toast(revise?'Bid revised — buyer notified':'Bid submitted — now in review'); go('mybids'); }
 function publishRFQ(){ toast('RFQ published to qualified suppliers'); go('rfqs'); }
 
 /* ---------------- supplier: kanban ---------------- */
@@ -903,9 +1016,13 @@ function renderMessages(){
       ? (m.from==='sup'?'me':'them')
       : (m.from==='sup'?'them':'me');
   const bubbles = t.msgs.map(m=>{
+    if(m.from==='sys') return `<div class="sysmsg"><i class="ti ti-speakerphone" style="font-size:12px;vertical-align:-1px"></i> ${m.text}</div>`;
     const side=who(m);
     return `<div class="bub ${side}">${side==='them'?`<div style="font-size:10px;color:var(--faint);margin-bottom:2px">${m.name}</div>`:''}${m.text}<div class="bt">${m.t}</div></div>`;
   }).join('');
+  const addendumUI = role()==='buyer'
+    ? `<label class="chk" style="padding:8px 14px 0;font-size:12px"><input type="checkbox" id="post-addendum"><span>Post this answer as an <b>addendum to all ${(RFQS.find(r=>r.id===t.part)?.bids)||'the'} bidders</b> on ${t.part} (fairness)</span></label>`
+    : '';
   document.getElementById('messages-body').innerHTML = `
     <div class="sec"><h3>Messages</h3><span class="v">technical questions route to the assigned ${role()==='supplier'?'engineer/buyer':'supplier'}</span></div>
     <div class="chat">
@@ -913,6 +1030,7 @@ function renderMessages(){
       <div class="thread">
         <div class="thhead"><div class="tn">${threadCounterpart(t)}</div><div class="tp">${t.partTitle} · ${t.part} · ${t.company}</div></div>
         <div class="thbody" id="thbody"><div class="sysmsg">Conversation started on part ${t.part}</div>${bubbles}</div>
+        ${addendumUI}
         <div class="composer"><input id="chat-in" type="text" placeholder="Type a message…" onkeydown="if(event.key==='Enter')sendMsg()"><button class="btn btn-primary" onclick="sendMsg()">Send</button></div>
       </div>
     </div>`;
@@ -921,7 +1039,17 @@ function renderMessages(){
 function sendMsg(){
   const inp=document.getElementById('chat-in'); const v=(inp.value||'').trim(); if(!v) return;
   const t=THREADS.find(x=>x.id===activeThread);
+  const asAddendum = role()==='buyer' && document.getElementById('post-addendum') && document.getElementById('post-addendum').checked;
   t.msgs.push({from: role()==='supplier'?'sup':(persona()==='engineer'?'eng':'buy'), name:'You', text:v, t:'now'});
+  if(asAddendum){
+    const lastQ = [...t.msgs].reverse().find(m=>m.from==='sup');
+    const bidders = (RFQS.find(r=>r.id===t.part)?.bids) || THREADS.filter(x=>x.part===t.part).length || 1;
+    (ADDENDA[t.part]=ADDENDA[t.part]||[]).push({q:lastQ?lastQ.text:'(buyer clarification)', a:v, at:'now · '+actorName(), bidders});
+    t.msgs.push({from:'sys', text:`Posted as an addendum to all ${bidders} bidders on ${t.part}`});
+    pushNotif('supplier','ti-speakerphone',`Addendum posted on ${t.partTitle} (${t.part}) — all bidders`, ()=>openOpp(t.part));
+    logEvent(`Posted addendum to ${bidders} bidders`, t.part, 'addendum');
+    renderMessages(); toast('Answer posted as an addendum to all bidders'); return;
+  }
   renderMessages(); toast('Message sent · notification pushed');
 }
 
@@ -975,25 +1103,122 @@ function renderScorecards(){
 }
 
 /* ---------------- buyer: bid compare + award ---------------- */
+let currentRFQ=null, selectedBid=null, splitMode=false, splitAlloc={};
+function supplierFlags(name){ const p=PROFILES[name]; return p ? p.research.flags : []; }
 function openRFQ(id){
   const r = RFQS.find(x=>x.id===id);
   if(r.awarded){ toast('Already awarded — see Tracking'); go('tracking'); return; }
-  const el = document.getElementById('bidcompare');
-  const priceHead = canSeePrice()?'Price':'Price 🔒';
-  const rows = BIDS.map(b=>`<tr class="bidrow ${b.best==='price'?'best':''}" onclick="openSupplier('${b.supplier}','bidcompare')"><td><span class="link">${b.supplier} <i class="ti ti-external-link" style="font-size:11px;vertical-align:-1px"></i></span></td><td>${money(b.price)}${b.best==='price'&&canSeePrice()?'<span class="minip" style="background:#E1F5EE;color:#085041">best price</span>':''}</td><td>${b.lead} days${b.best==='fast'?'<span class="minip" style="background:#E6F1FB;color:#0C447C">fastest</span>':''}</td><td>★ ${b.score}</td><td><button class="btn btn-sm" onclick="event.stopPropagation();award('${b.supplier}')">Select</button></td></tr>`).join('');
-  el.innerHTML = `
-    <span class="back" onclick="go('rfqs')"><i class="ti ti-arrow-left"></i> My RFQs</span>
-    <div class="sec"><h3>${r.title} — bids</h3><span class="v">${r.bids} bids · tap a row to view the supplier's profile</span></div>
-    ${persona()==='engineer'&&!SETTINGS.showPricingToEngineers?'<div class="banner"><i class="ti ti-eye-off"></i><span>You\'re viewing as an <b>engineer</b> — pricing is hidden by the admin. Lead time and scorecard are visible.</span></div>':''}
-    ${r.open?'<div class="banner">Window still open — award becomes available after it closes.</div>':''}
-    <div class="meta-row">${tag(r.cat)}<span>${r.id}</span><span>${r.product}</span></div>
-    <div class="list" style="padding:0"><table><thead><tr><th>Supplier</th><th>${priceHead}</th><th>Lead time</th><th>Scorecard</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
-    <div class="hint" style="margin-top:8px">Shipping is quoted separately and not included in lead time.</div>
-    <div class="award"><span class="n"><i class="ti ti-shield-check" style="font-size:15px;vertical-align:-2px;margin-right:5px"></i>Awarding requires internal sign-off before the PO is issued.</span><button class="btn btn-primary" ${r.open?'disabled style="opacity:.5;cursor:not-allowed"':''} onclick="award()">Award &amp; request sign-off</button></div>`;
-  go('bidcompare');
+  currentRFQ=r; selectedBid=null; splitMode=false; splitAlloc={};
+  renderBidCompare(); go('bidcompare');
 }
-function award(sup){ toast(sup?('Selected '+sup+' — sign-off requested'):'Award sent for sign-off'); go('rfqs'); }
-function acceptBid(name){ toast('Bid from '+name+' accepted — supplier notified, lead time started'); go('tracking'); }
+function renderBidRows(){
+  const r=currentRFQ, qty=r.qty||BID_QTY;
+  return BIDS.map(b=>{
+    const flags=supplierFlags(b.supplier);
+    const sel = (!splitMode && selectedBid===b.supplier)?'sel':'';
+    const first = splitMode
+      ? `<input type="number" min="0" max="${qty}" value="${splitAlloc[b.supplier]||0}" onclick="event.stopPropagation()" oninput="setSplit('${b.supplier}',this.value)">`
+      : `<span class="selradio"></span>`;
+    return `<tr class="bidrow ${sel} ${b.best==='price'?'best':''}" onclick="${splitMode?'':`selectBid('${b.supplier}')`}">
+      <td style="width:70px">${first}</td>
+      <td><span class="link" onclick="event.stopPropagation();openSupplier('${b.supplier}','bidcompare')">${b.supplier} <i class="ti ti-external-link" style="font-size:11px;vertical-align:-1px"></i></span>${b.revised?'<span class="minip st-muted" style="background:var(--rule-soft);color:var(--muted)">revised</span>':''}${flags.length?`<span class="minip" style="background:#FCEBEB;color:#A32D2D">⚑ ${flags.length}</span>`:''}</td>
+      <td>${money(b.unit)}<span style="color:var(--faint);font-size:11px">/u</span></td>
+      <td>${money(b.price)}${b.best==='price'&&canSeePrice()?'<span class="minip" style="background:#E1F5EE;color:#085041">best</span>':''}<div style="font-size:11px;color:var(--faint)">+${canSeePrice()?'$'+b.ship:'••'} ship · ${b.incoterms}</div></td>
+      <td>${b.lead}d${b.best==='fast'?'<span class="minip" style="background:#E6F1FB;color:#0C447C">fastest</span>':''}</td>
+      <td>★ ${b.score}</td></tr>`;
+  }).join('');
+}
+function renderBidCompare(){
+  const r=currentRFQ, qty=r.qty||BID_QTY;
+  const priceHead = canSeePrice()?'Total':'Total 🔒';
+  const declined = DECLINED[r.id]||[];
+  const splitTotal = Object.values(splitAlloc).reduce((a,b)=>a+(b||0),0);
+  document.getElementById('bidcompare').innerHTML = `
+    <span class="back" onclick="go('rfqs')"><i class="ti ti-arrow-left"></i> My RFQs</span>
+    <div class="sec"><h3>${r.title} — bids</h3><span class="v">${r.bids} bids · ${declined.length} declined · qty ${qty}</span></div>
+    ${persona()==='engineer'&&!SETTINGS.showPricingToEngineers?'<div class="banner"><i class="ti ti-eye-off"></i><span>Viewing as <b>engineer</b> — pricing hidden by admin. Lead time &amp; scorecard visible.</span></div>':''}
+    ${r.open?`<div class="banner"><i class="ti ti-clock"></i><span>Window still open — award unlocks after close.${r.autoExtend?' <b>Anti-sniping:</b> a bid in the final 10 min auto-extends the window.':''}</span></div>`:''}
+    <div class="meta-row">${tag(r.cat)}<span>${r.id}</span><span>${r.product}</span>${r.autoExtend?'<span class="pill st-info">auto-extend on</span>':''}</div>
+    <div class="toolbar">
+      <span class="fchip ${!splitMode?'on':''}" onclick="splitMode=false;selectedBid=null;renderBidCompare()">Single award</span>
+      <span class="fchip ${splitMode?'on':''}" onclick="splitMode=true;selectedBid=null;renderBidCompare()">Split award</span>
+      <span style="flex:1"></span>
+      <button class="btn btn-sm" onclick="exportBids()"><i class="ti ti-download" style="font-size:13px;vertical-align:-2px"></i> Export CSV</button>
+      <button class="btn btn-sm" onclick="duplicateRFQ('${r.id}')"><i class="ti ti-copy" style="font-size:13px;vertical-align:-2px"></i> Duplicate / re-run</button>
+    </div>
+    <div class="list" style="padding:0"><table><thead><tr><th>${splitMode?'Qty':''}</th><th>Supplier</th><th>Unit</th><th>${priceHead}</th><th>Lead</th><th>Score</th></tr></thead><tbody>${renderBidRows()}</tbody></table></div>
+    <div class="hint" style="margin-top:8px">Totals include shipping as quoted (incoterms shown). ${splitMode?`Allocate quantities across suppliers — split sums to <b>${splitTotal}</b> / ${qty}.`:'Tap a row to select the awardee.'}</div>
+    ${declined.length?`<div class="seclbl">Declined / no-bid (${declined.length}) — buyer signal</div>`+declined.map(d=>`<div class="li" style="border:0.5px solid var(--rule);border-radius:9px;margin-bottom:7px"><div><div class="lt">${d.supplier}</div><div class="lm">${d.reason}</div></div><span class="pill st-muted">no-bid</span></div>`).join(''):''}
+    <div class="award"><span class="n"><i class="ti ti-shield-check" style="font-size:15px;vertical-align:-2px;margin-right:5px"></i>Awarding requires internal sign-off before the PO is issued.</span>
+      <button class="btn btn-primary" ${r.open?'disabled style="opacity:.5;cursor:not-allowed"':''} onclick="awardConfirm()">Award &amp; request sign-off</button></div>`;
+}
+function selectBid(name){ selectedBid=name; renderBidCompare(); }
+function setSplit(name,v){ splitAlloc[name]=Math.max(0, parseInt(v)||0); }
+function awardConfirm(){
+  const r=currentRFQ, qty=r.qty||BID_QTY;
+  if(splitMode){
+    const parts=Object.entries(splitAlloc).filter(([,q])=>q>0);
+    if(!parts.length){ toast('Allocate quantity to at least one supplier'); return; }
+    const total=parts.reduce((a,[,q])=>a+q,0);
+    if(total!==qty){ toast(`Split must sum to ${qty} (currently ${total})`); return; }
+    const rows=parts.map(([s,q])=>{const b=BIDS.find(x=>x.supplier===s); return `<div class="sumrow"><span>${s} · ${q} units</span><span class="sv">${money(b.unit*q)}</span></div>`;}).join('')+`<div class="sumrow"><span>Total qty</span><span class="sv">${qty}</span></div>`;
+    openAwardModal(`Split award — ${r.title}`, rows, parts.map(p=>p[0]).filter(s=>supplierFlags(s).length));
+    return;
+  }
+  if(!selectedBid){ toast('Select a supplier row to award'); return; }
+  const b=BIDS.find(x=>x.supplier===selectedBid);
+  const lowest=Math.min(...BIDS.map(x=>x.price)), delta=b.price-lowest;
+  const rows=`
+    <div class="sumrow"><span>Supplier</span><span class="sv">${b.supplier} · ★ ${b.score}</span></div>
+    <div class="sumrow"><span>Unit price × ${qty}</span><span class="sv">${money(b.unit)} × ${qty}</span></div>
+    <div class="sumrow"><span>Shipping (${b.incoterms})</span><span class="sv">${money(b.ship)}</span></div>
+    <div class="sumrow"><span>Total</span><span class="sv">${money(b.price)}</span></div>
+    <div class="sumrow"><span>Lead time</span><span class="sv">${b.lead} days</span></div>
+    <div class="sumrow"><span>vs. lowest bid</span><span class="sv" style="color:${delta>0?'var(--warn)':'var(--good)'}">${delta>0?'+'+money(delta):'lowest bid'}</span></div>`;
+  openAwardModal(`Award — ${r.title}`, rows, supplierFlags(b.supplier).length?[b.supplier]:[]);
+}
+function openAwardModal(title, summaryRows, flaggedSuppliers){
+  const flags = (flaggedSuppliers||[]).flatMap(s=>supplierFlags(s).map(f=>({s,f})));
+  const flagBox = flags.length ? `
+    <div class="flagack">
+      <div style="font-weight:600"><i class="ti ti-alert-triangle" style="vertical-align:-2px"></i> ${flags.length} open risk flag${flags.length>1?'s':''} on ${[...new Set(flags.map(x=>x.s))].join(', ')}</div>
+      ${flags.map(x=>`<div class="fl"><i class="ti ti-point-filled" style="font-size:11px;margin-top:3px"></i><span><b>${x.s}:</b> ${x.f}</span></div>`).join('')}
+      <label class="chk" style="margin-top:11px"><input type="checkbox" id="ackflags" onchange="document.getElementById('awardgo').disabled=!this.checked"><span>I acknowledge these flags and accept responsibility for awarding despite them.</span></label>
+    </div>` : '';
+  openModal(`
+    <h3>${title}</h3>
+    <div class="msub">Confirm the award — this requests internal sign-off before a PO is issued.</div>
+    <div style="margin:8px 0 2px">${summaryRows}</div>
+    ${flagBox}
+    <div class="actions"><button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="awardgo" ${flags.length?'disabled':''} onclick="doAward()">Confirm &amp; request sign-off</button></div>`);
+}
+function doAward(){
+  const r=currentRFQ;
+  if(splitMode){
+    const parts=Object.entries(splitAlloc).filter(([,q])=>q>0);
+    parts.forEach(([s,q])=>logEvent(`Awarded ${q} units to ${s} (split)`, r.id, 'award'));
+    parts.forEach(([s])=>pushNotif('supplier','ti-check',`You were awarded part of ${r.title} (${r.id})`,()=>go('tracking')));
+    toast(`Split award sent for sign-off across ${parts.length} suppliers`);
+  } else {
+    logEvent(`Awarded to ${selectedBid} — sign-off requested`, r.id, 'award');
+    pushNotif('supplier','ti-check',`Your bid on ${r.title} (${r.id}) was accepted`, ()=>go('tracking'));
+    toast(`${selectedBid} awarded — sign-off requested, supplier notified`);
+  }
+  r.awarded=true; r.status=['Awarded','st-win']; r.open=false; closeModal(); renderRFQs(); go('rfqs');
+}
+function exportBids(){
+  const r=currentRFQ, rows=[['Supplier','Unit','Qty','Shipping','Incoterms','Total','Lead(days)','Score']];
+  BIDS.forEach(b=>rows.push([b.supplier,b.unit,(r.qty||BID_QTY),b.ship,b.incoterms,b.price,b.lead,b.score]));
+  (DECLINED[r.id]||[]).forEach(d=>rows.push([d.supplier,'no-bid','','','','','',d.reason]));
+  downloadCSV(`${r.id}-bids.csv`, rows); logEvent('Exported bid tabulation', r.id, 'export'); toast('Bid tabulation exported (CSV)');
+}
+function downloadCSV(name, rows){
+  const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a'); a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv); a.download=name; document.body.appendChild(a); a.click(); a.remove();
+}
+function duplicateRFQ(id){ logEvent('Duplicated RFQ to new draft', id, 'rfq'); toast(`Duplicated ${id} as a new draft`); go('createrfq'); }
+function acceptBid(name){ logEvent(`Accepted bid from ${name}`, currentRFQ?currentRFQ.id:'', 'award'); pushNotif('supplier','ti-check',`Your bid was accepted by the buyer`,()=>go('tracking')); toast('Bid from '+name+' accepted — supplier notified, lead time started'); go('tracking'); }
 
 /* ---------------- supplier profile (buyer diligence) ---------------- */
 let profileReturn = 'bidcompare';
@@ -1089,9 +1314,21 @@ function renderSuppFeedback(){
   document.getElementById('supp-feedback').innerHTML = SUPP_FEEDBACK.map(f=>`<div class="li"><div><div class="lt">${f.title} <span class="pill st-muted" style="margin-left:4px">${f.part}</span></div><div class="lm">${f.note}</div></div><div class="lr"><span style="color:#E0A24E">${'★'.repeat(f.rating)}${'☆'.repeat(5-f.rating)}</span></div></div>`).join('');
 }
 
+/* ---------------- audit trail ---------------- */
+function renderAudit(){
+  const kindIcon={bid:'ti-gavel', view:'ti-eye', nda:'ti-file-check', addendum:'ti-speakerphone', rfq:'ti-file-text', award:'ti-award', decline:'ti-ban', export:'ti-download', evt:'ti-point'};
+  const kindColor={bid:'var(--brand)', view:'var(--faint)', nda:'var(--good)', addendum:'var(--brand)', rfq:'var(--muted)', award:'var(--win)', decline:'var(--danger)', export:'var(--muted)', evt:'var(--faint)'};
+  const rows = AUDIT.map(a=>`<tr><td style="white-space:nowrap;color:var(--muted)">${a.t}</td><td><i class="ti ${kindIcon[a.kind]||'ti-point'}" style="color:${kindColor[a.kind]||'var(--faint)'};font-size:15px;vertical-align:-2px;margin-right:6px"></i>${a.action}</td><td>${a.actor}</td><td><span class="pill st-muted">${a.target||'—'}</span></td></tr>`).join('');
+  document.getElementById('audit-body').innerHTML = `
+    <div class="sec"><h3>Activity &amp; audit trail</h3><span class="v"><button class="btn btn-sm" onclick="exportAudit()"><i class="ti ti-download" style="font-size:13px;vertical-align:-2px"></i> Export</button></span></div>
+    <div class="banner info"><i class="ti ti-lock"></i><span>Every drawing view, bid, NDA, addendum and award is recorded — timestamped, attributable, and exportable for procurement compliance.</span></div>
+    <div class="list" style="padding:0"><table><thead><tr><th>When</th><th>Action</th><th>Actor</th><th>RFQ / part</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+function exportAudit(){ const rows=[['When','Action','Actor','Target','Kind']]; AUDIT.forEach(a=>rows.push([a.t,a.action,a.actor,a.target,a.kind])); downloadCSV('forerun-audit.csv', rows); toast('Audit trail exported (CSV)'); }
+
 /* ---------------- init ---------------- */
 function renderLists(){ renderOppFilters(); renderOpps(); renderKanban(); renderRFQs(); renderSuppliers(); renderSuppFeedback(); }
-renderNav(); renderLists(); updatePersonaLabel();
+renderNav(); renderLists(); updatePersonaLabel(); updateBell();
 document.getElementById('persona-pick').style.display='none';
 </script>
 </body>
