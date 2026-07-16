@@ -1,54 +1,72 @@
 'use strict';
 /*
  * Forerun Exchange — application server.
- * Serves the single-page app from /public and persists application state
- * through a tiny JSON store. The client hydrates from GET /api/state and
- * syncs mutations back via PUT /api/state.
+ * Auth + validated REST endpoints; all business logic lives in src/model.js.
  */
 const express = require('express');
+const cookieParser = require('cookie-parser');
 const path = require('path');
-const store = require('./src/store');
+const model = require('./src/model');
 
 const app = express();
 app.disable('x-powered-by');
-app.use(express.json({ limit: '8mb' }));
+app.use(express.json({ limit: '2mb' }));
+app.use(cookieParser());
 
-// health check (useful for Railway)
-app.get('/api/health', (req, res) => {
-  res.json({ ok: true, service: 'forerun-exchange', time: new Date().toISOString() });
+const COOKIE = 'fx_session';
+const cookieOpts = { httpOnly: true, sameSite: 'lax', maxAge: 1000 * 60 * 60 * 24 * 7 };
+
+function currentAccount(req) { return model.accountForToken(req.cookies[COOKIE]); }
+function requireAuth(req, res, next) {
+  const a = currentAccount(req);
+  if (!a) return res.status(401).json({ error: 'Not authenticated' });
+  req.account = a; next();
+}
+
+app.get('/api/health', (req, res) => res.json({ ok: true, service: 'forerun-exchange', time: new Date().toISOString() }));
+
+/* ---- auth ---- */
+app.post('/api/login', (req, res) => {
+  try {
+    const { token, account } = model.login(req.body.email, req.body.password);
+    res.cookie(COOKIE, token, cookieOpts);
+    res.json({ ok: true, state: model.viewerState(account) });
+  } catch (e) { res.status(e.status || 500).json({ error: e.message }); }
+});
+app.post('/api/logout', (req, res) => { model.logout(req.cookies[COOKIE]); res.clearCookie(COOKIE); res.json({ ok: true }); });
+
+/* ---- state ---- */
+app.get('/api/state', requireAuth, (req, res) => res.json({ state: model.viewerState(req.account) }));
+
+/* ---- operations ---- */
+const OPS = ['toggleSave', 'viewVault', 'signNda', 'submitBid', 'declineBid', 'postMessage', 'award',
+  'advanceOrder', 'addTracking', 'reportDelay', 'reviewOrder', 'reorder', 'duplicateRfq', 'publishRfq',
+  'readNotif', 'markAllRead', 'addUser', 'updateUserRole', 'updateSettings'];
+for (const name of OPS) {
+  app.post('/api/' + name, requireAuth, async (req, res) => {
+    try {
+      const result = await model.ops[name](req.account, req.body || {});
+      res.json({ ok: true, msg: result.msg || '', state: model.viewerState(req.account) });
+    } catch (e) {
+      res.status(e.status || 500).json({ error: e.message, state: model.viewerState(req.account) });
+    }
+  });
+}
+
+/* ---- admin: reset (demo convenience) ---- */
+app.post('/api/reset', requireAuth, async (req, res) => {
+  if (!(req.account.role === 'buyer' && req.account.persona === 'admin')) return res.status(403).json({ error: 'Admins only' });
+  await model.reset(); res.json({ ok: true });
 });
 
-// read the whole application state (null if never seeded)
-app.get('/api/state', (req, res) => {
-  res.json(store.load());
-});
-
-// persist the whole application state
-app.put('/api/state', (req, res) => {
-  const body = req.body;
-  if (!body || typeof body !== 'object' || Array.isArray(body)) {
-    return res.status(400).json({ error: 'state must be a JSON object' });
-  }
-  store.save(body);
-  res.json({ ok: true });
-});
-
-// wipe persisted state (re-seeds from the client's built-in defaults on next load)
-app.post('/api/reset', (req, res) => {
-  store.clear();
-  res.json({ ok: true });
-});
-
-// static assets
+/* ---- static + SPA fallback ---- */
 app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
-
-// SPA fallback for any non-API route
 app.get('*', (req, res) => {
   if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'not found' });
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Forerun Exchange listening on :${PORT}  (data dir: ${store.DIR})`);
-});
+model.init().then(() => {
+  app.listen(PORT, () => console.log(`Forerun Exchange listening on :${PORT}`));
+}).catch(err => { console.error('Failed to initialize:', err); process.exit(1); });

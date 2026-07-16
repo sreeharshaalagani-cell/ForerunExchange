@@ -301,3 +301,16 @@
   .splitrow:first-child{border-top:none;} .splitrow .sn{flex:1; font-size:13px;} .splitrow input{width:74px;}
   .chk{display:flex; align-items:flex-start; gap:9px; font-size:13px; cursor:pointer;} .chk input{width:auto; margin-top:3px;}
   @media (max-width:640px){ .row2,.row3{grid-template-columns:1fr;} .side{width:64px;} .side .nm,.roletoggle,.persona-pick{display:none;} .notifs{right:8px; width:calc(100vw - 32px);} }
+
+/* ---------------- login screen ---------------- */
+.login-screen{position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:var(--paper); z-index:200; padding:20px;}
+.login-card{background:var(--panel); border:0.5px solid var(--rule); border-radius:16px; padding:26px 26px 22px; max-width:400px; width:100%; box-shadow:0 20px 55px rgba(0,0,0,.16);}
+.login-brand{display:flex; align-items:center; gap:10px; font-family:"Archivo",sans-serif; font-weight:700; font-size:19px; letter-spacing:-.01em;}
+.login-brand .lg{width:30px; height:30px; border-radius:8px; background:#3A5CCC; color:#fff; display:flex; align-items:center; justify-content:center; font-family:"Archivo"; font-weight:800; font-size:16px;}
+@media (prefers-color-scheme:dark){ .login-brand .lg{background:#7C93F0;} }
+.login-sub{font-size:12.5px; color:var(--muted); margin:6px 0 18px;}
+.login-err{background:#FCEBEB; color:#A32D2D; font-size:12.5px; padding:9px 12px; border-radius:8px; margin-bottom:14px;}
+@media (prefers-color-scheme:dark){ .login-err{background:#2A1414; color:#E27A7A;} }
+.login-demo{font-size:11.5px; color:var(--faint); text-align:center; margin:18px 0 10px; position:relative;}
+.login-accts{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+.login-accts .btn{width:100%;}

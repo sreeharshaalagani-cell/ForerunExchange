@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<div class="app" id="app" data-role="supplier" data-persona="buyer">
+<div class="app" id="app" data-role="supplier" data-persona="buyer" style="display:none">
   <aside class="side">
     <div class="shead">
       <div class="brand"><span class="lg">F</span><span class="nm">Forerun</span></div>
@@ -36,7 +36,7 @@
   <section class="main">
     <div class="tbar">
       <h3 id="view-title">Opportunities</h3>
-      <div class="right"><button class="bell" id="bell" onclick="toggleNotifs(event)" aria-label="Notifications"><i class="ti ti-bell"></i><span class="bdot" id="bdot">0</span></button><span class="persona" id="persona">Acme Precision · supplier</span><span class="av" id="avatar">AP</span></div>
+      <div class="right"><button class="bell" id="bell" onclick="toggleNotifs(event)" aria-label="Notifications"><i class="ti ti-bell"></i><span class="bdot" id="bdot">0</span></button><span class="persona" id="persona">Acme Precision · supplier</span><span class="av" id="avatar">AP</span><button class="btn btn-sm btn-ghost" id="logoutbtn" onclick="logout()" title="Log out"><i class="ti ti-logout" style="font-size:15px;vertical-align:-2px"></i></button></div>
     </div>
     <div class="notifs" id="notifs"></div>
     <div class="body">
