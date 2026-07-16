@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forerun Exchange</title>
+<meta name="description" content="Forerun Exchange — reverse-auction procurement for semiconductor R&D parts.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.7.0/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app" id="app" data-role="supplier" data-persona="buyer">
+  <aside class="side">
+    <div class="shead">
+      <div class="brand"><span class="lg">F</span><span class="nm">Forerun</span></div>
+      <button class="cbtn" onclick="document.getElementById('app').classList.toggle('collapsed')" aria-label="Toggle navigation"><i class="ti ti-chevron-left"></i></button>
+    </div>
+    <div class="roletoggle">
+      <button id="role-sup" class="on" onclick="setRole('supplier')">Supplier</button>
+      <button id="role-buy" onclick="setRole('buyer')">Buyer</button>
+    </div>
+    <div class="persona-pick" id="persona-pick">
+      <div class="pl">Signed in as</div>
+      <div class="segrole">
+        <button data-p="admin" onclick="setPersona('admin')">Admin</button>
+        <button data-p="buyer" class="on" onclick="setPersona('buyer')">Buyer</button>
+        <button data-p="engineer" onclick="setPersona('engineer')">Engineer</button>
+      </div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+  </aside>
+
+  <section class="main">
+    <div class="tbar">
+      <h3 id="view-title">Opportunities</h3>
+      <div class="right"><button class="bell" id="bell" onclick="toggleNotifs(event)" aria-label="Notifications"><i class="ti ti-bell"></i><span class="bdot" id="bdot">0</span></button><span class="persona" id="persona">Acme Precision · supplier</span><span class="av" id="avatar">AP</span></div>
+    </div>
+    <div class="notifs" id="notifs"></div>
+    <div class="body">
+      <!-- SUPPLIER: opportunities -->
+      <div class="view on" id="view-opportunities">
+        <div class="kpis">
+          <div class="k clickable" onclick="oppFilter='all';oppSoon=false;renderOppFilters();renderOpps()"><div class="l">Open</div><div class="v">8</div><div class="d">in your categories →</div></div>
+          <div class="k clickable" onclick="oppSoon=true;renderOppFilters();renderOpps()"><div class="l">Closing today</div><div class="v">2</div><div class="d">filter →</div></div>
+          <div class="k clickable" onclick="go('mybids')"><div class="l">Active bids</div><div class="v">3</div><div class="d">view board →</div></div>
+          <div class="k clickable" onclick="go('tracking')"><div class="l">On-time</div><div class="v">96%</div><div class="d up">41 orders →</div></div>
+        </div>
+        <div class="sec"><h3>Open opportunities</h3><span class="v">tap a card to view &amp; bid</span></div>
+        <div class="toolbar" id="opp-filters"></div>
+        <div class="feed" id="opp-feed"></div>
+      </div>
+
+      <!-- SHARED: opportunity detail + bid -->
+      <div class="view" id="view-opportunity"><div id="opp-detail"></div></div>
+
+      <!-- SUPPLIER: my bids -->
+      <div class="view" id="view-mybids">
+        <div class="sec"><h3>My bids</h3><span class="v">grouped by stage</span></div>
+        <div class="kanban" id="mybids-kanban"></div>
+      </div>
+
+      <!-- SHARED: orders & tracking -->
+      <div class="view" id="view-tracking"><div id="tracking-body"></div></div>
+
+      <!-- SHARED: messages / chat -->
+      <div class="view" id="view-messages"><div id="messages-body"></div></div>
+
+      <!-- SUPPLIER: scorecard -->
+      <div class="view" id="view-scorecard">
+        <div class="sec"><h3>Annual supplier scorecard</h3><span class="v">2025 · Acme Precision</span></div>
+        <div class="sc-grid">
+          <div class="sc"><div class="l">Overall</div><div class="v">4.6</div><div class="bar"><span style="width:92%"></span></div></div>
+          <div class="sc"><div class="l">Collaboration</div><div class="v">4.7</div><div class="bar"><span style="width:94%"></span></div></div>
+          <div class="sc"><div class="l">Turnaround</div><div class="v">4.4</div><div class="bar"><span style="width:88%"></span></div></div>
+          <div class="sc"><div class="l">Quality</div><div class="v">4.5</div><div class="bar"><span style="width:90%"></span></div></div>
+        </div>
+        <div class="panelcard"><div class="vault" style="border-color:var(--brand)"><div><div class="t">Why this matters</div><div class="n">Buyers rate every closed job on quality and spec conformance. Scores post here immediately and weigh into award decisions alongside price and lead time.</div></div></div></div>
+        <div class="sec"><h3>Recent job feedback</h3></div>
+        <div class="list" id="supp-feedback"></div>
+      </div>
+
+      <!-- SUPPLIER: company profile / onboarding -->
+      <div class="view" id="view-company"><div id="company-body"></div></div>
+
+      <!-- BUYER: RFQs -->
+      <div class="view" id="view-rfqs">
+        <div class="kpis">
+          <div class="k"><div class="l">Open RFQs</div><div class="v">3</div></div>
+          <div class="k clickable" onclick="openRFQ('SV-300')"><div class="l">Awaiting award</div><div class="v">1</div><div class="d">review bids →</div></div>
+          <div class="k clickable" onclick="trackTab='delayed';go('tracking')"><div class="l">In production</div><div class="v">4</div><div class="d" style="color:var(--danger)">1 late →</div></div>
+          <div class="k clickable" onclick="go('tracking')"><div class="l">R&amp;D spend</div><div class="v">$148k</div><div class="d">across 3 groups →</div></div>
+        </div>
+        <div class="sec"><h3>My requests</h3><span class="v"><button class="btn btn-primary btn-sm" onclick="go('createrfq')">+ New request</button></span></div>
+        <div class="list" id="rfq-list"></div>
+      </div>
+
+      <!-- BUYER: create RFQ -->
+      <div class="view" id="view-createrfq">
+        <span class="back" onclick="go('rfqs')"><i class="ti ti-arrow-left"></i> My RFQs</span>
+        <div class="sec"><h3>New part request</h3><span class="v">posts to qualified suppliers in the category</span></div>
+        <div class="panelcard">
+          <div class="field"><label>Title</label><input type="text" value="Vacuum flange, 6061-T6"></div>
+          <div class="row2">
+            <div class="field"><label>Part number</label><input type="text" value="VF-6061-204"></div>
+            <div class="field"><label>Category</label><select id="cat-select"></select></div>
+          </div>
+          <div class="row3">
+            <div class="field"><label>Quantity</label><input type="text" value="12"></div>
+            <div class="field"><label>Product / project</label><select><option>Litho stage</option><option>Etch chamber</option><option>Deposition module</option></select></div>
+            <div class="field"><label>Cost center</label><select><option>RND-LITHO-204</option><option>RND-ETCH-118</option><option>RND-DEP-330</option></select></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label>Assign engineer (technical questions route here)</label><select><option>Priya Rao — Litho</option><option>Marcus Vogel — Etch</option></select></div>
+            <div class="field"><label>Assign buyer</label><select><option>You (Sam Ortiz)</option><option>Lena Park</option></select></div>
+          </div>
+          <div class="field"><label>Requirements</label><textarea>Tolerance ±0.05mm on bore ID. Hard anodized. Test batch ahead of production qualification.</textarea></div>
+          <div class="row2">
+            <div class="field"><label>Drawing (vault link — IP stays in your vault)</label><input type="text" value="scv://northvale-vault/rfq/VF-6061-204"><div class="hint">Forerun stores only the part number &amp; link — never the drawing file.</div></div>
+            <div class="field"><label>Bid window</label><select><option>3 days</option><option>2 days</option><option>5 days</option></select></div>
+          </div>
+          <div class="field"><label>NDA required to view drawing</label>
+            <select><option>Category NDA (qualified suppliers)</option><option>Drawing-specific NDA</option><option>None — non-critical / common part</option></select>
+            <div class="hint">New suppliers must accept this before the drawing unlocks.</div>
+          </div>
+          <div class="actions"><button class="btn" onclick="go('rfqs')">Save draft</button><button class="btn btn-primary" onclick="publishRFQ()">Publish RFQ</button></div>
+        </div>
+      </div>
+
+      <!-- BUYER: suppliers -->
+      <div class="view" id="view-suppliers">
+        <div class="sec"><h3>Qualified suppliers</h3><span class="v">by category</span></div>
+        <div class="list" id="sup-list"></div>
+      </div>
+
+      <!-- BUYER: scorecards -->
+      <div class="view" id="view-scorecards">
+        <div class="sec"><h3>Supplier scorecards</h3><span class="v">quality &amp; delivery, updated on job close</span></div>
+        <div class="list" id="scorecards-list"></div>
+      </div>
+
+      <!-- BUYER: admin -->
+      <div class="view" id="view-admin"><div id="admin-body"></div></div>
+
+      <!-- SHARED: audit trail / activity -->
+      <div class="view" id="view-audit"><div id="audit-body"></div></div>
+
+      <!-- SHARED: bid comparison + award -->
+      <div class="view" id="view-bidcompare"><div id="bidcompare"></div></div>
+
+      <!-- SHARED: supplier profile (buyer diligence) -->
+      <div class="view" id="view-supplier-profile"><div id="supplier-profile"></div></div>
+    </div>
+  </section>
+</div>
+
+<div class="overlay" id="overlay"><div class="modal" id="modal"></div></div>
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toast-msg"></span></div>
+
+<script src="app.js"></script>
+</body>
+</html>
