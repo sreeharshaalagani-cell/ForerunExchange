@@ -12,16 +12,16 @@ npm start
 # open http://localhost:3000
 ```
 
-Sign in with a demo account (password **`demo1234`**):
+**Self-serve registration:** create a *Buyer workspace* (you become its admin and invite buyers/engineers with temporary passwords) or *Register as supplier* (pick capability categories; the Research Agent marks you "verification pending" until diligence completes).
 
-| Account | Email | Sees |
+**Demo accounts** (password `demo1234`) — each role gets different functionality, enforced server-side:
+
+| Account | Email | Role-driven functionality |
 |---|---|---|
-| Supplier (Acme) | `acme@forerun.dev` | Opportunities, bids, own orders |
-| Buyer · Admin | `dana@northvale.com` | Everything incl. user/role admin |
-| Buyer | `sam@northvale.com` | RFQs, award, tracking, scorecards |
-| Engineer | `priya@northvale.com` | RFQs & tracking, **prices masked, cannot award** |
-
-The sidebar Supplier/Buyer + Admin/Buyer/Engineer controls switch between these demo accounts (real re-login under the hood).
+| Supplier | `acme@forerun.dev` | Opportunities in qualified categories, NDA-gated bidding, own orders/tracking/delays, scorecard, company profile |
+| Engineer | `priya@northvale.com` | Create RFQs, answer questions/addenda, tracking — **prices masked, cannot award/close windows** |
+| Buyer | `sam@northvale.com` | Engineer + prices, close bid windows, single/split awards (flag-ack), quality reviews, reorder |
+| Admin | `dana@northvale.com` | Buyer + users/roles/groups, pricing-visibility setting |
 
 ## Architecture
 
@@ -33,11 +33,12 @@ The sidebar Supplier/Buyer + Admin/Buyer/Engineer controls switch between these 
 
 ### Server-enforced rules (not just UI)
 
-- **Auth required** for every `/api/*` operation (401 otherwise).
-- **Price masking:** engineers get `null` bid/order prices unless an admin enables "show pricing to engineers".
-- **Award authorization:** only Buyer/Admin can award; **engineers are blocked (403)**.
-- **Award validation:** window must be closed; flagged suppliers require explicit `ackFlags`; split awards must sum to the RFQ quantity.
-- **Ownership checks:** suppliers can only advance/track/delay their own orders.
+- **Multi-tenant isolation:** buyers see only their company's RFQs/orders/audit; suppliers see only opportunities matching their capability categories and their own bids/orders.
+- **Role authorization:** engineers cannot award, close windows, or review quality (403); only admins manage users/settings; suppliers cannot touch buyer-side ops and vice-versa.
+- **Price masking:** engineers receive null prices from the API unless their admin enables visibility.
+- **Bid rules:** NDA must be signed before bidding (when required); real time-based windows; anti-sniping auto-extends the window 10 min on late bids; bids revisable until close.
+- **Award rules:** window must be closed (or closed early by a buyer); flagged suppliers — including newly registered "verification pending" ones — require explicit acknowledgment; split awards must sum to the RFQ quantity.
+- **Scorecards are computed** from real quality reviews on closed jobs.
 
 ### API (all POST unless noted, all require the session cookie)
 

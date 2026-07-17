@@ -1,8 +1,12 @@
 'use strict';
 /*
- * Domain model + business logic. All mutations run here, server-side, with
- * validation and role-based authorization. The client never mutates state
- * directly — it calls endpoints that invoke these operations.
+ * Domain model + business logic (multi-tenant, role-driven).
+ * Roles:
+ *   supplier  — bid/decline/NDA on opportunities in their categories; manage own orders & company profile
+ *   engineer  — create RFQs, answer questions/addenda, tracking; prices masked (per company setting); cannot award
+ *   buyer     — everything an engineer can + see prices, close windows, award, quality reviews, reorder
+ *   admin     — everything a buyer can + user/role/group management and settings
+ * Every operation validates authorization server-side; the UI only mirrors it.
  */
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
@@ -10,304 +14,571 @@ const db = require('./db');
 const { seed } = require('./seed');
 
 let state = null;
-const sessions = new Map(); // token -> accountId
+const sessions = new Map(); // token -> userId
 
 function err(status, message) { const e = new Error(message); e.status = status; return e; }
+const now = () => Date.now();
 
 async function init() {
   await db.init();
   state = await db.load();
-  if (!state || !state.__seeded) { state = seed(); await db.save(state); }
-  console.log(`[model] state ready (${db.kind}) — accounts: ${state.accounts.length}`);
+  if (!state || !state.__seeded || state.version !== 3) { state = seed(); await db.save(state); }
+  console.log(`[model] state ready (${db.kind}) — companies: ${state.companies.length}, users: ${state.users.length}`);
 }
 async function persist() { await db.save(state); }
 
-/* ---------------- auth ---------------- */
-function accountByEmail(email) {
-  return state.accounts.find(a => a.email.toLowerCase() === String(email || '').toLowerCase());
-}
-function accountById(id) { return state.accounts.find(a => a.id === id); }
+/* ---------------- lookups ---------------- */
+const company = id => state.companies.find(c => c.id === id);
+const userById = id => state.users.find(u => u.id === id);
+const userByEmail = e => state.users.find(u => u.email.toLowerCase() === String(e || '').toLowerCase().trim());
+const rfqById = id => state.rfqs.find(r => r.id === id);
+const orderById = id => state.orders.find(o => o.id === id);
+const supProfile = cid => state.supplierProfiles[cid];
+const supName = cid => (company(cid) || {}).name || 'Unknown';
 
+/* ---------------- roles & permissions ---------------- */
+const isSupplier = u => u.persona === 'supplier';
+const isBuyerSide = u => !isSupplier(u);
+const isAdmin = u => u.persona === 'admin';
+const canAward = u => u.persona === 'buyer' || u.persona === 'admin';
+function companySettings(cid) { return state.settingsByCompany[cid] || (state.settingsByCompany[cid] = { showPricingToEngineers: false }); }
+const canSeePrice = u => isSupplier(u) || u.persona !== 'engineer' || !!companySettings(u.companyId).showPricingToEngineers;
+function requireSupplier(u) { if (!isSupplier(u)) throw err(403, 'Suppliers only'); }
+function requireBuyerSide(u) { if (!isBuyerSide(u)) throw err(403, 'Buyer-side only'); }
+function requireAward(u) { if (!canAward(u)) throw err(403, 'Only a buyer or admin can do this (engineers cannot).'); }
+function requireAdmin(u) { if (!isAdmin(u)) throw err(403, 'Admins only'); }
+
+function actorName(u) {
+  if (isSupplier(u)) return supName(u.companyId);
+  return `${u.name} (${u.persona.charAt(0).toUpperCase() + u.persona.slice(1)})`;
+}
+function audit(u, action, target, kind, extraCompanyIds) {
+  const ids = new Set([u.companyId, ...(extraCompanyIds || [])]);
+  state.audit.unshift({ t: stamp(), companyIds: [...ids], actor: actorName(u), action, target: target || '', kind: kind || 'evt' });
+}
+function notify(companyId, role, icon, text, link) {
+  state.notifications.unshift({ id: ++state.seq, companyId, role: role || null, icon, text, when: 'just now', unread: true, link: link || null });
+}
+function stamp() { const d = new Date(); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' · ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }); }
+function supplierFlags(cid) { const sp = supProfile(cid); const p = sp && state.profiles[sp.profileName]; return p ? p.research.flags : []; }
+
+/* ---------------- time / window helpers ---------------- */
+function humanize(ms) {
+  if (ms <= 0) return 'closed';
+  const m = Math.floor(ms / 60000), h = Math.floor(m / 60), d = Math.floor(h / 24);
+  if (d >= 1) return `${d}d ${h % 24}h`;
+  if (h >= 1) return `${h}h ${m % 60}m`;
+  return `${m}m`;
+}
+const windowOpen = r => r.status === 'open' && r.closesAt > now();
+function rfqBids(id) { return state.bids.filter(b => b.rfqId === id); }
+function bidPrice(b, r) { return b.unit * r.qty + (b.ship || 0); }
+
+/* ---------------- scorecard (computed) ---------------- */
+function supplierScore(cid) {
+  const sp = supProfile(cid); if (!sp) return { score: null, jobs: 0, ontime: null };
+  const revs = state.reviews.filter(v => v.supplierCompanyId === cid);
+  const jobs = sp.baseJobs + revs.length;
+  const sum = (sp.baseScore || 0) * sp.baseJobs + revs.reduce((a, v) => a + v.rating, 0);
+  const score = jobs ? Math.round((sum / jobs) * 10) / 10 : null;
+  return { score, jobs, ontime: sp.ontime };
+}
+
+/* ---------------- auth & registration ---------------- */
 function login(email, password) {
-  const a = accountByEmail(email);
-  if (!a || !bcrypt.compareSync(String(password || ''), a.passHash)) throw err(401, 'Invalid email or password');
+  const u = userByEmail(email);
+  if (!u || !bcrypt.compareSync(String(password || ''), u.passHash)) throw err(401, 'Invalid email or password');
+  if (u.status === 'Invited') u.status = 'Active';
   const token = crypto.randomBytes(24).toString('hex');
-  sessions.set(token, a.id);
-  return { token, account: a };
+  sessions.set(token, u.id);
+  return { token, user: u };
 }
 function logout(token) { sessions.delete(token); }
-function accountForToken(token) { const id = sessions.get(token); return id ? accountById(id) : null; }
+function userForToken(token) { const id = sessions.get(token); return id ? userById(id) : null; }
 
-/* ---------------- authorization helpers ---------------- */
-const isSupplier = a => a.role === 'supplier';
-const isBuyer = a => a.role === 'buyer';
-const canSeePrice = a => isSupplier(a) || a.persona !== 'engineer' || !!state.settings.showPricingToEngineers;
-const canAward = a => isBuyer(a) && (a.persona === 'buyer' || a.persona === 'admin');
-const isAdmin = a => isBuyer(a) && a.persona === 'admin';
-function requireSupplier(a) { if (!isSupplier(a)) throw err(403, 'Suppliers only'); }
-function requireBuyer(a) { if (!isBuyer(a)) throw err(403, 'Buyer-side only'); }
-function requireAdmin(a) { if (!isAdmin(a)) throw err(403, 'Admins only'); }
+async function registerBuyer({ companyName, name, email, password }) {
+  if (!companyName || !name || !email || !password) throw err(400, 'All fields are required');
+  if (String(password).length < 8) throw err(400, 'Password must be at least 8 characters');
+  if (userByEmail(email)) throw err(409, 'An account with this email already exists');
+  const cid = 'c_' + (++state.seq);
+  state.companies.push({ id: cid, name: companyName.trim(), type: 'buyer' });
+  const u = { id: 'u_' + (++state.seq), email: email.trim(), passHash: bcrypt.hashSync(password, 10), name: name.trim(), companyId: cid, persona: 'admin', group: 'Supply Chain', status: 'Active' };
+  state.users.push(u);
+  state.groupsByCompany[cid] = ['Supply Chain'];
+  state.settingsByCompany[cid] = { showPricingToEngineers: false };
+  state.audit.unshift({ t: stamp(), companyIds: [cid], actor: `${u.name} (Admin)`, action: 'Created buyer workspace ' + companyName, target: '', kind: 'evt' });
+  await persist();
+  return u;
+}
 
-function actorName(a) {
-  if (isSupplier(a)) return a.company;
-  return `${a.name} (${a.persona.charAt(0).toUpperCase() + a.persona.slice(1)})`;
-}
-function audit(a, action, target, kind) { state.audit.unshift({ t: 'just now', actor: actorName(a), action, target: target || '', kind: kind || 'evt' }); }
-function notify(role, icon, text, link) { state.notifs.unshift({ id: ++state.nid, role, icon, text, when: 'just now', unread: true, link: link || null }); }
-function supplierFlags(name) { const p = state.profiles[name]; return p ? p.research.flags : []; }
-
-/* ---------------- viewer-scoped state ---------------- */
-function publicAccounts() {
-  return state.accounts.map(a => ({ id: a.id, email: a.email, name: a.name, role: a.role, persona: a.persona, company: a.company }));
-}
-function me(a) {
-  return { id: a.id, email: a.email, name: a.name, role: a.role, persona: a.persona, company: a.company,
-           canSeePrice: canSeePrice(a), canAward: canAward(a), isAdmin: isAdmin(a) };
-}
-function maskBid(b) { return { ...b, unit: null, ship: null, price: null, masked: true }; }
-function viewerState(a) {
-  const see = canSeePrice(a);
-  const bidsByRfq = {};
-  for (const k of Object.keys(state.bidsByRfq)) bidsByRfq[k] = state.bidsByRfq[k].map(b => see ? b : maskBid(b));
-  const orders = state.orders.map(o => see ? o : { ...o, price: null });
-  const mybids = state.mybids.map(m => see ? m : { ...m, price: null });
-  return {
-    me: me(a),
-    accounts: publicAccounts(),
-    opps: state.opps, mybids, rfqs: state.rfqs, bidsByRfq, declined: state.declined,
-    addenda: state.addenda, sups: state.sups, orders, threads: state.threads,
-    suppFeedback: state.suppFeedback, users: state.users, groups: state.groups,
-    settings: state.settings, saved: state.saved, ndaSigned: state.ndaSigned,
-    notifs: state.notifs.filter(n => n.role === a.role), audit: state.audit, profiles: state.profiles
+async function registerSupplier({ companyName, name, email, password, cats, rnd, about, location }) {
+  if (!companyName || !name || !email || !password) throw err(400, 'All fields are required');
+  if (String(password).length < 8) throw err(400, 'Password must be at least 8 characters');
+  if (userByEmail(email)) throw err(409, 'An account with this email already exists');
+  const catList = Array.isArray(cats) && cats.length ? cats : ['cnc'];
+  const cid = 'c_' + (++state.seq);
+  state.companies.push({ id: cid, name: companyName.trim(), type: 'supplier' });
+  const u = { id: 'u_' + (++state.seq), email: email.trim(), passHash: bcrypt.hashSync(password, 10), name: name.trim(), companyId: cid, persona: 'supplier', group: '', status: 'Active' };
+  state.users.push(u);
+  state.supplierProfiles[cid] = { cats: catList, rnd: rnd !== false, baseScore: 0, baseJobs: 0, ontime: null, profileName: companyName.trim() };
+  state.profiles[companyName.trim()] = {
+    id: 'SUP-' + (1000 + state.seq), cats: catList, score: null,
+    provided: { about: about || 'Newly registered supplier.', founded: '—', location: location || '—', employees: '—', leadtime: '—', capacity: '—', capabilities: [], materials: [], certs: [] },
+    research: { confidence: 30, summary: 'Newly registered supplier — Research Agent verification is in progress. Certifications, financials and screening have not been independently confirmed yet.',
+      findings: [
+        { key: 'Certifications', status: 'unverified', detail: 'Claimed certifications not yet confirmed with registrar.', source: 'pending' },
+        { key: 'Denied-party screening', status: 'unverified', detail: 'Screening queued.', source: 'pending' },
+        { key: 'Delivery performance', status: 'unverified', detail: 'No platform history yet.', source: 'Forerun history' }
+      ], flags: ['Newly registered — verification pending. Confirm diligence before sharing controlled drawings.'] }
   };
+  state.audit.unshift({ t: stamp(), companyIds: [cid], actor: companyName.trim(), action: 'Registered as supplier', target: '', kind: 'evt' });
+  await persist();
+  return u;
 }
+
+/* ---------------- projections (viewer-scoped state) ---------------- */
+function me(u) {
+  return { id: u.id, email: u.email, name: u.name, company: supName(u.companyId), companyId: u.companyId,
+           role: isSupplier(u) ? 'supplier' : 'buyer', persona: u.persona,
+           canSeePrice: canSeePrice(u), canAward: canAward(u), isAdmin: isAdmin(u), canCreateRfq: isBuyerSide(u) };
+}
+
+function bidView(b, r, see) {
+  const price = bidPrice(b, r);
+  const sc = supplierScore(b.supplierCompanyId);
+  return { supplier: supName(b.supplierCompanyId), supplierCompanyId: b.supplierCompanyId,
+    unit: see ? b.unit : null, ship: see ? b.ship : null, price: see ? price : null, masked: !see,
+    incoterms: b.incoterms, lead: b.lead, revised: !!b.revised, score: sc.score, notes: b.notes || '' };
+}
+
+function rfqStatus(r) {
+  if (r.status === 'draft') return ['Draft', 'st-muted'];
+  if (r.status === 'awarded') return ['Awarded', 'st-win'];
+  if (windowOpen(r)) return ['Open', 'st-good'];
+  return ['Closed · review bids', 'st-warn'];
+}
+
+function supplierBidStage(u, r, myBid) {
+  if (r.status === 'awarded') {
+    const won = state.orders.some(o => o.rfqId === r.id && o.supplierCompanyId === u.companyId);
+    return won ? { stage: 'won', status: ['Won', 'st-win'] } : { stage: 'lost', status: ['Lost', 'st-danger'] };
+  }
+  if (!windowOpen(r)) return { stage: 'review', status: ['In review', 'st-info'] };
+  const all = rfqBids(r.id);
+  if (all.length > 1) {
+    const lowest = Math.min(...all.map(b => bidPrice(b, r)));
+    return bidPrice(myBid, r) <= lowest
+      ? { stage: 'active', status: ['Leading', 'st-good'] }
+      : { stage: 'active', status: ['Outbid', 'st-warn'] };
+  }
+  return { stage: 'active', status: ['Submitted', 'st-muted'] };
+}
+
+function viewerState(u) {
+  const see = canSeePrice(u);
+  const base = { me: me(u), settings: companySettings(isSupplier(u) ? u.companyId : u.companyId), profiles: state.profiles };
+
+  if (isSupplier(u)) {
+    const sp = supProfile(u.companyId) || { cats: [] };
+    const opps = state.rfqs
+      .filter(r => r.status === 'open' && windowOpen(r) && sp.cats.includes(r.cat))
+      .map(r => ({ id: r.id, title: r.title, cat: r.cat, qty: r.qty, closes: humanize(r.closesAt - now()),
+        soon: r.closesAt - now() < 24 * 3600e3, customer: supName(r.buyerCompanyId), reqs: r.reqs, nda: r.nda,
+        bids: rfqBids(r.id).length, hasMyBid: rfqBids(r.id).some(b => b.supplierCompanyId === u.companyId) }));
+    const mybids = state.bids.filter(b => b.supplierCompanyId === u.companyId).map(b => {
+      const r = rfqById(b.rfqId); if (!r) return null;
+      const st = supplierBidStage(u, r, b);
+      return { id: r.id, title: r.title, cat: r.cat, price: bidPrice(b, r), lead: b.lead, stage: st.stage, status: st.status };
+    }).filter(Boolean);
+    const orders = state.orders.filter(o => o.supplierCompanyId === u.companyId)
+      .map(o => ({ ...o, buyerName: o.buyer, customer: supName(o.buyerCompanyId) }));
+    const threads = state.threads.filter(t => t.supplierCompanyId === u.companyId)
+      .map(t => threadView(t, u));
+    const sc = supplierScore(u.companyId);
+    return { ...base,
+      opps, mybids, orders, threads,
+      saved: state.savedByUser[u.id] || [],
+      ndaSigned: state.ndas.filter(n => n.supplierCompanyId === u.companyId).map(n => n.rfqId),
+      addenda: pickAddenda(opps.map(o => o.id)),
+      scorecard: { ...sc, feedback: state.reviews.filter(v => v.supplierCompanyId === u.companyId).map(v => ({ part: v.part || v.orderId, title: v.title, rating: v.rating, note: v.note })) },
+      companyProfile: { name: supName(u.companyId), cats: sp.cats, rnd: sp.rnd, ...( (state.profiles[sp.profileName]||{}).provided || {} ) },
+      notifs: myNotifs(u), audit: myAudit(u),
+      rfqs: [], bidsByRfq: {}, declined: {}, sups: [], users: [], groups: [] };
+  }
+
+  /* buyer-side */
+  const myRfqs = state.rfqs.filter(r => r.buyerCompanyId === u.companyId);
+  const rfqs = myRfqs.map(r => ({ id: r.id, title: r.title, cat: r.cat, qty: r.qty, product: r.product,
+    status: rfqStatus(r), bids: rfqBids(r.id).length, closes: r.status === 'awarded' ? 'awarded' : (windowOpen(r) ? humanize(r.closesAt - now()) : 'closed'),
+    open: windowOpen(r), awarded: r.status === 'awarded', draft: r.status === 'draft', autoExtend: r.autoExtend, engineer: r.engineer }));
+  const bidsByRfq = {};
+  myRfqs.forEach(r => { bidsByRfq[r.id] = rfqBids(r.id).map(b => bidView(b, r, see)); });
+  const declined = {};
+  state.declines.forEach(d => { const r = rfqById(d.rfqId); if (r && r.buyerCompanyId === u.companyId) (declined[d.rfqId] = declined[d.rfqId] || []).push({ supplier: d.supplierName || supName(d.supplierCompanyId), reason: d.reason }); });
+  const sups = Object.keys(state.supplierProfiles).map(cid => {
+    const sp = state.supplierProfiles[cid]; const sc = supplierScore(cid);
+    return { name: supName(cid), companyId: cid, cats: sp.cats, rnd: sp.rnd, score: sc.score, jobs: sc.jobs, ontime: sc.ontime };
+  });
+  const orders = state.orders.filter(o => o.buyerCompanyId === u.companyId)
+    .map(o => ({ ...o, price: see ? o.price : null, supplier: supName(o.supplierCompanyId) }));
+  const threads = state.threads.filter(t => t.buyerCompanyId === u.companyId).map(t => threadView(t, u));
+  return { ...base,
+    rfqs, bidsByRfq, declined, sups, orders, threads,
+    addenda: pickAddenda(myRfqs.map(r => r.id)),
+    users: state.users.filter(x => x.companyId === u.companyId).map(x => ({ name: x.name, email: x.email, role: x.persona.charAt(0).toUpperCase() + x.persona.slice(1), group: x.group, status: x.status })),
+    groups: state.groupsByCompany[u.companyId] || [],
+    notifs: myNotifs(u), audit: myAudit(u),
+    opps: [], mybids: [], saved: [], ndaSigned: [], scorecard: null, companyProfile: null };
+}
+function pickAddenda(ids) { const out = {}; ids.forEach(id => { if (state.addenda[id]) out[id] = state.addenda[id]; }); return out; }
+function threadView(t, u) {
+  const r = rfqById(t.rfqId);
+  return { id: t.id, part: t.rfqId, partTitle: r ? r.title : t.rfqId, supplier: supName(t.supplierCompanyId),
+    engineer: r ? (r.engineer + ' (Engineer)') : 'Engineer', buyer: r ? 'Buyer team' : '', company: r ? supName(r.buyerCompanyId) : '',
+    unread: (isSupplier(u) ? t.unreadFor === 'supplier' : t.unreadFor === 'buyer') ? 1 : 0, msgs: t.msgs };
+}
+function myNotifs(u) { return state.notifications.filter(n => n.companyId === u.companyId && (!n.role || n.role === u.persona || isAdmin(u))); }
+function myAudit(u) { return state.audit.filter(a => a.companyIds.includes(u.companyId)); }
 
 /* ---------------- operations ---------------- */
 const ops = {};
 
-ops.toggleSave = async (a, { oppId }) => {
-  requireSupplier(a);
-  const i = state.saved.indexOf(oppId);
-  if (i >= 0) state.saved.splice(i, 1); else state.saved.push(oppId);
+/* ----- supplier ops ----- */
+ops.toggleSave = async (u, { oppId }) => {
+  requireSupplier(u);
+  const arr = state.savedByUser[u.id] = state.savedByUser[u.id] || [];
+  const i = arr.indexOf(oppId);
+  if (i >= 0) arr.splice(i, 1); else arr.push(oppId);
   await persist();
   return { msg: i >= 0 ? 'Removed from saved' : 'Saved to your pipeline' };
 };
 
-ops.viewVault = async (a, { oppId }) => {
-  audit(a, 'Viewed drawing in vault', oppId, 'view');
+ops.viewVault = async (u, { oppId }) => {
+  const r = rfqById(oppId);
+  audit(u, 'Viewed drawing in vault', oppId, 'view', r ? [r.buyerCompanyId] : []);
   await persist();
   return { msg: 'Opening vault link · access logged' };
 };
 
-ops.signNda = async (a, { oppId }) => {
-  requireSupplier(a);
-  if (!state.ndaSigned.includes(oppId)) state.ndaSigned.push(oppId);
-  audit(a, 'Signed NDA', oppId, 'nda');
+ops.signNda = async (u, { oppId }) => {
+  requireSupplier(u);
+  const r = rfqById(oppId); if (!r) throw err(404, 'RFQ not found');
+  if (!state.ndas.some(n => n.rfqId === oppId && n.supplierCompanyId === u.companyId)) {
+    state.ndas.push({ rfqId: oppId, supplierCompanyId: u.companyId, by: u.name, at: stamp() });
+  }
+  audit(u, 'Signed NDA', oppId, 'nda', [r.buyerCompanyId]);
   await persist();
   return { msg: 'NDA signed · drawing unlocked' };
 };
 
-ops.submitBid = async (a, { rfqId, unit, ship, incoterms, lead }) => {
-  requireSupplier(a);
-  const rfq = state.rfqs.find(r => r.id === rfqId) || state.opps.find(o => o.id === rfqId);
-  const qty = (rfq && rfq.qty) || 12;
-  const u = Number(unit), s = Number(ship) || 0, l = Number(lead);
-  const list = (state.bidsByRfq[rfqId] = state.bidsByRfq[rfqId] || []);
-  let bid = list.find(b => b.supplier === a.company);
+ops.submitBid = async (u, { rfqId, unit, ship, incoterms, lead, notes }) => {
+  requireSupplier(u);
+  const r = rfqById(rfqId); if (!r) throw err(404, 'RFQ not found');
+  if (!windowOpen(r)) throw err(400, 'Bid window is closed');
+  const sp = supProfile(u.companyId);
+  if (!sp || !sp.cats.includes(r.cat)) throw err(403, 'Your company is not qualified in this category');
+  if (r.nda !== 'none' && !state.ndas.some(n => n.rfqId === rfqId && n.supplierCompanyId === u.companyId)) throw err(403, 'Sign the NDA before bidding');
+  const un = Number(unit), ld = Number(lead);
+  if (!(un > 0)) throw err(400, 'Unit price is required');
+  if (!(ld > 0)) throw err(400, 'Lead time is required');
+  let bid = state.bids.find(b => b.rfqId === rfqId && b.supplierCompanyId === u.companyId);
   const revise = !!bid;
-  const price = (u ? u * qty : 0) + s;
-  if (bid) { Object.assign(bid, { unit: u || bid.unit, ship: s, incoterms: incoterms || bid.incoterms, lead: l || bid.lead, price, revised: true }); }
-  else { list.push({ supplier: a.company, unit: u || 0, ship: s, incoterms: incoterms || 'FOB Origin', lead: l || 0, score: 4.6, price }); }
-  // reflect on the supplier's own board
-  let mb = state.mybids.find(m => m.id === rfqId);
-  if (mb) { mb.price = price || mb.price; mb.lead = l || mb.lead; mb.stage = 'review'; mb.status = ['In review', 'st-info']; }
-  audit(a, revise ? 'Revised bid' : 'Submitted bid', rfqId, 'bid');
-  notify('buyer', 'ti-gavel', `${revise ? 'Revised' : 'New'} bid on ${rfqId} from ${a.company}`, { view: 'rfq', arg: rfqId });
+  if (bid) Object.assign(bid, { unit: un, ship: Number(ship) || 0, incoterms: incoterms || bid.incoterms, lead: ld, notes: notes || '', revised: true, at: now() });
+  else state.bids.push({ id: 'b_' + (++state.seq), rfqId, supplierCompanyId: u.companyId, unit: un, ship: Number(ship) || 0, incoterms: incoterms || 'FOB Origin', lead: ld, notes: notes || '', revised: false, at: now() });
+  // anti-sniping: a bid in the final 10 minutes auto-extends the window
+  let extended = false;
+  if (r.autoExtend && r.closesAt - now() < 10 * 60e3) { r.closesAt = now() + 10 * 60e3; extended = true; }
+  audit(u, (revise ? 'Revised bid' : 'Submitted bid') + (extended ? ' · window auto-extended 10m' : ''), rfqId, 'bid', [r.buyerCompanyId]);
+  notify(r.buyerCompanyId, null, 'ti-gavel', `${revise ? 'Revised' : 'New'} bid on ${r.title} (${rfqId}) from ${supName(u.companyId)}`, { view: 'rfq', arg: rfqId });
   await persist();
-  return { msg: revise ? 'Bid revised — buyer notified' : 'Bid submitted — now in review' };
+  return { msg: (revise ? 'Bid revised — buyer notified' : 'Bid submitted — now in review') + (extended ? ' · anti-snipe extended the window 10 min' : '') };
 };
 
-ops.declineBid = async (a, { rfqId, reason }) => {
-  requireSupplier(a);
-  (state.declined[rfqId] = state.declined[rfqId] || []).push({ supplier: a.company, reason: reason || 'No-bid' });
-  audit(a, 'Declined (no-bid): ' + (reason || ''), rfqId, 'decline');
-  notify('buyer', 'ti-ban', `${a.company} declined ${rfqId}: ${reason || 'no-bid'}`, { view: 'rfq', arg: rfqId });
+ops.declineBid = async (u, { rfqId, reason }) => {
+  requireSupplier(u);
+  const r = rfqById(rfqId); if (!r) throw err(404, 'RFQ not found');
+  state.declines.push({ rfqId, supplierCompanyId: u.companyId, supplierName: supName(u.companyId), reason: reason || 'No-bid' });
+  audit(u, 'Declined (no-bid): ' + (reason || ''), rfqId, 'decline', [r.buyerCompanyId]);
+  notify(r.buyerCompanyId, null, 'ti-ban', `${supName(u.companyId)} declined ${rfqId}: ${reason || 'no-bid'}`, { view: 'rfq', arg: rfqId });
   await persist();
   return { msg: 'No-bid recorded — buyer notified' };
 };
 
-ops.postMessage = async (a, { threadId, text, addendum }) => {
+ops.updateCompanyProfile = async (u, body) => {
+  requireSupplier(u);
+  const sp = supProfile(u.companyId); if (!sp) throw err(404, 'No supplier profile');
+  if (Array.isArray(body.cats) && body.cats.length) sp.cats = body.cats;
+  if (typeof body.rnd === 'boolean') sp.rnd = body.rnd;
+  const prof = state.profiles[sp.profileName];
+  if (prof) {
+    const p = prof.provided;
+    ['about', 'location', 'founded', 'employees', 'leadtime', 'capacity'].forEach(k => { if (body[k] !== undefined && body[k] !== '') p[k] = body[k]; });
+    if (Array.isArray(body.certs)) p.certs = body.certs;
+    prof.cats = sp.cats;
+  }
+  audit(u, 'Updated company profile', '', 'evt');
+  await persist();
+  return { msg: 'Profile saved — submitted for verification' };
+};
+
+/* ----- shared chat ----- */
+ops.openThread = async (u, { rfqId }) => {
+  const r = rfqById(rfqId); if (!r) throw err(404, 'RFQ not found');
+  let t;
+  if (isSupplier(u)) t = state.threads.find(x => x.rfqId === rfqId && x.supplierCompanyId === u.companyId);
+  else t = state.threads.find(x => x.rfqId === rfqId && x.buyerCompanyId === u.companyId);
+  if (!t && isSupplier(u)) {
+    t = { id: ++state.seq, rfqId, buyerCompanyId: r.buyerCompanyId, supplierCompanyId: u.companyId, unreadFor: null, msgs: [] };
+    state.threads.push(t);
+  }
+  if (!t) throw err(404, 'No conversation yet for this RFQ');
+  return { threadId: t.id };
+};
+
+ops.postMessage = async (u, { threadId, text, addendum }) => {
   const t = state.threads.find(x => x.id === threadId);
   if (!t) throw err(404, 'Thread not found');
+  const mine = isSupplier(u) ? t.supplierCompanyId === u.companyId : t.buyerCompanyId === u.companyId;
+  if (!mine) throw err(403, 'Not your conversation');
   if (!text || !String(text).trim()) throw err(400, 'Message is empty');
-  const from = isSupplier(a) ? 'sup' : (a.persona === 'engineer' ? 'eng' : 'buy');
-  t.msgs.push({ from, name: a.name, text: String(text).trim(), t: 'now' });
-  if (addendum && isBuyer(a)) {
+  const from = isSupplier(u) ? 'sup' : (u.persona === 'engineer' ? 'eng' : 'buy');
+  t.msgs.push({ from, name: u.name, text: String(text).trim(), t: 'now' });
+  t.unreadFor = isSupplier(u) ? 'buyer' : 'supplier';
+  const r = rfqById(t.rfqId);
+  if (addendum && isBuyerSide(u)) {
     const lastQ = [...t.msgs].reverse().find(m => m.from === 'sup');
-    const rfq = state.rfqs.find(r => r.id === t.part);
-    const bidders = (rfq && rfq.bids) || 1;
-    (state.addenda[t.part] = state.addenda[t.part] || []).push({ q: lastQ ? lastQ.text : '(buyer clarification)', a: String(text).trim(), at: 'now · ' + actorName(a), bidders });
-    t.msgs.push({ from: 'sys', text: `Posted as an addendum to all ${bidders} bidders on ${t.part}` });
-    notify('supplier', 'ti-speakerphone', `Addendum posted on ${t.partTitle} (${t.part}) — all bidders`, { view: 'opp', arg: t.part });
-    audit(a, `Posted addendum to ${bidders} bidders`, t.part, 'addendum');
+    const bidders = rfqBids(t.rfqId).length || 1;
+    (state.addenda[t.rfqId] = state.addenda[t.rfqId] || []).push({ q: lastQ ? lastQ.text : '(buyer clarification)', a: String(text).trim(), at: actorName(u), bidders });
+    t.msgs.push({ from: 'sys', text: `Posted as an addendum to all ${bidders} bidders on ${t.rfqId}` });
+    rfqBids(t.rfqId).forEach(b => notify(b.supplierCompanyId, null, 'ti-speakerphone', `Addendum posted on ${r ? r.title : t.rfqId} (${t.rfqId})`, { view: 'opp', arg: t.rfqId }));
+    audit(u, `Posted addendum to ${bidders} bidders`, t.rfqId, 'addendum');
     await persist();
     return { msg: 'Answer posted as an addendum to all bidders' };
   }
+  if (isSupplier(u)) notify(t.buyerCompanyId, null, 'ti-message-2', `${supName(u.companyId)} asked a question on ${r ? r.title : t.rfqId}`, { view: 'thread', arg: t.rfqId });
+  else notify(t.supplierCompanyId, null, 'ti-message-2', `Reply from ${actorName(u)} on ${r ? r.title : t.rfqId}`, { view: 'thread', arg: t.rfqId });
   await persist();
   return { msg: 'Message sent · notification pushed' };
 };
 
-function createOrder(a, rfq, supplier, qty, price) {
-  state.orders.push({ id: rfq.id + (state.orders.some(o => o.id === rfq.id) ? '-' + supplier.slice(0, 3).toUpperCase() : ''),
-    title: rfq.title, cat: rfq.cat, supplier, buyer: a.name, engineer: 'Priya Rao', product: rfq.product,
-    qty, price, stage: 'accepted', due: 'TBD', tracking: null, delayed: false, delayReason: '' });
+/* ----- buyer-side: RFQ lifecycle ----- */
+ops.createRfq = async (u, body) => {
+  requireBuyerSide(u);
+  const id = String(body.partNumber || '').trim() || 'RFQ-' + (++state.seq);
+  if (rfqById(id)) throw err(409, `Part number ${id} already has an RFQ`);
+  if (!body.title || !String(body.title).trim()) throw err(400, 'Title is required');
+  const qty = Number(body.qty); if (!(qty > 0)) throw err(400, 'Quantity must be a positive number');
+  const windowDays = Number(body.windowDays) || 3;
+  const r = { id, buyerCompanyId: u.companyId, title: String(body.title).trim(), cat: body.cat || 'cnc', qty,
+    product: body.product || 'General', costCenter: body.costCenter || '', reqs: body.reqs || '',
+    vaultLink: body.vaultLink || '', nda: ['category', 'drawing', 'none'].includes(body.nda) ? body.nda : 'category',
+    autoExtend: body.autoExtend !== false, status: body.draft ? 'draft' : 'open',
+    closesAt: now() + windowDays * 24 * 3600e3, createdBy: u.id, engineer: body.engineer || u.name, createdAt: now() };
+  state.rfqs.unshift(r);
+  audit(u, body.draft ? 'Saved RFQ draft' : 'Published RFQ', id, 'rfq');
+  if (!body.draft) notifySuppliersOfRfq(r);
+  await persist();
+  return { msg: body.draft ? 'Draft saved' : 'RFQ published to qualified suppliers in ' + r.cat, rfqId: id };
+};
+function notifySuppliersOfRfq(r) {
+  Object.keys(state.supplierProfiles).forEach(cid => {
+    const sp = state.supplierProfiles[cid];
+    if (sp.cats.includes(r.cat) && sp.rnd !== false) {
+      notify(cid, null, 'ti-file-text', `New opportunity: ${r.title} (${r.id}) — ${supName(r.buyerCompanyId)}`, { view: 'opp', arg: r.id });
+    }
+  });
 }
-
-ops.award = async (a, { rfqId, mode, supplier, alloc, ackFlags }) => {
-  if (!canAward(a)) throw err(403, 'Only a buyer or admin can award (engineers cannot).');
-  const rfq = state.rfqs.find(r => r.id === rfqId);
-  if (!rfq) throw err(404, 'RFQ not found');
-  if (rfq.awarded) throw err(400, 'Already awarded');
-  if (rfq.open) throw err(400, 'Award unlocks only after the bid window closes');
-  const bids = state.bidsByRfq[rfqId] || [];
-
-  if (mode === 'split') {
-    const parts = Object.entries(alloc || {}).filter(([, q]) => Number(q) > 0).map(([s, q]) => [s, Number(q)]);
-    if (!parts.length) throw err(400, 'Allocate quantity to at least one supplier');
-    const total = parts.reduce((n, [, q]) => n + q, 0);
-    if (total !== rfq.qty) throw err(400, `Split must sum to ${rfq.qty} (got ${total})`);
-    const flagged = parts.map(([s]) => s).filter(s => supplierFlags(s).length);
-    if (flagged.length && !ackFlags) throw err(409, `Risk flags on ${flagged.join(', ')} require acknowledgment`);
-    parts.forEach(([s, q]) => {
-      const b = bids.find(x => x.supplier === s);
-      createOrder(a, rfq, s, q, (b ? b.unit : 0) * q);
-      audit(a, `Awarded ${q} units to ${s} (split)`, rfqId, 'award');
-      notify('supplier', 'ti-check', `You were awarded part of ${rfq.title} (${rfqId})`, { view: 'tracking' });
-    });
-  } else {
-    if (!supplier) throw err(400, 'Select a supplier to award');
-    const b = bids.find(x => x.supplier === supplier);
-    if (supplierFlags(supplier).length && !ackFlags) throw err(409, `Risk flags on ${supplier} require acknowledgment`);
-    createOrder(a, rfq, supplier, rfq.qty, b ? b.price : 0);
-    audit(a, `Awarded to ${supplier} — sign-off requested`, rfqId, 'award');
-    notify('supplier', 'ti-check', `Your bid on ${rfq.title} (${rfqId}) was accepted`, { view: 'tracking' });
-  }
-  rfq.awarded = true; rfq.status = ['Awarded', 'st-win']; rfq.open = false; rfq.closes = 'awarded';
-  await persist();
-  return { msg: mode === 'split' ? 'Split award sent for sign-off' : `${supplier} awarded — sign-off requested` };
-};
-
-ops.advanceOrder = async (a, { orderId }) => {
-  requireSupplier(a);
-  const o = state.orders.find(x => x.id === orderId);
-  if (!o) throw err(404, 'Order not found');
-  if (o.supplier !== a.company) throw err(403, 'Not your order');
-  if (o.stage === 'manufacturing') { o.stage = 'shipped'; o.delayed = false; }
-  else if (o.stage === 'shipped') { o.stage = 'delivered'; }
-  audit(a, `Order ${o.stage}`, orderId, 'evt');
-  notify('buyer', 'ti-truck', `${o.title} (${orderId}) marked ${o.stage}`, { view: 'tracking' });
-  await persist();
-  return { msg: o.stage === 'delivered' ? 'Marked delivered — FedEx confirmation posted' : 'Marked shipped — buyer & engineer notified' };
-};
-
-ops.addTracking = async (a, { orderId, tracking }) => {
-  requireSupplier(a);
-  const o = state.orders.find(x => x.id === orderId);
-  if (!o || o.supplier !== a.company) throw err(404, 'Order not found');
-  o.tracking = tracking || '7712 3480 1123'; o.stage = 'shipped'; o.delayed = false;
-  audit(a, 'Added tracking ' + o.tracking, orderId, 'evt');
-  notify('buyer', 'ti-truck', `Tracking added for ${o.title} (${orderId})`, { view: 'tracking' });
-  await persist();
-  return { msg: 'Tracking added · marked shipped' };
-};
-
-ops.reportDelay = async (a, { orderId, reason }) => {
-  requireSupplier(a);
-  const o = state.orders.find(x => x.id === orderId);
-  if (!o || o.supplier !== a.company) throw err(404, 'Order not found');
-  o.delayed = true; o.delayReason = reason || 'Timeline slipped.';
-  audit(a, 'Reported delay: ' + o.delayReason, orderId, 'evt');
-  notify('buyer', 'ti-clock-exclamation', `${o.title} (${orderId}) reported a delay`, { view: 'tracking', arg: 'delayed' });
-  await persist();
-  return { msg: 'Delay reported — engineer & buyer notified' };
-};
-
-ops.reviewOrder = async (a, { orderId, rating, escalate }) => {
-  requireBuyer(a);
-  const o = state.orders.find(x => x.id === orderId);
-  if (!o) throw err(404, 'Order not found');
-  state.orders = state.orders.filter(x => x !== o);
-  state.suppFeedback.unshift({ part: o.id, title: o.title, rating: Number(rating) || 4, note: escalate ? 'Quality finding escalated to QA.' : 'Closed on delivery.' });
-  audit(a, escalate ? 'Closed job · quality escalation' : `Closed job · rated ${rating || 4}★`, orderId, 'evt');
-  notify('supplier', 'ti-star', `${o.title} rated ${rating || 4}★ on your scorecard`, { view: 'tracking' });
-  await persist();
-  return { msg: escalate ? 'Job closed · quality finding escalated to QA' : 'Job closed · rating sent to supplier scorecard' };
-};
-
-ops.reorder = async (a, { orderId, mode }) => {
-  requireBuyer(a);
-  const o = state.orders.find(x => x.id === orderId);
-  if (!o) throw err(404, 'Order not found');
-  audit(a, mode === 'requote' ? 'Re-quote opened' : 'Repeat order placed', orderId, 'rfq');
-  await persist();
-  return { msg: mode === 'requote' ? 'New RFQ opened for competitive bids' : `Repeat order placed — ${o.supplier} notified` };
-};
-
-ops.duplicateRfq = async (a, { rfqId }) => {
-  requireBuyer(a);
-  audit(a, 'Duplicated RFQ to new draft', rfqId, 'rfq');
-  await persist();
-  return { msg: `Duplicated ${rfqId} as a new draft` };
-};
-
-ops.publishRfq = async (a, body) => {
-  requireBuyer(a);
-  const id = (body && body.id) || 'RFQ-' + (++state.nid);
-  if (!state.rfqs.some(r => r.id === id)) {
-    state.rfqs.unshift({ id, title: (body && body.title) || 'New request', cat: (body && body.cat) || 'cnc', qty: Number(body && body.qty) || 1,
-      status: ['Open', 'st-good'], bids: 0, closes: (body && body.window) || '3 days', open: true, product: (body && body.product) || 'Litho stage', autoExtend: true });
-  }
-  audit(a, 'Published RFQ', id, 'rfq');
+ops.publishDraft = async (u, { rfqId, windowDays }) => {
+  requireBuyerSide(u);
+  const r = rfqById(rfqId); if (!r || r.buyerCompanyId !== u.companyId) throw err(404, 'RFQ not found');
+  if (r.status !== 'draft') throw err(400, 'Not a draft');
+  r.status = 'open'; r.closesAt = now() + (Number(windowDays) || 3) * 24 * 3600e3;
+  audit(u, 'Published RFQ', rfqId, 'rfq');
+  notifySuppliersOfRfq(r);
   await persist();
   return { msg: 'RFQ published to qualified suppliers' };
 };
+ops.closeWindow = async (u, { rfqId }) => {
+  requireAward(u);
+  const r = rfqById(rfqId); if (!r || r.buyerCompanyId !== u.companyId) throw err(404, 'RFQ not found');
+  if (!windowOpen(r)) throw err(400, 'Window already closed');
+  r.closesAt = now();
+  audit(u, 'Closed bid window early', rfqId, 'rfq');
+  rfqBids(rfqId).forEach(b => notify(b.supplierCompanyId, null, 'ti-clock', `Bid window closed on ${r.title} (${rfqId}) — bids in review`, { view: 'mybids' }));
+  await persist();
+  return { msg: 'Bid window closed — bids now in review' };
+};
+ops.duplicateRfq = async (u, { rfqId }) => {
+  requireBuyerSide(u);
+  const r = rfqById(rfqId); if (!r || r.buyerCompanyId !== u.companyId) throw err(404, 'RFQ not found');
+  const nid = r.id + '-R' + (++state.seq % 100);
+  state.rfqs.unshift({ ...r, id: nid, status: 'draft', closesAt: now() + 3 * 24 * 3600e3, createdBy: u.id, createdAt: now() });
+  audit(u, 'Duplicated RFQ to new draft ' + nid, rfqId, 'rfq');
+  await persist();
+  return { msg: `Duplicated ${rfqId} as draft ${nid}`, rfqId: nid };
+};
 
-ops.readNotif = async (a, { id }) => {
-  const n = state.notifs.find(x => x.id === id && x.role === a.role);
+/* ----- buyer-side: award ----- */
+ops.award = async (u, { rfqId, mode, supplierCompanyId, alloc, ackFlags }) => {
+  requireAward(u);
+  const r = rfqById(rfqId); if (!r || r.buyerCompanyId !== u.companyId) throw err(404, 'RFQ not found');
+  if (r.status === 'awarded') throw err(400, 'Already awarded');
+  if (windowOpen(r)) throw err(400, 'Award unlocks only after the bid window closes');
+  const bids = rfqBids(rfqId);
+  const mkOrder = (scid, qty, price, lead) => {
+    const oid = 'ORD-' + (++state.seq);
+    state.orders.push({ id: oid, rfqId: r.id, buyerCompanyId: u.companyId, supplierCompanyId: scid, title: r.title, cat: r.cat,
+      qty, price, stage: 'accepted', due: new Date(now() + (lead || 10) * 24 * 3600e3).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      tracking: null, delayed: false, delayReason: '', buyer: u.name, engineer: r.engineer, product: r.product });
+  };
+  if (mode === 'split') {
+    const parts = Object.entries(alloc || {}).filter(([, q]) => Number(q) > 0).map(([cid, q]) => [cid, Number(q)]);
+    if (!parts.length) throw err(400, 'Allocate quantity to at least one supplier');
+    const total = parts.reduce((n, [, q]) => n + q, 0);
+    if (total !== r.qty) throw err(400, `Split must sum to ${r.qty} (got ${total})`);
+    const flagged = parts.map(([cid]) => cid).filter(cid => supplierFlags(cid).length);
+    if (flagged.length && !ackFlags) throw err(409, `Risk flags on ${flagged.map(supName).join(', ')} require acknowledgment`);
+    parts.forEach(([cid, q]) => {
+      const b = bids.find(x => x.supplierCompanyId === cid);
+      if (!b) throw err(400, `${supName(cid)} has no bid on this RFQ`);
+      mkOrder(cid, q, b.unit * q, b.lead);
+      audit(u, `Awarded ${q} units to ${supName(cid)} (split)`, rfqId, 'award', [cid]);
+      notify(cid, null, 'ti-check', `You were awarded ${q} units of ${r.title} (${rfqId})`, { view: 'tracking' });
+    });
+  } else {
+    const cid = supplierCompanyId;
+    if (!cid) throw err(400, 'Select a supplier to award');
+    const b = bids.find(x => x.supplierCompanyId === cid);
+    if (!b) throw err(400, 'That supplier has no bid on this RFQ');
+    if (supplierFlags(cid).length && !ackFlags) throw err(409, `Risk flags on ${supName(cid)} require acknowledgment`);
+    mkOrder(cid, r.qty, bidPrice(b, r), b.lead);
+    audit(u, `Awarded to ${supName(cid)} — sign-off requested`, rfqId, 'award', [cid]);
+    notify(cid, null, 'ti-check', `Your bid on ${r.title} (${rfqId}) was accepted — lead time starts now`, { view: 'tracking' });
+    bids.filter(x => x.supplierCompanyId !== cid).forEach(x =>
+      notify(x.supplierCompanyId, null, 'ti-x', `${r.title} (${rfqId}) was awarded to another supplier`, { view: 'mybids' }));
+  }
+  r.status = 'awarded';
+  await persist();
+  return { msg: mode === 'split' ? 'Split award sent for sign-off' : `${supName(supplierCompanyId)} awarded — sign-off requested, supplier notified` };
+};
+
+/* ----- orders ----- */
+ops.advanceOrder = async (u, { orderId }) => {
+  requireSupplier(u);
+  const o = orderById(orderId); if (!o || o.supplierCompanyId !== u.companyId) throw err(404, 'Order not found');
+  if (o.stage === 'accepted') o.stage = 'manufacturing';
+  else if (o.stage === 'manufacturing') { o.stage = 'shipped'; o.delayed = false; }
+  else if (o.stage === 'shipped') o.stage = 'delivered';
+  audit(u, `Order ${o.stage}`, orderId, 'evt', [o.buyerCompanyId]);
+  notify(o.buyerCompanyId, null, 'ti-truck', `${o.title} (${orderId}) marked ${o.stage}`, { view: 'tracking' });
+  await persist();
+  return { msg: 'Marked ' + o.stage + ' — buyer & engineer notified' };
+};
+ops.addTracking = async (u, { orderId, tracking }) => {
+  requireSupplier(u);
+  const o = orderById(orderId); if (!o || o.supplierCompanyId !== u.companyId) throw err(404, 'Order not found');
+  if (!tracking || !String(tracking).trim()) throw err(400, 'Tracking number required');
+  o.tracking = String(tracking).trim(); if (o.stage === 'accepted' || o.stage === 'manufacturing') o.stage = 'shipped';
+  o.delayed = false;
+  audit(u, 'Added tracking ' + o.tracking, orderId, 'evt', [o.buyerCompanyId]);
+  notify(o.buyerCompanyId, null, 'ti-truck', `Tracking added for ${o.title} (${orderId})`, { view: 'tracking' });
+  await persist();
+  return { msg: 'Tracking added · marked shipped' };
+};
+ops.reportDelay = async (u, { orderId, reason }) => {
+  requireSupplier(u);
+  const o = orderById(orderId); if (!o || o.supplierCompanyId !== u.companyId) throw err(404, 'Order not found');
+  o.delayed = true; o.delayReason = reason || 'Timeline slipped.';
+  audit(u, 'Reported delay: ' + o.delayReason, orderId, 'evt', [o.buyerCompanyId]);
+  notify(o.buyerCompanyId, null, 'ti-clock-exclamation', `${o.title} (${orderId}) reported a delay`, { view: 'tracking', arg: 'delayed' });
+  await persist();
+  return { msg: 'Delay reported — engineer & buyer notified' };
+};
+ops.reviewOrder = async (u, { orderId, rating, escalate, note }) => {
+  requireAward(u);
+  const o = orderById(orderId); if (!o || o.buyerCompanyId !== u.companyId) throw err(404, 'Order not found');
+  state.orders = state.orders.filter(x => x !== o);
+  state.reviews.unshift({ orderId, supplierCompanyId: o.supplierCompanyId, title: o.title, part: o.rfqId, rating: Math.min(5, Math.max(1, Number(rating) || 4)), note: note || (escalate ? 'Quality finding escalated to QA.' : 'Closed on delivery.'), at: now() });
+  audit(u, escalate ? 'Closed job · quality escalation' : `Closed job · rated ${rating || 4}★`, orderId, 'evt', [o.supplierCompanyId]);
+  notify(o.supplierCompanyId, null, 'ti-star', `${o.title} rated ${rating || 4}★ on your scorecard`, { view: 'scorecard' });
+  await persist();
+  return { msg: escalate ? 'Job closed · quality finding escalated to QA' : 'Job closed · rating posted to supplier scorecard' };
+};
+ops.reorder = async (u, { orderId, mode }) => {
+  requireAward(u);
+  const src = orderById(orderId) || state.orders.find(o => o.id === orderId);
+  if (!src || src.buyerCompanyId !== u.companyId) throw err(404, 'Order not found');
+  if (mode === 'requote') {
+    const r = rfqById(src.rfqId);
+    const nid = src.rfqId + '-RQ' + (++state.seq % 100);
+    state.rfqs.unshift({ id: nid, buyerCompanyId: u.companyId, title: src.title, cat: src.cat, qty: src.qty,
+      product: src.product, costCenter: r ? r.costCenter : '', reqs: r ? r.reqs : '', vaultLink: r ? r.vaultLink : '',
+      nda: r ? r.nda : 'category', autoExtend: true, status: 'open', closesAt: now() + 3 * 24 * 3600e3,
+      createdBy: u.id, engineer: src.engineer, createdAt: now() });
+    audit(u, 'Re-quote opened as ' + nid, orderId, 'rfq');
+    notifySuppliersOfRfq(rfqById(nid));
+    await persist();
+    return { msg: `New RFQ ${nid} opened for competitive bids` };
+  }
+  const oid = 'ORD-' + (++state.seq);
+  state.orders.push({ ...src, id: oid, stage: 'accepted', tracking: null, delayed: false, delayReason: '', buyer: u.name });
+  audit(u, 'Repeat order placed as ' + oid, orderId, 'evt', [src.supplierCompanyId]);
+  notify(src.supplierCompanyId, null, 'ti-repeat', `Repeat order for ${src.title} (${oid}) — same terms`, { view: 'tracking' });
+  await persist();
+  return { msg: `Repeat order placed — ${supName(src.supplierCompanyId)} notified` };
+};
+
+/* ----- notifications ----- */
+ops.readNotif = async (u, { id }) => {
+  const n = state.notifications.find(x => x.id === id && x.companyId === u.companyId);
   if (n) n.unread = false;
   await persist();
   return {};
 };
-ops.markAllRead = async (a) => {
-  state.notifs.forEach(n => { if (n.role === a.role) n.unread = false; });
+ops.markAllRead = async (u) => {
+  state.notifications.forEach(n => { if (n.companyId === u.companyId) n.unread = false; });
   await persist();
   return {};
 };
 
-ops.addUser = async (a, { name, email, role, group }) => {
-  requireAdmin(a);
-  state.users.push({ name: name || 'New User', email: email || 'user@northvale.com', role: role || 'Buyer', group: group || 'Litho', status: 'Invited' });
-  audit(a, `Invited user ${email || ''}`, '', 'evt');
+/* ----- admin ----- */
+ops.addUser = async (u, { name, email, role, group }) => {
+  requireAdmin(u);
+  if (!email || !String(email).includes('@')) throw err(400, 'Valid email required');
+  if (userByEmail(email)) throw err(409, 'That email already has an account');
+  const persona = { Admin: 'admin', Buyer: 'buyer', Engineer: 'engineer' }[role] || 'buyer';
+  const temp = crypto.randomBytes(4).toString('hex');
+  state.users.push({ id: 'u_' + (++state.seq), email: String(email).trim(), passHash: bcrypt.hashSync(temp, 10), name: name || 'New User', companyId: u.companyId, persona, group: group || '', status: 'Invited' });
+  audit(u, `Invited ${email} as ${role}`, '', 'evt');
   await persist();
-  return { msg: 'Invite sent' };
+  return { msg: `Invite created — temporary password: ${temp}`, tempPassword: temp };
 };
-ops.updateUserRole = async (a, { email, role }) => {
-  requireAdmin(a);
-  const u = state.users.find(x => x.email === email);
-  if (u) u.role = role;
+ops.updateUserRole = async (u, { email, role }) => {
+  requireAdmin(u);
+  const x = userByEmail(email);
+  if (!x || x.companyId !== u.companyId) throw err(404, 'User not found');
+  x.persona = { Admin: 'admin', Buyer: 'buyer', Engineer: 'engineer' }[role] || x.persona;
+  audit(u, `Changed ${email} role to ${role}`, '', 'evt');
   await persist();
   return { msg: 'Role updated' };
 };
-ops.updateSettings = async (a, { key, value }) => {
-  requireAdmin(a);
-  const allowed = ['showPricingToEngineers'];
-  if (!allowed.includes(key)) throw err(400, 'Unknown setting');
-  state.settings[key] = !!value;
-  audit(a, `Setting ${key} = ${!!value}`, '', 'evt');
+ops.addGroup = async (u, { name }) => {
+  requireAdmin(u);
+  if (!name || !String(name).trim()) throw err(400, 'Group name required');
+  const arr = state.groupsByCompany[u.companyId] = state.groupsByCompany[u.companyId] || [];
+  if (!arr.includes(name.trim())) arr.push(name.trim());
+  await persist();
+  return { msg: 'Group added' };
+};
+ops.updateSettings = async (u, { key, value }) => {
+  requireAdmin(u);
+  if (key !== 'showPricingToEngineers') throw err(400, 'Unknown setting');
+  companySettings(u.companyId)[key] = !!value;
+  audit(u, `Setting ${key} = ${!!value}`, '', 'evt');
   await persist();
   return { msg: 'Setting updated' };
 };
 
 async function reset() { state = seed(); await db.save(state); sessions.clear(); }
 
-module.exports = { init, login, logout, accountForToken, viewerState, ops, reset };
+module.exports = { init, login, logout, userForToken, viewerState, ops, registerBuyer, registerSupplier, reset };

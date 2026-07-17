@@ -314,3 +314,12 @@
 .login-demo{font-size:11.5px; color:var(--faint); text-align:center; margin:18px 0 10px; position:relative;}
 .login-accts{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
 .login-accts .btn{width:100%;}
+
+/* ---------------- workspace label + login tabs ---------------- */
+.ws{margin:0 2px 14px; padding:9px 10px; background:var(--panel); border:0.5px solid var(--rule); border-radius:9px; overflow:hidden;}
+.app.collapsed .ws{display:none;}
+.ws-co{font-size:12.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.ws-role{font-size:10.5px; color:var(--faint); text-transform:capitalize; margin-top:1px;}
+.login-tabs{display:flex; background:var(--rule-soft); border-radius:9px; padding:3px; margin-bottom:16px;}
+.login-tabs button{flex:1; border:none; background:transparent; font-size:11.5px; padding:7px 4px; border-radius:7px; cursor:pointer; color:var(--muted);}
+.login-tabs button.on{background:var(--panel); color:var(--ink); box-shadow:0 1px 2px rgba(0,0,0,.06); font-weight:500;}
