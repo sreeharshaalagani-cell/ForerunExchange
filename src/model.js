@@ -195,8 +195,12 @@ function viewerState(u) {
     const threads = state.threads.filter(t => t.supplierCompanyId === u.companyId)
       .map(t => threadView(t, u));
     const sc = supplierScore(u.companyId);
+    // open RFQs hidden because the supplier is not qualified in that category
+    const outsideByCat = {};
+    state.rfqs.filter(r => r.status === 'open' && windowOpen(r) && !sp.cats.includes(r.cat))
+      .forEach(r => { outsideByCat[r.cat] = (outsideByCat[r.cat] || 0) + 1; });
     return { ...base,
-      opps, mybids, orders, threads,
+      opps, mybids, orders, threads, qualifiedCats: sp.cats, outsideByCat,
       saved: state.savedByUser[u.id] || [],
       ndaSigned: state.ndas.filter(n => n.supplierCompanyId === u.companyId).map(n => n.rfqId),
       addenda: pickAddenda(opps.map(o => o.id)),

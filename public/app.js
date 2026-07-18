@@ -56,7 +56,8 @@ const NAVKEY = {opportunity:'opportunities', bidcompare:'rfqs', createrfq:'creat
 /* ---------------- server-backed state ---------------- */
 let ME=null;
 let OPPS=[], MYBIDS=[], RFQS=[], BIDSBYRFQ={}, DECLINED={}, ADDENDA={}, SUPS=[], ORDERS=[],
-    THREADS=[], USERS=[], GROUPS=[], SETTINGS={}, NOTIFS=[], AUDIT=[], PROFILES={}, SCORECARD=null, COMPANY_PROFILE=null;
+    THREADS=[], USERS=[], GROUPS=[], SETTINGS={}, NOTIFS=[], AUDIT=[], PROFILES={}, SCORECARD=null, COMPANY_PROFILE=null,
+    QUALCATS=[], OUTSIDE={};
 let SAVED=new Set(), NDA_SIGNED=new Set();
 let BIDS=[]; // bids of the RFQ currently under review
 let VIEW='opportunities';
@@ -77,6 +78,7 @@ function applyState(s){
   ADDENDA=s.addenda||{}; SUPS=s.sups||[]; ORDERS=s.orders||[]; THREADS=s.threads||[];
   USERS=s.users||[]; GROUPS=s.groups||[]; SETTINGS=s.settings||{}; NOTIFS=s.notifs||[]; AUDIT=s.audit||[];
   PROFILES=s.profiles||{}; SCORECARD=s.scorecard||null; COMPANY_PROFILE=s.companyProfile||null;
+  QUALCATS=s.qualifiedCats||[]; OUTSIDE=s.outsideByCat||{};
   SAVED=new Set(s.saved||[]); NDA_SIGNED=new Set(s.ndaSigned||[]);
   document.getElementById('app').dataset.role=ME.role;
 }
@@ -269,8 +271,14 @@ function bmBtn(id){ const on=SAVED.has(id); return `<button class="bm ${on?'on':
 async function toggleSave(id, ev){ if(ev) ev.stopPropagation(); await act('toggleSave',{oppId:id}); renderOpps(); renderKanban(); }
 function renderOpps(){
   const list = OPPS.filter(o=>(oppFilter==='all'||o.customer===oppFilter) && (!oppSoon||o.soon));
-  document.getElementById('opp-feed').innerHTML = list.map(o=>`<div class="card" onclick="openOpp('${o.id}')">${bmBtn(o.id)}<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">${tag(o.cat)}${cotag(esc(o.customer))}</div><span class="ti2">${esc(o.title)}</span><span class="pn">${o.id} · qty ${o.qty}${o.nda!=='none'?' · <i class="ti ti-lock" style="font-size:11px;vertical-align:-1px"></i> NDA':''}${o.hasMyBid?' · <b>bid placed</b>':''}</span><div class="meta"><span class="${o.soon?'soon':''}">${o.closes}</span><span>${o.bids} bids</span></div></div>`).join('')
-    || `<div class="kempty">No open opportunities${oppFilter!=='all'?' for '+esc(oppFilter):''} in your categories right now.</div>`;
+  const hiddenCats=Object.keys(OUTSIDE);
+  const hiddenTotal=hiddenCats.reduce((a,c)=>a+OUTSIDE[c],0);
+  const qualLine=`<div style="grid-column:1/-1;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted)">
+    <span>You're qualified in:</span>${QUALCATS.map(c=>tag(c)).join(' ')}
+    <span class="link" onclick="go('company')" style="font-size:11.5px">edit capabilities →</span></div>`;
+  const hiddenBanner=hiddenTotal?`<div class="banner" style="grid-column:1/-1;margin:0"><i class="ti ti-eye-off"></i><span><b>${hiddenTotal} open request${hiddenTotal>1?'s':''} hidden</b> — in ${hiddenCats.map(c=>CATS[c]?.label||c).join(', ')}, where your company isn't qualified. Add those capabilities in <span class="link" onclick="go('company')">Company profile</span> to see and bid on them.</span></div>`:'';
+  document.getElementById('opp-feed').innerHTML = qualLine + hiddenBanner + (list.map(o=>`<div class="card" onclick="openOpp('${o.id}')">${bmBtn(o.id)}<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">${tag(o.cat)}${cotag(esc(o.customer))}</div><span class="ti2">${esc(o.title)}</span><span class="pn">${o.id} · qty ${o.qty}${o.nda!=='none'?' · <i class="ti ti-lock" style="font-size:11px;vertical-align:-1px"></i> NDA':''}${o.hasMyBid?' · <b>bid placed</b>':''}</span><div class="meta"><span class="${o.soon?'soon':''}">${o.closes}</span><span>${o.bids} bids</span></div></div>`).join('')
+    || `<div class="kempty" style="grid-column:1/-1">No open opportunities${oppFilter!=='all'?' for '+esc(oppFilter):''} in your qualified categories right now.</div>`);
 }
 function openOpp(id){
   const o = OPPS.find(x=>x.id===id);
