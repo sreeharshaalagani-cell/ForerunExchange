@@ -323,3 +323,128 @@
 .login-tabs{display:flex; background:var(--rule-soft); border-radius:9px; padding:3px; margin-bottom:16px;}
 .login-tabs button{flex:1; border:none; background:transparent; font-size:11.5px; padding:7px 4px; border-radius:7px; cursor:pointer; color:var(--muted);}
 .login-tabs button.on{background:var(--panel); color:var(--ink); box-shadow:0 1px 2px rgba(0,0,0,.06); font-weight:500;}
+
+/* ============================================================
+   UX readability pass (July 2026 review)
+   Type scale: xs 12 (footnotes only) · sm 13 · base 14.5–15 · lg 17 · xl 24
+   Rule: gray is for labels, ink is for values; no data below 13px.
+   ============================================================ */
+:root{ --fs-xs:12px; --fs-sm:13px; --fs-base:14.5px; --fs-lg:17px; --fs-xl:24px; --faint:#65696E; }
+@media (prefers-color-scheme:dark){ :root{ --faint:#8E939A; } }
+
+/* nav & shell */
+.nav a{font-size:var(--fs-base);}
+.ws-co{font-size:13.5px;} .ws-role{font-size:var(--fs-xs);}
+.persona{font-size:13.5px;}
+.tbar h3{font-size:18px;}
+
+/* chips, badges, labels */
+.tag,.cotag,.pill,.fchip,.chip2,.seclbl{font-size:var(--fs-sm);}
+.minip{font-size:12.5px;}
+.stat{font-size:var(--fs-xs); letter-spacing:.04em;}
+.rolebadge{font-size:12.5px;}
+th{font-size:var(--fs-sm); letter-spacing:.04em;}
+
+/* KPI cards: label 13, number 24, sublabel 13 faint; whole card clickable */
+.k{padding:14px;}
+.k .l{font-size:var(--fs-sm);}
+.k .v{font-size:var(--fs-xl);}
+.k .d{font-size:var(--fs-sm); color:var(--faint); margin-top:3px;}
+.k.clickable{cursor:pointer; transition:border-color .15s, box-shadow .15s;}
+.k.clickable:hover{border-color:color-mix(in srgb,var(--brand) 45%,var(--rule)); box-shadow:0 2px 10px rgba(0,0,0,.07);}
+
+/* sections & cards */
+.sec h3{font-size:var(--fs-lg);}
+.sec .v{font-size:var(--fs-sm);}
+.card{padding:16px; gap:8px;}
+.card .ti2{font-size:var(--fs-lg); line-height:1.35; padding-right:20px;}
+.card .ti2 .qty{font-size:14px; color:var(--muted); font-weight:400; white-space:nowrap;}
+.card .pn{font-size:var(--fs-sm); color:var(--faint);}
+.card .meta{font-size:var(--fs-sm); padding-top:9px;}
+/* countdowns are decision-critical: 15px semibold, red only when <24h */
+.cd{font-size:15px; font-weight:600; color:var(--ink);}
+.cd.soon{color:var(--danger);}
+.kempty{font-size:13.5px;}
+
+/* rows & tables: ≥48px rows, data ≥14.5, decision numbers 15 ink */
+.li{padding:14px 16px; min-height:48px;}
+.li .lt{font-size:16px;}
+.li .lm{font-size:var(--fs-sm); margin-top:3px;}
+.li .lr{font-size:var(--fs-base);}
+td{font-size:var(--fs-base); padding:14px 10px;}
+.num{font-size:15px; color:var(--ink); font-weight:500;}
+.subnum{font-size:var(--fs-sm); color:var(--faint);}
+.val{color:var(--ink); font-weight:500;}
+.mask{font-size:inherit;}
+
+/* forms */
+label{font-size:14px;}
+input,select,textarea{font-size:15px;}
+.hint{font-size:var(--fs-sm); color:var(--faint); line-height:1.45;}
+.btn{font-size:14px;}
+.btn-sm{font-size:var(--fs-sm);}
+.back{font-size:14px;}
+.meta-row{font-size:var(--fs-base); color:var(--ink);}
+.banner{font-size:14px; line-height:1.5;}
+.award .n{font-size:13.5px;}
+.sumrow{font-size:var(--fs-base);}
+
+/* kanban */
+.khead{font-size:14px;} .kc{font-size:12.5px;}
+.kcard{padding:12px 13px;}
+.kcard .kt{font-size:15.5px; line-height:1.35;}
+.kcard .km{font-size:var(--fs-sm); margin-top:8px;}
+
+/* tracking */
+.gr-t{font-size:16px;} .gr-m{font-size:13.5px; margin-top:3px; line-height:1.5;}
+.steplbls{font-size:12.5px;}
+.sc .l{font-size:var(--fs-sm);}
+
+/* chat */
+.cli .cn{font-size:var(--fs-base);} .cli .cp{font-size:var(--fs-sm);} .cli .cprev{font-size:var(--fs-sm);}
+.bub{font-size:var(--fs-base); line-height:1.5;} .bub .bt{font-size:var(--fs-xs);}
+.sysmsg{font-size:var(--fs-sm);}
+.thhead .tn{font-size:var(--fs-base);} .thhead .tp{font-size:var(--fs-sm);}
+.chk{font-size:var(--fs-sm);}
+
+/* supplier profile */
+.blabel{font-size:var(--fs-xs);}
+.kv{font-size:var(--fs-base);} .kv .item .l{font-size:var(--fs-sm);}
+.find .fk{font-size:15px;} .find .fd{font-size:14px; line-height:1.5;} .find .fsrc{font-size:12.5px;}
+.conf{font-size:var(--fs-sm);}
+.disc{font-size:var(--fs-xs); line-height:1.5;}   /* footnote — allowed at 12 */
+.flagbox{font-size:14px; line-height:1.5;}
+.flagack{font-size:13.5px; line-height:1.5;}
+.rf{font-size:14px;}
+.pmeta{font-size:13.5px;}
+
+/* tabs, toasts, notifications */
+.tab{font-size:14px;} .tab .tcount{font-size:var(--fs-xs);}
+.toast{font-size:14px;}
+.notifs{width:360px;}
+.nhead{font-size:14px;}
+.ni .nt{font-size:14px; line-height:1.5; overflow-wrap:anywhere;}
+.ni .nm2{font-size:12.5px;}
+
+/* addenda */
+.addendum .aq{font-size:var(--fs-sm);} .addendum .aa{font-size:var(--fs-base); line-height:1.5;} .addendum .at{font-size:var(--fs-xs);}
+
+/* choices / onboarding */
+.choicecard .ct{font-size:15px;} .choicecard .cd2,.choicecard .cd{font-size:13.5px; font-weight:400; color:var(--muted); line-height:1.5;}
+.catopt{font-size:14px;}
+.setrow{padding:13px 0;}
+
+/* login */
+.login-sub{font-size:13.5px;} .login-demo{font-size:var(--fs-sm);} .login-err{font-size:13.5px;} .login-tabs button{font-size:var(--fs-sm);}
+
+/* tap targets */
+.bm{width:38px; height:38px; display:flex; align-items:center; justify-content:center; font-size:19px; padding:0; top:5px; right:5px; border-radius:9px;}
+.bm:hover{background:var(--rule-soft);}
+.selradio{width:18px; height:18px;}
+.bell{padding:8px;}
+
+/* general line-height for multi-line text */
+.lm,.fd,.nt,.cprev,.hint,.banner span,.n{line-height:1.45;}
+.bell .bdot{font-size:10.5px; min-width:15px; height:15px; line-height:15px;}
+.nav a .nbadge{font-size:11.5px;}
+.av{font-size:12.5px;}

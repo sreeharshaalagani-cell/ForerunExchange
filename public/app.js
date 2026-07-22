@@ -18,7 +18,7 @@ const CATS = {
   plastic:{label:'Plastics', bg:'#E9F3E1', fg:'#3B5B12', icon:'ti-box'}
 };
 function tag(c){const x=CATS[c]; return x?`<span class="tag" style="background:${x.bg};color:${x.fg}">${x.label}</span>`:'';}
-function cotag(name){return `<span class="cotag"><i class="ti ti-building-factory" style="font-size:12px"></i>${name}</span>`;}
+function cotag(name){return `<span class="cotag"><i class="ti ti-building-factory" style="font-size:13.5px"></i>${name}</span>`;}
 const STAGES = ['accepted','manufacturing','shipped','delivered'];
 const STAGE_LBL = {accepted:'Accepted', manufacturing:'In production', shipped:'Shipped', delivered:'Delivered'};
 const STAT = {
@@ -45,12 +45,11 @@ const NAV = {
     {v:'tracking', i:'timeline', l:'Tracking', roles:['admin','buyer','engineer']},
     {v:'suppliers', i:'users', l:'Suppliers', roles:['admin','buyer','engineer']},
     {v:'messages', i:'message-2', l:'Messages', roles:['admin','buyer','engineer'], badge:true},
-    {v:'scorecards', i:'star', l:'Scorecards', roles:['admin','buyer']},
     {v:'audit', i:'history', l:'Activity', roles:['admin','buyer','engineer']},
     {v:'admin', i:'settings', l:'Admin', roles:['admin']}
   ]
 };
-const TITLES = {opportunities:'Opportunities', opportunity:'Opportunity', mybids:'My bids', tracking:'Orders & tracking', messages:'Messages', audit:'Activity & audit', scorecard:'Scorecard', company:'Company profile', rfqs:'My RFQs', createrfq:'New request', suppliers:'Suppliers', scorecards:'Supplier scorecards', admin:'Admin · users & roles', bidcompare:'Review bids', 'supplier-profile':'Supplier profile'};
+const TITLES = {opportunities:'Opportunities', opportunity:'Opportunity', mybids:'My bids', tracking:'Orders & tracking', messages:'Messages', audit:'Activity & audit', scorecard:'Scorecard', company:'Company profile', rfqs:'My RFQs', createrfq:'New request', suppliers:'Suppliers', admin:'Admin · users & roles', bidcompare:'Review bids', 'supplier-profile':'Supplier profile'};
 const NAVKEY = {opportunity:'opportunities', bidcompare:'rfqs', createrfq:'createrfq', 'supplier-profile':'rfqs'};
 
 /* ---------------- server-backed state ---------------- */
@@ -70,6 +69,7 @@ function fmtScore(s){ return (s===null||s===undefined) ? '<span class="pill st-m
 function unreadCount(){ return THREADS.reduce((n,t)=>n+(t.unread?1:0),0); }
 function initials(name){ return (name||'?').split(' ').map(w=>w[0]).slice(0,2).join(''); }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function plural(n, w){ return n+' '+w+(Number(n)===1?'':'s'); }
 
 function applyState(s){
   if(!s) return;
@@ -215,7 +215,6 @@ function go(view){
   if(view==='messages') renderMessages();
   if(view==='company') renderCompany();
   if(view==='admin') renderAdmin();
-  if(view==='scorecards') renderScorecards();
   if(view==='scorecard') renderScorecard();
   if(view==='audit') renderAudit();
   document.getElementById('notifs').classList.remove('on');
@@ -263,9 +262,9 @@ function renderSuppKpis(){
 function renderOppFilters(){
   const chips=['all',...customers()];
   document.getElementById('opp-filters').innerHTML =
-    `<span style="font-size:12px;color:var(--faint)">Customer:</span>` +
+    `<span style="font-size:13.5px;color:var(--faint)">Customer:</span>` +
     chips.map(c=>`<span class="fchip ${oppFilter===c&&!oppSoon?'on':''}" onclick="oppFilter='${esc(c)}';oppSoon=false;renderOppFilters();renderOpps()">${c==='all'?'All':esc(c)}</span>`).join('') +
-    `<span style="width:8px"></span><span class="fchip ${oppSoon?'on':''}" onclick="oppSoon=!oppSoon;renderOppFilters();renderOpps()"><i class="ti ti-clock" style="font-size:12px;vertical-align:-1px"></i> Closing today</span>`;
+    `<span style="width:8px"></span><span class="fchip ${oppSoon?'on':''}" onclick="oppSoon=!oppSoon;renderOppFilters();renderOpps()"><i class="ti ti-clock" style="font-size:13.5px;vertical-align:-1px"></i> Closing today</span>`;
 }
 function bmBtn(id){ const on=SAVED.has(id); return `<button class="bm ${on?'on':''}" onclick="toggleSave('${id}',event)" aria-label="${on?'Saved':'Save'}"><i class="ti ti-bookmark"></i></button>`; }
 async function toggleSave(id, ev){ if(ev) ev.stopPropagation(); await act('toggleSave',{oppId:id}); renderOpps(); renderKanban(); }
@@ -273,11 +272,11 @@ function renderOpps(){
   const list = OPPS.filter(o=>(oppFilter==='all'||o.customer===oppFilter) && (!oppSoon||o.soon));
   const hiddenCats=Object.keys(OUTSIDE);
   const hiddenTotal=hiddenCats.reduce((a,c)=>a+OUTSIDE[c],0);
-  const qualLine=`<div style="grid-column:1/-1;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted)">
+  const qualLine=`<div style="grid-column:1/-1;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13.5px;color:var(--muted)">
     <span>You're qualified in:</span>${QUALCATS.map(c=>tag(c)).join(' ')}
-    <span class="link" onclick="go('company')" style="font-size:11.5px">edit capabilities →</span></div>`;
+    <span class="link" onclick="go('company')" style="font-size:13px">edit capabilities →</span></div>`;
   const hiddenBanner=hiddenTotal?`<div class="banner" style="grid-column:1/-1;margin:0"><i class="ti ti-eye-off"></i><span><b>${hiddenTotal} open request${hiddenTotal>1?'s':''} hidden</b> — in ${hiddenCats.map(c=>CATS[c]?.label||c).join(', ')}, where your company isn't qualified. Add those capabilities in <span class="link" onclick="go('company')">Company profile</span> to see and bid on them.</span></div>`:'';
-  document.getElementById('opp-feed').innerHTML = qualLine + hiddenBanner + (list.map(o=>`<div class="card" onclick="openOpp('${o.id}')">${bmBtn(o.id)}<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">${tag(o.cat)}${cotag(esc(o.customer))}</div><span class="ti2">${esc(o.title)}</span><span class="pn">${o.id} · qty ${o.qty}${o.nda!=='none'?' · <i class="ti ti-lock" style="font-size:11px;vertical-align:-1px"></i> NDA':''}${o.hasMyBid?' · <b>bid placed</b>':''}</span><div class="meta"><span class="${o.soon?'soon':''}">${o.closes}</span><span>${o.bids} bids</span></div></div>`).join('')
+  document.getElementById('opp-feed').innerHTML = qualLine + hiddenBanner + (list.map(o=>`<div class="card" onclick="openOpp('${o.id}')">${bmBtn(o.id)}<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">${tag(o.cat)}${cotag(esc(o.customer))}${o.hasMyBid?'<span class="pill st-info">bid placed</span>':''}</div><span class="ti2">${esc(o.title)} <span class="qty">· qty ${o.qty}</span></span><span class="pn">${o.id}${o.nda!=='none'?' · <i class="ti ti-lock" style="font-size:13px;vertical-align:-1px"></i> NDA':''}</span><div class="meta"><span class="cd ${o.soon?'soon':''}">${o.closes}</span><span>${plural(o.bids,'bid')}</span></div></div>`).join('')
     || `<div class="kempty" style="grid-column:1/-1">No open opportunities${oppFilter!=='all'?' for '+esc(oppFilter):''} in your qualified categories right now.</div>`);
 }
 function openOpp(id){
@@ -297,10 +296,10 @@ function openOpp(id){
         ? `<button class="btn" onclick="viewVault('${o.id}')">Open in vault ↗</button>`
         : `<button class="btn btn-primary" onclick="signNDA('${o.id}')"><i class="ti ti-file-pencil" style="font-size:14px;vertical-align:-2px"></i> Sign NDA to view</button>`}
     </div></div>
-    ${(ADDENDA[o.id]||[]).length?`<div class="panelcard"><div class="seclbl" style="margin-top:0"><i class="ti ti-speakerphone" style="font-size:12px;vertical-align:-1px"></i> Addenda — buyer answers shared with all bidders</div>${(ADDENDA[o.id]).map(a=>`<div class="addendum"><div class="aq">Q: ${esc(a.q)}</div><div class="aa">A: ${esc(a.a)}</div><div class="at">${esc(a.at)} · posted to ${a.bidders} bidders</div></div>`).join('')}</div>`:''}
+    ${(ADDENDA[o.id]||[]).length?`<div class="panelcard"><div class="seclbl" style="margin-top:0"><i class="ti ti-speakerphone" style="font-size:13.5px;vertical-align:-1px"></i> Addenda — buyer answers shared with all bidders</div>${(ADDENDA[o.id]).map(a=>`<div class="addendum"><div class="aq">Q: ${esc(a.q)}</div><div class="aa">A: ${esc(a.a)}</div><div class="at">${esc(a.at)} · posted to ${plural(a.bidders,"bidder")}</div></div>`).join('')}</div>`:''}
     <div class="panelcard">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-size:12.5px;color:var(--muted)">${esc(o.reqs||'')}</div><button class="btn btn-sm btn-ghost" onclick="openThreadFor('${o.id}')"><i class="ti ti-message-2" style="font-size:14px;vertical-align:-2px"></i> Ask engineer</button></div>
-      ${hasBid?'<div class="banner info" style="margin-bottom:12px"><i class="ti ti-info-circle"></i><span>You have an active bid here — you can revise it until the window closes.</span></div>':''}
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-size:14px;color:var(--muted)">${esc(o.reqs||'')}</div><button class="btn btn-sm btn-ghost" onclick="openThreadFor('${o.id}')"><i class="ti ti-message-2" style="font-size:14px;vertical-align:-2px"></i> Ask engineer</button></div>
+      ${hasBid&&o.myBid?`<div class="banner info" style="margin-bottom:12px"><i class="ti ti-info-circle"></i><span><b>Current bid:</b> $${o.myBid.unit}/u · $${o.myBid.ship||0} ship (${esc(o.myBid.incoterms)}) · ${o.myBid.lead}d lead — revise below until the window closes.</span></div>`:''}
       <div class="row2">
         <div class="field"><label>Unit price (USD) *</label><input id="bid-unit" type="text" placeholder="$ 0.00" oninput="calcTotal(${qty})" ${signed?'':'disabled'}></div>
         <div class="field"><label>Lead time (days) *</label><input id="bid-lead" type="text" placeholder="e.g. 10" ${signed?'':'disabled'}></div>
@@ -313,9 +312,17 @@ function openOpp(id){
       <div class="field"><label>Notes (optional)</label><textarea id="bid-notes" placeholder="Anything the engineer should know…" ${signed?'':'disabled'}></textarea></div>
       <div class="actions" style="justify-content:space-between">
         <button class="btn btn-ghost" onclick="declineBid('${o.id}')" ${signed?'':'disabled'}>Decline (no-bid)</button>
-        <div style="display:flex;gap:10px;align-items:center"><span style="font-size:12.5px;color:var(--muted)">${o.bids} bids · amounts hidden</span><button class="btn btn-primary" onclick="submitBid('${o.id}')" ${signed?'':'disabled'}>${hasBid?'Revise bid':'Submit bid'}</button></div>
+        <div style="display:flex;gap:10px;align-items:center"><span style="font-size:14px;color:var(--muted)">${plural(o.bids,'bid')} · amounts hidden</span><button class="btn btn-primary" onclick="submitBid('${o.id}')" ${signed?'':'disabled'}>${hasBid?'Revise bid':'Submit bid'}</button></div>
       </div>
     </div>`;
+  if(o.myBid){ // prefill current bid even when NDA-locked (fields stay disabled)
+    document.getElementById('bid-unit').value=o.myBid.unit;
+    document.getElementById('bid-ship').value=o.myBid.ship||0;
+    document.getElementById('bid-lead').value=o.myBid.lead;
+    document.getElementById('bid-inco').value=o.myBid.incoterms||'FOB Origin';
+    document.getElementById('bid-notes').value=o.myBid.notes||'';
+    calcTotal(qty);
+  }
   go('opportunity');
 }
 function calcTotal(qty){
@@ -336,7 +343,7 @@ function signNDA(id){
   openModal(`
     <h3>Sign NDA to view drawing</h3>
     <div class="msub">${esc(o.customer)} requires a ${kind} NDA before this drawing unlocks.</div>
-    <div class="rcard" style="max-height:150px;overflow:auto;font-size:12px;color:var(--muted)">This Non-Disclosure Agreement covers all technical data, drawings, and specifications accessed through Forerun Exchange for ${esc(o.customer)}${o.nda==='drawing'?` — specifically part ${o.id}`:` in the ${CATS[o.cat]?.label} category`}. Confidential information may not be shared, reproduced, or used outside the scope of quoting and fulfilling this work…</div>
+    <div class="rcard" style="max-height:150px;overflow:auto;font-size:13.5px;color:var(--muted)">This Non-Disclosure Agreement covers all technical data, drawings, and specifications accessed through Forerun Exchange for ${esc(o.customer)}${o.nda==='drawing'?` — specifically part ${o.id}`:` in the ${CATS[o.cat]?.label} category`}. Confidential information may not be shared, reproduced, or used outside the scope of quoting and fulfilling this work…</div>
     <label style="margin-top:12px"><input type="checkbox" id="nda-ck" style="width:auto;margin-right:8px" onchange="document.getElementById('nda-go').disabled=!this.checked">I have read and agree on behalf of ${esc(ME.company)}.</label>
     <div class="actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="nda-go" disabled onclick="confirmNda('${o.id}')">Accept &amp; unlock</button></div>`);
 }
@@ -348,8 +355,8 @@ async function submitBid(id){
 }
 
 function renderKanban(){
-  const savedItems = OPPS.filter(o=>SAVED.has(o.id) && !o.hasMyBid).map(o=>({id:o.id, title:o.title, cat:o.cat, sub:`${o.closes} · ${o.bids} bids`, saved:true}));
-  const mk = key => MYBIDS.filter(b=>b.stage===key).map(b=>({id:b.id, title:b.title, cat:b.cat, sub:`${money(b.price)} · ${b.lead}d`, pill:b.status}));
+  const savedItems = OPPS.filter(o=>SAVED.has(o.id) && !o.hasMyBid).map(o=>({id:o.id, title:o.title, cat:o.cat, sub:`${o.closes} · ${plural(o.bids,"bid")}`, saved:true}));
+  const mk = key => MYBIDS.filter(b=>b.stage===key).map(b=>({id:b.id, title:b.title, cat:b.cat, sub:`<span class="val">${money(b.price)}</span> · <span class="val">${b.lead}d</span>`, pill:b.status}));
   const stages = [
     {label:'Saved', dot:'var(--warn)', items:savedItems},
     {label:'Submitted', dot:'var(--brand)', items:mk('active')},
@@ -466,8 +473,8 @@ function renderTracking(){
     const cards = byProduct[prod].map(o=>{
       const who = isBuyer ? `Supplier: ${esc(o.supplier||'')}` : `Customer: ${esc(o.customer||o.buyer||'')}`;
       const trackBtn = o.tracking
-        ? `<span class="link" onclick="toast('Opening FedEx tracking ${esc(o.tracking)}')"><i class="ti ti-brand-fedex" style="font-size:13px;vertical-align:-2px"></i> ${esc(o.tracking)}</span>`
-        : (isBuyer?'<span style="color:var(--faint);font-size:12px">no tracking yet</span>':`<button class="btn btn-sm" onclick="addTracking('${o.id}')">Add FedEx tracking</button>`);
+        ? `<span class="link" onclick="toast('Opening FedEx tracking ${esc(o.tracking)}')"><i class="ti ti-brand-fedex" style="font-size:14px;vertical-align:-2px"></i> ${esc(o.tracking)}</span>`
+        : (isBuyer?'<span style="color:var(--faint);font-size:13.5px">no tracking yet</span>':`<button class="btn btn-sm" onclick="addTracking('${o.id}')">Add FedEx tracking</button>`);
       const delay = o.delayed ? `<div class="banner" style="margin:10px 0 0"><i class="ti ti-clock-exclamation"></i><span><b>Delayed.</b> ${esc(o.delayReason)}</span></div>` : '';
       let supActions='';
       if(!isBuyer){
@@ -478,16 +485,16 @@ function renderTracking(){
       let buyActions='';
       if(isBuyer && o.stage==='delivered' && ME.canAward) buyActions=`<button class="btn btn-sm btn-primary" onclick="qualityReview('${o.id}')">Close &amp; review</button> <button class="btn btn-sm" onclick="reorder('${o.id}')">Reorder</button>`;
       return `<div class="gantt-row">
-        <div class="gr-head"><div><div class="gr-t">${esc(o.title)} <span class="pill st-muted">${o.id}</span></div><div class="gr-m">${tag(o.cat)} · qty ${o.qty} · ${who} · ${money(o.price)} · due ${esc(o.due)}</div></div>
+        <div class="gr-head"><div><div class="gr-t">${esc(o.title)} <span class="pill st-muted">${o.id}</span></div><div class="gr-m">${tag(o.cat)} · qty <span class="val">${o.qty}</span> · ${who} · <span class="val">${money(o.price)}</span> · due <span class="val">${esc(o.due)}</span></div></div>
         <div>${o.delayed?'<span class="pill st-danger">Late</span>':`<span class="pill ${o.stage==='delivered'?'st-win':o.stage==='shipped'?'st-info':'st-good'}">${STAGE_LBL[o.stage]}</span>`}</div></div>
         ${orderStepper(o)}
         ${delay}
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px">
-          <div>${trackBtn}</div><div style="display:flex;gap:8px">${supActions}${buyActions}<button class="btn btn-sm btn-ghost" onclick="openThreadFor('${o.rfqId||o.id}')"><i class="ti ti-message-2" style="font-size:13px;vertical-align:-2px"></i></button></div>
+          <div>${trackBtn}</div><div style="display:flex;gap:8px">${supActions}${buyActions}<button class="btn btn-sm btn-ghost" onclick="openThreadFor('${o.rfqId||o.id}')"><i class="ti ti-message-2" style="font-size:14px;vertical-align:-2px"></i></button></div>
         </div>
       </div>`;
     }).join('');
-    return isBuyer ? `<div class="seclbl" style="margin-top:6px"><i class="ti ti-folder" style="font-size:12px;vertical-align:-1px"></i> ${esc(prod)} · ${byProduct[prod].length}</div>${cards}` : cards;
+    return isBuyer ? `<div class="seclbl" style="margin-top:6px"><i class="ti ti-folder" style="font-size:13.5px;vertical-align:-1px"></i> ${esc(prod)} · ${byProduct[prod].length}</div>${cards}` : cards;
   }).join('') || '<div class="kempty">Nothing in this stage.</div>';
   document.getElementById('tracking-body').innerHTML = head + summary + tabbar + rows;
 }
@@ -552,12 +559,12 @@ function renderMessages(){
   }).join('');
   const who = m => role()==='supplier' ? (m.from==='sup'?'me':'them') : (m.from==='sup'?'them':'me');
   const bubbles = t.msgs.map(m=>{
-    if(m.from==='sys') return `<div class="sysmsg"><i class="ti ti-speakerphone" style="font-size:12px;vertical-align:-1px"></i> ${esc(m.text)}</div>`;
+    if(m.from==='sys') return `<div class="sysmsg"><i class="ti ti-speakerphone" style="font-size:13.5px;vertical-align:-1px"></i> ${esc(m.text)}</div>`;
     const side=who(m);
-    return `<div class="bub ${side}">${side==='them'?`<div style="font-size:10px;color:var(--faint);margin-bottom:2px">${esc(m.name)}</div>`:''}${esc(m.text)}<div class="bt">${m.t}</div></div>`;
+    return `<div class="bub ${side}">${side==='them'?`<div style="font-size:12px;color:var(--faint);margin-bottom:2px">${esc(m.name)}</div>`:''}${esc(m.text)}<div class="bt">${m.t}</div></div>`;
   }).join('');
   const addendumUI = role()==='buyer'
-    ? `<label class="chk" style="padding:8px 14px 0;font-size:12px"><input type="checkbox" id="post-addendum"><span>Post this answer as an <b>addendum to all bidders</b> on ${t.part} (fairness)</span></label>`
+    ? `<label class="chk" style="padding:8px 14px 0;font-size:13.5px"><input type="checkbox" id="post-addendum"><span>Post this answer as an <b>addendum to all bidders</b> on ${t.part} (fairness)</span></label>`
     : '';
   document.getElementById('messages-body').innerHTML = `
     <div class="sec"><h3>Messages</h3><span class="v">technical questions route to the assigned ${role()==='supplier'?'engineer/buyer':'supplier'}</span></div>
@@ -607,11 +614,6 @@ async function submitRfq(draft){
 function renderSuppliers(){
   document.getElementById('sup-list').innerHTML = SUPS.map(s=>`<div class="li" onclick="openSupplier('${esc(s.name)}','suppliers')"><div><div class="lt">${esc(s.name)} ${s.rnd?'<span class="pill st-good" style="margin-left:4px">R&amp;D</span>':'<span class="pill st-muted" style="margin-left:4px">Production only</span>'}</div><div class="lm">${s.cats.map(c=>CATS[c]?.label||c).join(' · ')} · ${s.jobs} jobs${s.ontime!=null?' · '+s.ontime+'% on-time':''}</div></div><div class="lr"><span>${fmtScore(s.score)}</span><span class="pill st-good">Qualified</span></div></div>`).join('');
 }
-function renderScorecards(){
-  document.getElementById('scorecards-list').innerHTML = SUPS.map(s=>`<div class="li" onclick="openSupplier('${esc(s.name)}','scorecards')">
-    <div><div class="lt">${esc(s.name)}</div><div class="lm">${s.cats.map(c=>CATS[c]?.label||c).join(' · ')}</div></div>
-    <div class="lr"><span>${s.jobs} jobs</span><span>${s.ontime!=null?s.ontime+'% on-time':'no history'}</span><span class="pill ${s.score==null?'st-muted':s.score>=4.5?'st-win':s.score>=4?'st-good':'st-warn'}">${s.score==null?'New':'★ '+s.score}</span></div></div>`).join('');
-}
 
 /* ----- bid compare + award ----- */
 let currentRFQ=null, selectedBid=null, splitMode=false, splitAlloc={};
@@ -640,10 +642,10 @@ function renderBidRows(){
       : `<span class="selradio"></span>`;
     return `<tr class="bidrow ${sel}" onclick="${splitMode?'':`selectBid('${b.supplierCompanyId}')`}">
       <td style="width:70px">${first}</td>
-      <td><span class="link" onclick="event.stopPropagation();openSupplier('${esc(b.supplier)}','bidcompare')">${esc(b.supplier)} <i class="ti ti-external-link" style="font-size:11px;vertical-align:-1px"></i></span>${b.revised?'<span class="minip st-muted" style="background:var(--rule-soft);color:var(--muted)">revised</span>':''}${flags.length?`<span class="minip" style="background:#FCEBEB;color:#A32D2D">⚑ ${flags.length}</span>`:''}</td>
-      <td>${money(b.unit)}<span style="color:var(--faint);font-size:11px">/u</span></td>
-      <td>${money(b.price)}<div style="font-size:11px;color:var(--faint)">+${canSeePrice()?'$'+(b.ship||0):'••'} ship · ${b.incoterms}</div></td>
-      <td>${b.lead}d</td>
+      <td><span class="link" onclick="event.stopPropagation();openSupplier('${esc(b.supplier)}','bidcompare')">${esc(b.supplier)} <i class="ti ti-external-link" style="font-size:13px;vertical-align:-1px"></i></span>${b.revised?'<span class="minip st-muted" style="background:var(--rule-soft);color:var(--muted)">revised</span>':''}${flags.length?`<span class="minip" style="background:#FCEBEB;color:#A32D2D">⚑ ${flags.length}</span>`:''}</td>
+      <td><span class="num">${money(b.unit)}</span><span class="subnum">/u</span></td>
+      <td><span class="num">${money(b.price)}</span><div class="subnum">+${canSeePrice()?'$'+(b.ship||0):'••'} ship · ${b.incoterms}</div></td>
+      <td><span class="num">${b.lead}d</span></td>
       <td>${fmtScore(b.score)}</td></tr>`;
   }).join('') || `<tr><td colspan="6" class="kempty">No bids yet.</td></tr>`;
 }
@@ -655,7 +657,7 @@ function renderBidCompare(){
   const canAwardMe = ME.canAward;
   document.getElementById('bidcompare').innerHTML = `
     <span class="back" onclick="go('rfqs')"><i class="ti ti-arrow-left"></i> My RFQs</span>
-    <div class="sec"><h3>${esc(r.title)} — bids</h3><span class="v">${r.bids} bids · ${declined.length} declined · qty ${qty}</span></div>
+    <div class="sec"><h3>${esc(r.title)} — bids</h3><span class="v">${plural(r.bids,"bid")} · ${declined.length} declined · qty ${qty}</span></div>
     ${persona()==='engineer'&&!SETTINGS.showPricingToEngineers?'<div class="banner"><i class="ti ti-eye-off"></i><span>Viewing as <b>engineer</b> — pricing is masked by your admin and awarding is unavailable. You can answer supplier questions and post addenda.</span></div>':''}
     ${r.open?`<div class="banner"><i class="ti ti-clock"></i><span>Window open — closes in <b>${r.closes}</b>. Award unlocks after close.${r.autoExtend?' <b>Anti-sniping:</b> a bid in the final 10 min auto-extends the window.':''}</span>${canAwardMe?`<button class="btn btn-sm" style="margin-left:auto" onclick="closeWindowNow('${r.id}')">Close window now</button>`:''}</div>`:''}
     <div class="meta-row">${tag(r.cat)}<span>${r.id}</span><span>${esc(r.product||'')}</span>${r.autoExtend?'<span class="pill st-info">auto-extend on</span>':''}<span>Engineer: ${esc(r.engineer||'—')}</span></div>
@@ -663,8 +665,8 @@ function renderBidCompare(){
       <span class="fchip ${!splitMode?'on':''}" onclick="splitMode=false;selectedBid=null;renderBidCompare()">Single award</span>
       <span class="fchip ${splitMode?'on':''}" onclick="splitMode=true;selectedBid=null;renderBidCompare()">Split award</span>
       <span style="flex:1"></span>
-      <button class="btn btn-sm" onclick="exportBids()"><i class="ti ti-download" style="font-size:13px;vertical-align:-2px"></i> Export CSV</button>
-      <button class="btn btn-sm" onclick="duplicateRFQ('${r.id}')"><i class="ti ti-copy" style="font-size:13px;vertical-align:-2px"></i> Duplicate / re-run</button>
+      <button class="btn btn-sm" onclick="exportBids()"><i class="ti ti-download" style="font-size:14px;vertical-align:-2px"></i> Export CSV</button>
+      <button class="btn btn-sm" onclick="duplicateRFQ('${r.id}')"><i class="ti ti-copy" style="font-size:14px;vertical-align:-2px"></i> Duplicate / re-run</button>
     </div>
     <div class="list" style="padding:0"><table><thead><tr><th>${splitMode?'Qty':''}</th><th>Supplier</th><th>Unit</th><th>${priceHead}</th><th>Lead</th><th>Score</th></tr></thead><tbody>${renderBidRows()}</tbody></table></div>
     <div class="hint" style="margin-top:8px">Totals include shipping as quoted (incoterms shown). ${splitMode?`Allocate quantities across suppliers — split sums to <b>${splitTotal}</b> / ${qty}.`:'Tap a row to select the awardee.'}</div>
@@ -704,7 +706,7 @@ function openAwardModal(title, summaryRows, flaggedSuppliers){
   const flagBox = flags.length ? `
     <div class="flagack">
       <div style="font-weight:600"><i class="ti ti-alert-triangle" style="vertical-align:-2px"></i> ${flags.length} open risk flag${flags.length>1?'s':''} on ${[...new Set(flags.map(x=>x.s))].map(esc).join(', ')}</div>
-      ${flags.map(x=>`<div class="fl"><i class="ti ti-point-filled" style="font-size:11px;margin-top:3px"></i><span><b>${esc(x.s)}:</b> ${esc(x.f)}</span></div>`).join('')}
+      ${flags.map(x=>`<div class="fl"><i class="ti ti-point-filled" style="font-size:13px;margin-top:3px"></i><span><b>${esc(x.s)}:</b> ${esc(x.f)}</span></div>`).join('')}
       <label class="chk" style="margin-top:11px"><input type="checkbox" id="ackflags" onchange="document.getElementById('awardgo').disabled=!this.checked"><span>I acknowledge these flags and accept responsibility for awarding despite them.</span></label>
     </div>` : '';
   openModal(`
@@ -749,12 +751,12 @@ function openSupplier(name, ret){
   document.getElementById('supplier-profile').innerHTML = `
     <span class="back" onclick="go('${profileReturn}')"><i class="ti ti-arrow-left"></i> Back</span>
     <div class="phead"><span class="pav">${initials(name)}</span><div><div class="pname">${esc(name)}</div><div class="pmeta">${(pr.cats||[]).map(c=>tag(c)).join(' ')}<span class="pill st-good">Qualified</span><span>${fmtScore(pr.score)}</span><span class="mono">${pr.id}</span></div></div></div>
-    ${showBid?`<div class="block" style="padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><span style="font-size:13px;color:var(--muted)">Bid under review</span><span style="font-weight:500">$${bid.price.toLocaleString()} · ${bid.lead} days</span></div>`:''}
+    ${showBid?`<div class="block" style="padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><span style="font-size:14px;color:var(--muted)">Bid under review</span><span style="font-weight:500">$${bid.price.toLocaleString()} · ${bid.lead} days</span></div>`:''}
     <div class="prof">
       <div class="pmain">
         <div class="block">
           <span class="blabel bl-self"><i class="ti ti-building"></i> Supplier-provided</span>
-          <div style="font-size:13.5px;margin-bottom:14px">${esc(p.about)}</div>
+          <div style="font-size:14.5px;margin-bottom:14px">${esc(p.about)}</div>
           <div class="kv">
             <div class="item"><div class="l">Founded</div><div class="v">${esc(p.founded)}</div></div>
             <div class="item"><div class="l">Location</div><div class="v">${esc(p.location)}</div></div>
@@ -768,7 +770,7 @@ function openSupplier(name, ret){
         </div>
         <div class="block agent">
           <span class="blabel bl-agent"><i class="ti ti-sparkles"></i> Forerun Research Agent</span>
-          <div style="font-size:13.5px;margin-bottom:10px">${esc(r.summary)}</div>
+          <div style="font-size:14.5px;margin-bottom:10px">${esc(r.summary)}</div>
           <div class="conf">Confidence<span class="confbar"><span style="width:${r.confidence}%"></span></span>${r.confidence}%</div>
           <div style="margin-top:12px">${findings}</div>
           ${flags}
@@ -777,7 +779,7 @@ function openSupplier(name, ret){
       </div>
       <div class="rail">
         <div class="rcard">
-          <div style="font-size:12.5px;font-weight:500;margin-bottom:8px">At a glance</div>
+          <div style="font-size:14px;font-weight:500;margin-bottom:8px">At a glance</div>
           <div class="rf"><span>Scorecard</span><span>${fmtScore(pr.score)}</span></div>
           <div class="rf"><span>Certs</span>${certStat}</div>
           <div class="rf"><span>Risk flags</span><span style="color:${r.flags.length?'var(--warn)':'var(--good)'}">${r.flags.length||'None'}</span></div>
@@ -794,8 +796,8 @@ function openSupplier(name, ret){
 
 /* ----- admin (admins only; server enforces too) ----- */
 function renderAdmin(){
-  const rows = USERS.map(u=>`<tr><td><div style="font-weight:500">${esc(u.name)}</div><div style="font-size:11.5px;color:var(--faint)">${esc(u.email)}</div></td>
-    <td>${ME.isAdmin?`<select onchange="changeUserRole('${esc(u.email)}',this.value)" style="padding:5px 8px;font-size:12px;max-width:120px">${['Admin','Buyer','Engineer'].map(r=>`<option ${u.role===r?'selected':''}>${r}</option>`).join('')}</select>`:esc(u.role)}</td>
+  const rows = USERS.map(u=>`<tr><td><div style="font-weight:500">${esc(u.name)}</div><div style="font-size:13px;color:var(--faint)">${esc(u.email)}</div></td>
+    <td>${ME.isAdmin?`<select onchange="changeUserRole('${esc(u.email)}',this.value)" style="padding:5px 8px;font-size:13.5px;max-width:120px">${['Admin','Buyer','Engineer'].map(r=>`<option ${u.role===r?'selected':''}>${r}</option>`).join('')}</select>`:esc(u.role)}</td>
     <td>${esc(u.group)}</td><td><span class="pill ${u.status==='Active'?'st-good':'st-warn'}">${u.status}</span></td></tr>`).join('');
   document.getElementById('admin-body').innerHTML = `
     <div class="sec"><h3>Users &amp; roles</h3><span class="v"><button class="btn btn-primary btn-sm" onclick="addUser()">+ Invite user</button></span></div>
@@ -805,7 +807,7 @@ function renderAdmin(){
     <div class="chips" style="margin-bottom:18px">${GROUPS.map(g=>`<span class="chip2">${esc(g)}</span>`).join('')}<span class="chip2 link" onclick="addGroupModal()">+ Add group</span></div>
     <div class="sec"><h3>Access settings</h3></div>
     <div class="panelcard" style="padding:6px 18px">
-      <div class="setrow"><div><div style="font-weight:500;font-size:13.5px">Show pricing to engineers</div><div style="font-size:12px;color:var(--muted)">When off, engineers see lead time &amp; scorecards but bid prices are masked (enforced server-side).</div></div><button class="toggle ${SETTINGS.showPricingToEngineers?'on':''}" onclick="toggleSetting()"></button></div>
+      <div class="setrow"><div><div style="font-weight:500;font-size:14.5px">Show pricing to engineers</div><div style="font-size:13.5px;color:var(--muted)">When off, engineers see lead time &amp; scorecards but bid prices are masked (enforced server-side).</div></div><button class="toggle ${SETTINGS.showPricingToEngineers?'on':''}" onclick="toggleSetting()"></button></div>
     </div>`;
 }
 async function toggleSetting(){ if(await act('updateSettings',{key:'showPricingToEngineers', value:!SETTINGS.showPricingToEngineers})) renderAdmin(); }
@@ -841,7 +843,7 @@ function renderAudit(){
   const rows = AUDIT.map(a=>`<tr><td style="white-space:nowrap;color:var(--muted)">${a.t}</td><td><i class="ti ${kindIcon[a.kind]||'ti-point'}" style="color:${kindColor[a.kind]||'var(--faint)'};font-size:15px;vertical-align:-2px;margin-right:6px"></i>${esc(a.action)}</td><td>${esc(a.actor)}</td><td><span class="pill st-muted">${esc(a.target||'—')}</span></td></tr>`).join('')
     || '<tr><td colspan="4" class="kempty">No activity yet.</td></tr>';
   document.getElementById('audit-body').innerHTML = `
-    <div class="sec"><h3>Activity &amp; audit trail</h3><span class="v"><button class="btn btn-sm" onclick="exportAudit()"><i class="ti ti-download" style="font-size:13px;vertical-align:-2px"></i> Export</button></span></div>
+    <div class="sec"><h3>Activity &amp; audit trail</h3><span class="v"><button class="btn btn-sm" onclick="exportAudit()"><i class="ti ti-download" style="font-size:14px;vertical-align:-2px"></i> Export</button></span></div>
     <div class="banner info"><i class="ti ti-lock"></i><span>Every drawing view, bid, NDA, addendum and award involving your company is recorded server-side — timestamped, attributable, exportable.</span></div>
     <div class="list" style="padding:0"><table><thead><tr><th>When</th><th>Action</th><th>Actor</th><th>RFQ / part</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }

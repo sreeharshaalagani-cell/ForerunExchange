@@ -182,13 +182,23 @@ function viewerState(u) {
     const sp = supProfile(u.companyId) || { cats: [] };
     const opps = state.rfqs
       .filter(r => r.status === 'open' && windowOpen(r) && sp.cats.includes(r.cat))
-      .map(r => ({ id: r.id, title: r.title, cat: r.cat, qty: r.qty, closes: humanize(r.closesAt - now()),
-        soon: r.closesAt - now() < 24 * 3600e3, customer: supName(r.buyerCompanyId), reqs: r.reqs, nda: r.nda,
-        bids: rfqBids(r.id).length, hasMyBid: rfqBids(r.id).some(b => b.supplierCompanyId === u.companyId) }));
+      .map(r => {
+        const mine = rfqBids(r.id).find(b => b.supplierCompanyId === u.companyId);
+        return { id: r.id, title: r.title, cat: r.cat, qty: r.qty, closes: humanize(r.closesAt - now()),
+          soon: r.closesAt - now() < 24 * 3600e3, customer: supName(r.buyerCompanyId), reqs: r.reqs, nda: r.nda,
+          bids: rfqBids(r.id).length, hasMyBid: !!mine,
+          myBid: mine ? { unit: mine.unit, ship: mine.ship, incoterms: mine.incoterms, lead: mine.lead, notes: mine.notes || '' } : null };
+      });
     const mybids = state.bids.filter(b => b.supplierCompanyId === u.companyId).map(b => {
       const r = rfqById(b.rfqId); if (!r) return null;
       const st = supplierBidStage(u, r, b);
-      return { id: r.id, title: r.title, cat: r.cat, price: bidPrice(b, r), lead: b.lead, stage: st.stage, status: st.status };
+      // won cards show the awarded order total (what was actually won), not the last bid amount
+      let price = bidPrice(b, r);
+      if (st.stage === 'won') {
+        const won = state.orders.filter(o => o.rfqId === r.id && o.supplierCompanyId === u.companyId);
+        if (won.length) price = won.reduce((a, o) => a + (o.price || 0), 0);
+      }
+      return { id: r.id, title: r.title, cat: r.cat, price, lead: b.lead, stage: st.stage, status: st.status };
     }).filter(Boolean);
     const orders = state.orders.filter(o => o.supplierCompanyId === u.companyId)
       .map(o => ({ ...o, buyerName: o.buyer, customer: supName(o.buyerCompanyId) }));
@@ -353,7 +363,7 @@ ops.postMessage = async (u, { threadId, text, addendum }) => {
     const lastQ = [...t.msgs].reverse().find(m => m.from === 'sup');
     const bidders = rfqBids(t.rfqId).length || 1;
     (state.addenda[t.rfqId] = state.addenda[t.rfqId] || []).push({ q: lastQ ? lastQ.text : '(buyer clarification)', a: String(text).trim(), at: actorName(u), bidders });
-    t.msgs.push({ from: 'sys', text: `Posted as an addendum to all ${bidders} bidders on ${t.rfqId}` });
+    t.msgs.push({ from: 'sys', text: `Posted as an addendum to ${bidders === 1 ? 'the 1 bidder' : 'all ' + bidders + ' bidders'} on ${t.rfqId}` });
     rfqBids(t.rfqId).forEach(b => notify(b.supplierCompanyId, null, 'ti-speakerphone', `Addendum posted on ${r ? r.title : t.rfqId} (${t.rfqId})`, { view: 'opp', arg: t.rfqId }));
     audit(u, `Posted addendum to ${bidders} bidders`, t.rfqId, 'addendum');
     await persist();
