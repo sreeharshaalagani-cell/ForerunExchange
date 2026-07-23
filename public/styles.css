@@ -448,3 +448,160 @@ input,select,textarea{font-size:15px;}
 .bell .bdot{font-size:10.5px; min-width:15px; height:15px; line-height:15px;}
 .nav a .nbadge{font-size:11.5px;}
 .av{font-size:12.5px;}
+
+/* ============================================================
+   DESIGN SYSTEM v2 — FreGo direction (forerun-design-guidelines.md)
+   Later-in-file layer: remaps legacy vars to tokens.css and restyles
+   shell + components. Requires tokens.css loaded first.
+   ============================================================ */
+
+/* legacy var mapping (resolves live, so dark mode flips automatically) */
+:root{
+  --paper:var(--canvas); --panel:var(--surface);
+  --muted:var(--text-2); --faint:var(--text-3);
+  --rule:var(--border); --rule-soft:var(--border-soft);
+  --good:var(--success); --warn:var(--warning); --win:var(--success);
+}
+/* single primary accent — retire per-role teal/indigo split */
+.app[data-role="supplier"], .app[data-role="buyer"]{ --brand:var(--primary); --brand-soft:var(--primary-tint); }
+@media (prefers-color-scheme:dark){
+  .app[data-role="supplier"], .app[data-role="buyer"]{ --brand:var(--primary); --brand-soft:var(--primary-tint); }
+}
+
+/* type */
+body{ background:var(--canvas); color:var(--ink); font-family:var(--font-ui); font-size:var(--fs-base); line-height:var(--lh-base); padding:20px; }
+h3,.pname,.brand .nm,.login-brand,.k .v,.sc .v{ font-family:var(--font-ui); letter-spacing:-0.01em; }
+.mono{ font-family:var(--font-mono); font-size:13px; }
+
+/* ---- shell: floating white sidebar, transparent content on canvas ---- */
+.app{ background:transparent; border:none; box-shadow:none; border-radius:0; max-width:var(--content-max); gap:20px; overflow:visible; min-height:calc(100vh - 40px); }
+.side{ background:var(--surface); border-right:none; border-radius:var(--r-card); box-shadow:var(--shadow-card); padding:18px 14px; align-self:flex-start; position:sticky; top:20px; max-height:calc(100vh - 40px); overflow-y:auto; }
+.main{ background:transparent; }
+.tbar{ border-bottom:none; padding:6px 6px 18px; }
+.tbar h3{ font-size:var(--fs-title); font-weight:var(--fw-bold); }
+.body{ padding:0 6px 28px; }
+@media (prefers-color-scheme:dark){ .side{ border:1px solid var(--border); } }
+
+/* sidebar nav: 44px pill items */
+.nav{ gap:4px; }
+.nav a{ height:var(--h-nav); padding:0 14px; border-radius:var(--r-pill); font-size:15px; font-weight:var(--fw-medium); color:var(--text-2); transition:background var(--t-fast) var(--ease); }
+.nav a i{ font-size:20px; }
+.nav a:hover{ background:var(--surface-2); }
+.nav a.on{ background:var(--primary-tint); color:var(--primary); font-weight:var(--fw-semibold); }
+.nav a .nbadge{ background:var(--danger); }
+.ws{ border-radius:var(--r-inner); }
+.brand .lg{ background:var(--primary); border-radius:10px; }
+
+/* ---- surfaces: top-level cards get shadow, nested get borders ---- */
+.panelcard,.list,.chat,.block,.k,.sc,.card,.gantt-row,.trend{
+  background:var(--surface); border:none; border-radius:var(--r-card); box-shadow:var(--shadow-card);
+}
+@media (prefers-color-scheme:dark){
+  .panelcard,.list,.chat,.block,.k,.sc,.card,.gantt-row,.trend{ border:1px solid var(--border); box-shadow:none; }
+}
+.panelcard{ padding:var(--pad-card); }
+.card{ padding:20px; transition:transform var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease); }
+.card:hover{ border-color:transparent; transform:translateY(-1px); box-shadow:var(--shadow-hover); }
+.block.agent{ box-shadow:var(--shadow-card); border-left:3px solid var(--primary); }
+.rcard,.addendum,.kcard,.choicecard,.catopt{ background:var(--surface); border:1px solid var(--border); border-radius:var(--r-inner); box-shadow:none; }
+.vault{ border-left:3px solid var(--primary); }
+.li{ border-top:1px solid var(--border-soft); }
+.li:hover{ background:var(--surface-2); }
+
+/* KPI cards */
+.kpis{ gap:16px; margin-bottom:20px; }
+.k{ padding:18px 20px; }
+.k .l{ font-size:13px; font-weight:var(--fw-medium); color:var(--text-2); }
+.k .v{ font-size:var(--fs-kpi); line-height:var(--lh-kpi); font-weight:var(--fw-bold); margin-top:6px; }
+.k .d{ font-size:13px; color:var(--text-3); margin-top:6px; }
+.k.clickable:hover{ border-color:transparent; transform:translateY(-1px); box-shadow:var(--shadow-hover); }
+
+/* ---- controls ---- */
+.btn{ height:var(--h-btn); padding:0 18px; border-radius:var(--r-btn); font-size:15px; font-weight:var(--fw-semibold); display:inline-flex; align-items:center; justify-content:center; gap:7px; border:1px solid var(--border); transition:background var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease); }
+.btn:hover{ border-color:var(--text-3); background:var(--surface-2); }
+.btn-primary{ background:var(--primary); border-color:var(--primary); color:#fff; }
+.btn-primary:hover{ background:var(--primary-hover); border-color:var(--primary-hover); opacity:1; }
+.btn-sm{ height:34px; padding:0 13px; font-size:13px; font-weight:var(--fw-medium); }
+.btn:focus-visible,input:focus,select:focus,textarea:focus{ outline:none; border-color:var(--primary); box-shadow:var(--focus-ring); }
+input,select,textarea{ min-height:var(--h-input); border:1px solid var(--border); border-radius:var(--r-inner); padding:10px 14px; font-size:15px; background:var(--surface); }
+textarea{ min-height:72px; }
+label{ font-size:13px; font-weight:var(--fw-medium); color:var(--text-2); margin-bottom:6px; }
+input[type="number"]{ min-height:38px; }
+.toggle{ border-radius:999px; }
+
+/* ---- chips: pills with tint bg + tone text ---- */
+.pill,.tag,.cotag,.stat,.minip,.fchip,.chip2{ border-radius:var(--r-pill); font-weight:var(--fw-medium); }
+.pill{ padding:4px 11px; font-family:var(--font-ui); font-size:13px; }
+.st-good,.st-win{ background:var(--success-tint); color:var(--success); }
+.st-warn{ background:var(--warning-tint); color:var(--warning); }
+.st-danger{ background:var(--danger-tint); color:var(--danger); }
+.st-info{ background:var(--primary-tint); color:var(--primary); }
+.st-muted{ background:var(--surface-2); color:var(--text-2); border:1px solid var(--border-soft); }
+@media (prefers-color-scheme:dark){ .st-muted{ border:none; } }
+.fchip{ padding:7px 14px; border:1px solid var(--border); }
+.fchip.on{ background:var(--primary-tint); border-color:var(--primary); color:var(--primary); font-weight:var(--fw-semibold); }
+.tag{ padding:4px 11px; }
+.cotag{ background:var(--surface-2); border:1px solid var(--border-soft); padding:4px 11px; }
+
+/* ---- tables ---- */
+th{ font-size:13px; letter-spacing:var(--ls-caps); color:var(--text-3); padding:10px 12px; }
+td{ padding:16px 12px; border-top:1px solid var(--border-soft); font-size:15px; }
+tr.bidrow:hover td{ background:var(--surface-2); }
+tr.bidrow.sel td{ background:var(--primary-tint); }
+tr.bidrow.sel td:first-child{ box-shadow:inset 3px 0 0 var(--primary); }
+.num{ font-size:15px; font-weight:var(--fw-semibold); }
+#bidcompare th:nth-child(n+3), #bidcompare td:nth-child(n+3){ text-align:right; }
+#bidcompare td:nth-child(2), #bidcompare th:nth-child(2){ text-align:left; }
+
+/* ---- progress / tracking ---- */
+.step .segline{ height:4px; border-radius:2px; }
+.step .dot{ width:20px; height:20px; border-width:2px; }
+.step .dot i{ font-size:11px; }
+.steplbls{ margin-top:6px; }
+
+/* ---- kanban: columns sit on canvas, cards are white ---- */
+.kcol{ background:transparent; border:none; padding:0 2px; }
+.kcard{ padding:14px; margin-bottom:10px; transition:box-shadow var(--t-fast) var(--ease); }
+.kcard:hover{ box-shadow:var(--shadow-hover); border-color:var(--border); }
+.kc{ background:var(--surface); border:1px solid var(--border-soft); }
+
+/* ---- chat ---- */
+.chat{ border:none; }
+.clist{ background:var(--surface-2); border-right:1px solid var(--border-soft); border-radius:var(--r-card) 0 0 var(--r-card); }
+.cli.on{ background:var(--primary-tint); }
+.thbody{ background:var(--surface-2); }
+.bub{ border-radius:14px; }
+.bub.me{ background:var(--primary); border-bottom-right-radius:4px; }
+.bub.them{ border-bottom-left-radius:4px; }
+
+/* ---- notifications ---- */
+.notifs{ border:none; border-radius:var(--r-card); box-shadow:var(--shadow-modal); }
+.ni.unread{ background:var(--primary-tint); }
+.bell .bdot{ background:var(--danger); }
+
+/* ---- modal & overlay ---- */
+.overlay{ background:rgba(16,24,40,.4); }
+.modal{ border:none; border-radius:var(--r-card); box-shadow:var(--shadow-modal); padding:24px; max-width:520px; }
+.modal h3{ font-size:var(--fs-lead); font-weight:var(--fw-bold); }
+.flagack{ border-radius:var(--r-inner); background:var(--warning-tint); border:1px solid color-mix(in srgb, var(--warning) 25%, transparent); color:var(--warning); }
+.banner{ border-radius:var(--r-inner); background:var(--warning-tint); color:var(--warning); }
+.banner.info{ background:var(--primary-tint); color:var(--primary); }
+.flagbox{ background:var(--warning-tint); color:var(--warning); border-radius:var(--r-inner); }
+@media (prefers-color-scheme:dark){ .modal{ border:1px solid var(--border); } }
+
+/* ---- empty states ---- */
+.kempty{ padding:24px; text-align:center; font-size:15px; color:var(--text-2); }
+
+/* ---- login ---- */
+.login-screen{ background:var(--canvas); }
+.login-card{ border:none; border-radius:var(--r-card); box-shadow:var(--shadow-modal); padding:28px; }
+.login-brand .lg{ background:var(--primary); }
+.login-tabs{ border-radius:var(--r-pill); }
+.login-tabs button{ border-radius:var(--r-pill); }
+@media (prefers-color-scheme:dark){ .login-card{ border:1px solid var(--border); } }
+
+/* misc */
+.toast{ border-radius:var(--r-inner); }
+.selradio{ width:20px; height:20px; }
+.confbar span,.sc .bar span{ background:var(--primary); }
+.chart .bar{ background:var(--primary); }

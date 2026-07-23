@@ -10,12 +10,12 @@
 
 /* ---------------- static presentation data ---------------- */
 const CATS = {
-  cnc:{label:'CNC machining', bg:'#E6F1FB', fg:'#0C447C', icon:'ti-tools'},
-  sheet:{label:'Sheet metal', bg:'#E1F5EE', fg:'#085041', icon:'ti-layers-subtract'},
-  gas:{label:'Gas & rough lines', bg:'#FAEEDA', fg:'#633806', icon:'ti-pipe'},
-  quartz:{label:'Quartz & ceramics', bg:'#EEEDFE', fg:'#3C3489', icon:'ti-diamond'},
-  rework:{label:'Reworks', bg:'#FAECE7', fg:'#712B13', icon:'ti-refresh'},
-  plastic:{label:'Plastics', bg:'#E9F3E1', fg:'#3B5B12', icon:'ti-box'}
+  cnc:{label:'CNC machining', bg:'var(--cat-cnc)', fg:'var(--cat-cnc-text)', icon:'ti-tools'},
+  sheet:{label:'Sheet metal', bg:'var(--cat-sheet)', fg:'var(--cat-sheet-text)', icon:'ti-layers-subtract'},
+  gas:{label:'Gas & rough lines', bg:'var(--cat-gas)', fg:'var(--cat-gas-text)', icon:'ti-pipe'},
+  quartz:{label:'Quartz & ceramics', bg:'var(--cat-quartz)', fg:'var(--cat-quartz-text)', icon:'ti-diamond'},
+  rework:{label:'Reworks', bg:'var(--cat-rework)', fg:'var(--cat-rework-text)', icon:'ti-refresh'},
+  plastic:{label:'Plastics', bg:'var(--cat-plastic)', fg:'var(--cat-plastic-text)', icon:'ti-box'}
 };
 function tag(c){const x=CATS[c]; return x?`<span class="tag" style="background:${x.bg};color:${x.fg}">${x.label}</span>`:'';}
 function cotag(name){return `<span class="cotag"><i class="ti ti-building-factory" style="font-size:13.5px"></i>${name}</span>`;}
@@ -257,7 +257,7 @@ function renderSuppKpis(){
     <div class="k clickable" onclick="oppFilter='all';oppSoon=false;renderOppFilters();renderOpps()"><div class="l">Open</div><div class="v">${OPPS.length}</div><div class="d">in your categories →</div></div>
     <div class="k clickable" onclick="oppSoon=true;renderOppFilters();renderOpps()"><div class="l">Closing today</div><div class="v">${closing}</div><div class="d">filter →</div></div>
     <div class="k clickable" onclick="go('mybids')"><div class="l">Active bids</div><div class="v">${active}</div><div class="d">view board →</div></div>
-    <div class="k clickable" onclick="go('scorecard')"><div class="l">On-time</div><div class="v">${sc.ontime!=null?sc.ontime+'%':'—'}</div><div class="d up">${sc.jobs||0} jobs →</div></div>`;
+    <div class="k clickable" onclick="go('scorecard')"><div class="l">On-time</div><div class="v">${sc.ontime!=null?sc.ontime+'%':'—'}</div><div class="d up">${plural(sc.jobs||0,"job")} →</div></div>`;
 }
 function renderOppFilters(){
   const chips=['all',...customers()];
@@ -360,7 +360,7 @@ function renderKanban(){
   const stages = [
     {label:'Saved', dot:'var(--warn)', items:savedItems},
     {label:'Submitted', dot:'var(--brand)', items:mk('active')},
-    {label:'In review', dot:'#0C447C', items:mk('review')},
+    {label:'In review', dot:'var(--primary)', items:mk('review')},
     {label:'Won', dot:'var(--win)', items:mk('won')},
     {label:'Lost', dot:'var(--danger)', items:mk('lost')}
   ];
@@ -372,7 +372,7 @@ function renderKanban(){
 
 function renderScorecard(){
   const sc=SCORECARD||{score:null,jobs:0,ontime:null,feedback:[]};
-  const fb=(sc.feedback||[]).map(f=>`<div class="li"><div><div class="lt">${esc(f.title)} <span class="pill st-muted" style="margin-left:4px">${esc(f.part)}</span></div><div class="lm">${esc(f.note)}</div></div><div class="lr"><span style="color:#E0A24E">${'★'.repeat(f.rating)}${'☆'.repeat(5-f.rating)}</span></div></div>`).join('')
+  const fb=(sc.feedback||[]).map(f=>`<div class="li"><div><div class="lt">${esc(f.title)} <span class="pill st-muted" style="margin-left:4px">${esc(f.part)}</span></div><div class="lm">${esc(f.note)}</div></div><div class="lr"><span style="color:var(--warning)">${'★'.repeat(f.rating)}${'☆'.repeat(5-f.rating)}</span></div></div>`).join('')
     || '<div class="li"><div class="lm">No reviews yet — ratings post here when buyers close jobs.</div></div>';
   document.getElementById('scorecard-body').innerHTML=`
     <div class="sec"><h3>Supplier scorecard</h3><span class="v">${esc(ME.company)} · computed from closed jobs</span></div>
@@ -600,7 +600,7 @@ function renderBuyerKpis(){
     <div class="k clickable" onclick="go('tracking')"><div class="l">Committed spend</div><div class="v">${canSeePrice()?'$'+(spend/1000).toFixed(1)+'k':'••'}</div><div class="d">active orders →</div></div>`;
 }
 function renderRFQs(){
-  document.getElementById('rfq-list').innerHTML = RFQS.map(r=>`<div class="li" onclick="openRFQ('${r.id}')"><div><div class="lt">${esc(r.title)}</div><div class="lm">${CATS[r.cat]?.label||r.cat} · ${r.id} · ${esc(r.product||'')}</div></div><div class="lr"><span>${r.bids} bids</span><span>${r.open?r.closes:''}</span><span class="pill ${r.status[1]}">${r.status[0]}</span></div></div>`).join('')
+  document.getElementById('rfq-list').innerHTML = RFQS.map(r=>`<div class="li" onclick="openRFQ('${r.id}')"><div><div class="lt">${esc(r.title)}</div><div class="lm">${CATS[r.cat]?.label||r.cat} · ${r.id} · ${esc(r.product||'')}</div></div><div class="lr"><span>${plural(r.bids,"bid")}</span><span>${r.open?r.closes:''}</span><span class="pill ${r.status[1]}">${r.status[0]}</span></div></div>`).join('')
     || '<div class="li"><div class="lm">No requests yet — create your first RFQ.</div></div>';
 }
 function fillCatSelect(){ const cs=document.getElementById('f-cat'); if(cs && !cs.options.length) cs.innerHTML=Object.keys(CATS).map(k=>`<option value="${k}">${CATS[k].label}</option>`).join(''); }
@@ -612,7 +612,7 @@ async function submitRfq(draft){
   if(r){ ['f-title','f-part','f-qty','f-product','f-cc','f-reqs','f-vault'].forEach(id=>{const e=document.getElementById(id); if(e) e.value='';}); renderRFQs(); go('rfqs'); }
 }
 function renderSuppliers(){
-  document.getElementById('sup-list').innerHTML = SUPS.map(s=>`<div class="li" onclick="openSupplier('${esc(s.name)}','suppliers')"><div><div class="lt">${esc(s.name)} ${s.rnd?'<span class="pill st-good" style="margin-left:4px">R&amp;D</span>':'<span class="pill st-muted" style="margin-left:4px">Production only</span>'}</div><div class="lm">${s.cats.map(c=>CATS[c]?.label||c).join(' · ')} · ${s.jobs} jobs${s.ontime!=null?' · '+s.ontime+'% on-time':''}</div></div><div class="lr"><span>${fmtScore(s.score)}</span><span class="pill st-good">Qualified</span></div></div>`).join('');
+  document.getElementById('sup-list').innerHTML = SUPS.map(s=>`<div class="li" onclick="openSupplier('${esc(s.name)}','suppliers')"><div><div class="lt">${esc(s.name)} ${s.rnd?'<span class="pill st-good" style="margin-left:4px">R&amp;D</span>':'<span class="pill st-muted" style="margin-left:4px">Production only</span>'}</div><div class="lm">${s.cats.map(c=>CATS[c]?.label||c).join(' · ')} · ${plural(s.jobs,'job')}${s.ontime!=null?' · '+s.ontime+'% on-time':''}</div></div><div class="lr"><span>${fmtScore(s.score)}</span><span class="pill st-good">Qualified</span></div></div>`).join('');
 }
 
 /* ----- bid compare + award ----- */
@@ -642,7 +642,7 @@ function renderBidRows(){
       : `<span class="selradio"></span>`;
     return `<tr class="bidrow ${sel}" onclick="${splitMode?'':`selectBid('${b.supplierCompanyId}')`}">
       <td style="width:70px">${first}</td>
-      <td><span class="link" onclick="event.stopPropagation();openSupplier('${esc(b.supplier)}','bidcompare')">${esc(b.supplier)} <i class="ti ti-external-link" style="font-size:13px;vertical-align:-1px"></i></span>${b.revised?'<span class="minip st-muted" style="background:var(--rule-soft);color:var(--muted)">revised</span>':''}${flags.length?`<span class="minip" style="background:#FCEBEB;color:#A32D2D">⚑ ${flags.length}</span>`:''}</td>
+      <td><span class="link" onclick="event.stopPropagation();openSupplier('${esc(b.supplier)}','bidcompare')">${esc(b.supplier)} <i class="ti ti-external-link" style="font-size:13px;vertical-align:-1px"></i></span>${b.revised?'<span class="minip st-muted" style="background:var(--rule-soft);color:var(--muted)">revised</span>':''}${flags.length?`<span class="minip" style="background:var(--danger-tint);color:var(--danger)">⚑ ${flags.length}</span>`:''}</td>
       <td><span class="num">${money(b.unit)}</span><span class="subnum">/u</span></td>
       <td><span class="num">${money(b.price)}</span><div class="subnum">+${canSeePrice()?'$'+(b.ship||0):'••'} ship · ${b.incoterms}</div></td>
       <td><span class="num">${b.lead}d</span></td>

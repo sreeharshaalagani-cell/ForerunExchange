@@ -1,0 +1,141 @@
+/* Forerun Exchange — Design Tokens v2 (FreGo-style direction)
+   Drop-in :root variables. Pair with forerun-design-guidelines.md */
+
+:root {
+  /* ---- Color: surfaces ---- */
+  --canvas:      #EDF0F4;   /* app background */
+  --surface:     #FFFFFF;   /* cards */
+  --surface-2:   #F7F9FC;   /* nested panels, hover rows */
+  --border:      #E4E8EE;
+  --border-soft: #EDF0F4;
+
+  /* ---- Color: text ---- */
+  --ink:    #1A1D23;        /* titles + all data values */
+  --text-2: #5A6069;        /* labels, secondary (4.6:1) */
+  --text-3: #6E747D;        /* captions >=13px only (4.5:1) */
+
+  /* ---- Color: brand / accent ---- */
+  --primary:       #3B54E0;
+  --primary-hover: #2F44C4;
+  --primary-tint:  #EEF1FD;
+  --primary-ring:  rgba(59, 84, 224, 0.20);
+
+  /* ---- Color: semantic ---- */
+  --success:      #1F9D63;
+  --success-tint: #E7F6EF;
+  --warning:      #9A6B00;
+  --warning-tint: #FFF3D6;
+  --danger:       #CC3D3D;
+  --danger-tint:  #FCECEC;
+
+  /* ---- Data-viz ---- */
+  --viz-1: #3B54E0;
+  --viz-2: #AAB6F2;
+  --viz-3: #D6DCF8;
+
+  /* ---- Category coding (keep 5-category system) ---- */
+  --cat-cnc:     #E3E9FB;  --cat-cnc-text:     #2B44B8;
+  --cat-sheet:   #E1F3EA;  --cat-sheet-text:   #1F7A50;
+  --cat-gas:     #FBEFDD;  --cat-gas-text:     #8A5A10;
+  --cat-quartz:  #F0E7F8;  --cat-quartz-text:  #6B3FA0;
+  --cat-rework:  #FBE7E3;  --cat-rework-text:  #A6402E;
+  --cat-plastic: #E7F2E0;  --cat-plastic-text: #4C7A1D;  /* added: app has a 6th category */
+
+  /* ---- Typography ---- */
+  --font-ui:   'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --fs-display: 32px;  --lh-display: 1.2;   /* welcome / empty-state headline */
+  --fs-title:   22px;  --lh-title:   1.25;  /* page & card titles */
+  --fs-kpi:     38px;  --lh-kpi:     1.1;   /* KPI numbers */
+  --fs-lead:    17px;  --lh-lead:    1.35;  /* row/item/modal titles */
+  --fs-base:    15px;  --lh-base:    1.5;   /* cells, inputs, messages, data */
+  --fs-sm:      13px;  --lh-sm:      1.45;  /* chips, headers, captions — FLOOR */
+
+  --fw-regular: 400; --fw-medium: 500; --fw-semibold: 600; --fw-bold: 700;
+  --ls-caps: 0.04em; /* uppercase table/section headers */
+
+  /* ---- Spacing (4px grid) ---- */
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 20px; --sp-6: 24px; --sp-8: 32px; --sp-10: 40px;
+
+  --pad-card: 24px;
+  --pad-item: 16px;
+  --gap-section: 24px;
+  --content-max: 1440px;
+  --sidebar-w: 240px;
+
+  /* ---- Radius ---- */
+  --r-card:  16px;
+  --r-inner: 12px;   /* nested cards, inputs, modals-inner */
+  --r-btn:   10px;
+  --r-pill:  999px;  /* chips, avatars, badges */
+
+  /* ---- Elevation ---- */
+  --shadow-card:  0 1px 2px rgba(16,24,40,.04), 0 8px 24px rgba(16,24,40,.06);
+  --shadow-hover: 0 2px 4px rgba(16,24,40,.06), 0 12px 32px rgba(16,24,40,.10);
+  --shadow-modal: 0 4px 8px rgba(16,24,40,.08), 0 24px 64px rgba(16,24,40,.18);
+
+  /* ---- Controls ---- */
+  --h-btn:    40px;
+  --h-input:  44px;
+  --h-nav:    44px;
+  --h-row:    52px;   /* min table row height */
+  --tap-min:  40px;   /* min interactive target */
+  --focus-ring: 0 0 0 3px var(--primary-ring);
+
+  /* ---- Motion ---- */
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --t-fast: 150ms;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --canvas:    #101216;
+    --surface:   #191C22;
+    --surface-2: #1F232A;
+    --border:      #262A31;
+    --border-soft: #21252B;
+
+    --ink:    #ECEEF2;
+    --text-2: #A6ACB6;
+    --text-3: #9AA0AA;   /* raised from old #6C7178 (failed contrast) */
+
+    --primary:       #7286F2;
+    --primary-hover: #8B9CF5;
+    --primary-tint:  rgba(114,134,242,.16);
+    --primary-ring:  rgba(114,134,242,.30);
+
+    --success: #4CC38A; --success-tint: rgba(76,195,138,.14);
+    --warning: #E0A24E; --warning-tint: rgba(224,162,78,.14);
+    --danger:  #E27A7A; --danger-tint:  rgba(226,122,122,.14);
+
+    --viz-2: #4A5AA8; --viz-3: #2E3560;
+
+    --shadow-card: none;   /* borders convey elevation in dark */
+    --shadow-hover: none;
+    --shadow-modal: 0 24px 64px rgba(0,0,0,.5);
+  }
+}
+
+/* ---- Base application ---- */
+body {
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+}
+
+/* Guardrails: enforce readability floors */
+small, .caption, .meta, .hint, time, th {
+  font-size: var(--fs-sm);   /* nothing below 13px, ever */
+  color: var(--text-3);
+}
+td, input, select, textarea, button, .msg, .cell {
+  font-size: var(--fs-base); /* interactive/data text >=15px */
+}
+.value, .price, .qty, .deadline, .lead-time {
+  color: var(--ink);         /* data is ink, never gray */
+  font-weight: var(--fw-semibold);
+}
