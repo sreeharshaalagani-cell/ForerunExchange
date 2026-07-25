@@ -273,7 +273,7 @@ async function markAllRead(){ await act('markAllRead'); renderNotifs(); }
 function routeNotif(link){ if(!link) return; const v=link.view, a=link.arg;
   if(v==='rfq') openRFQ(a);
   else if(v==='opp'){ role()==='supplier' ? openOpp(a) : openRFQ(a); }
-  else if(v==='thread') openThreadFor(a);
+  else if(v==='thread') openThreadFor(a, null, null);
   else if(v==='tracking'){ if(a) trackTab=a; go('tracking'); }
   else if(v==='mybids') go('mybids');
   else if(v==='scorecard') go('scorecard');
@@ -604,7 +604,7 @@ function renderTracking(){
         ${orderStepper(o)}
         ${delay}
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px">
-          <div>${trackBtn}</div><div style="display:flex;gap:8px">${supActions}${buyActions}<button class="btn btn-sm btn-ghost" onclick="openThreadFor('${o.rfqId||o.id}')"><i class="ti ti-message-2" style="font-size:14px;vertical-align:-2px"></i></button></div>
+          <div>${trackBtn}</div><div style="display:flex;gap:8px">${supActions}${buyActions}<button class="btn btn-sm btn-ghost" onclick="openThreadFor('${o.rfqId||o.id}',null,'tracking')"><i class="ti ti-message-2" style="font-size:14px;vertical-align:-2px"></i></button></div>
         </div>
       </div>`;
     }).join('');
@@ -651,7 +651,9 @@ async function doReorder(id,mode){ closeModal(); if(await act('reorder',{orderId
 /* ================= MESSAGES (both roles) ================= */
 let activeThread=null;
 function threadCounterpart(t){ return role()==='supplier' ? t.engineer : t.supplier; }
-async function openThreadFor(partId, supplierCompanyId){
+let msgReturn=null;   // where 'Ask engineer' was opened from, so we can offer a way back
+async function openThreadFor(partId, supplierCompanyId, from){
+  msgReturn = from ? {view:from, id:partId} : (partId ? {view:'opportunity', id:partId} : null);
   let t=THREADS.find(x=>x.part===partId && (!supplierCompanyId || x.supplierCompanyId===supplierCompanyId));
   if(!t){
     const r=await act('openThread',{rfqId:partId, supplierCompanyId});
@@ -660,6 +662,17 @@ async function openThreadFor(partId, supplierCompanyId){
   }
   if(t) activeThread=t.id;
   go('messages');
+}
+function backFromMessages(){
+  const r=msgReturn; msgReturn=null;
+  if(!r){ go(role()==='supplier'?'opportunities':'rfqs'); return; }
+  if(r.view==='tracking') go('tracking'); else openRequestFromThread(r.id);
+}
+/* Open the request a conversation belongs to, from either side.
+   openOpp falls back to the read-only archive when the window has closed. */
+function openRequestFromThread(partId){
+  msgReturn=null;
+  if(role()==='supplier') openOpp(partId); else openRFQ(partId);
 }
 function renderMessages(){
   if(!THREADS.length){ document.getElementById('messages-body').innerHTML='<div class="sec"><h3>Messages</h3></div><div class="kempty">No conversations yet. Suppliers can start one from any opportunity ("Ask engineer").</div>'; return; }
@@ -681,11 +694,12 @@ function renderMessages(){
     ? `<label class="chk" style="padding:8px 14px 0;font-size:13.5px"><input type="checkbox" id="post-addendum"><span>Post this answer as an <b>addendum to all bidders</b> on ${t.part} (fairness)</span></label>`
     : '';
   document.getElementById('messages-body').innerHTML = `
+    ${msgReturn?`<span class="back" onclick="backFromMessages()"><i class="ti ti-arrow-left"></i> Back to ${esc((THREADS.find(x=>x.part===msgReturn.id)||{}).partTitle||msgReturn.id)}</span>`:''}
     <div class="sec"><h3>Messages</h3><span class="v">technical questions route to the assigned ${role()==='supplier'?'engineer/buyer':'supplier'}</span></div>
     <div class="chat">
       <div class="clist">${list}</div>
       <div class="thread">
-        <div class="thhead"><div class="tn">${esc(threadCounterpart(t))}</div><div class="tp">${esc(t.partTitle)} · ${t.part} · ${esc(t.company)}</div></div>
+        <div class="thhead"><div class="tn">${esc(threadCounterpart(t))}</div><div class="tp">${esc(t.partTitle)} · <span class="link" onclick="openRequestFromThread('${t.part}')">${t.part} <i class="ti ti-external-link" style="font-size:12px;vertical-align:-1px"></i></span> · ${esc(t.company)}</div></div>
         <div class="thbody" id="thbody"><div class="sysmsg">Conversation on part ${t.part}</div>${bubbles}</div>
         ${addendumUI}
         <form class="composer" onsubmit="event.preventDefault();sendMsg()"><input id="chat-in" type="text" placeholder="Type a message…" autocomplete="off"><button type="submit" class="btn btn-primary">Send</button></form>
