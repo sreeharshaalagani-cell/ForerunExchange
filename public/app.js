@@ -400,30 +400,23 @@ async function openArchivedRfq(id){
       ${d.addenda.map(a=>`<div class="addendum"><div class="aq">Q: ${esc(a.q)}</div><div class="aa">A: ${esc(a.a)}</div><div class="at">${esc(a.at)}</div></div>`).join('')}</div>` : '';
 
   const mIcon={opened:'ti-lock-open', nda:'ti-file-check', submitted:'ti-gavel', revised:'ti-pencil',
-               declined:'ti-ban', closed:'ti-clock-stop', decision:'ti-award', signoff:'ti-shield-check'};
+               declined:'ti-ban', closed:'ti-clock-stop', decision:'ti-award', signoff:'ti-shield-check',
+               view:'ti-eye', addendum:'ti-speakerphone', rfq:'ti-file-text', export:'ti-download', evt:'ti-point'};
   const mTone={decision:'var(--success)', declined:'var(--danger)', signoff:'var(--success)'};
-  const tl = d.timeline||[];
-  const timelineBlock = `
-    <div class="panelcard"><div class="seclbl" style="margin-top:0">Key dates</div>
-      ${tl.length ? `<div class="tl">${tl.map((m,i)=>`
-        <div class="tl-item ${i===tl.length-1?'last':''}">
+  const acts = d.activity||[];
+  const activityBlock = `
+    <div class="panelcard"><div class="seclbl" style="margin-top:0">Activity log</div>
+      ${acts.length ? `<div class="tl">${acts.map((m,i)=>`
+        <div class="tl-item ${i===acts.length-1?'last':''}">
           <span class="tl-dot" style="color:${mTone[m.key]||'var(--primary)'}"><i class="ti ${mIcon[m.key]||'ti-point'}"></i></span>
           <div class="tl-body">
             <div class="tl-label">${esc(m.label)}</div>
-            ${m.note?`<div class="tl-note">${esc(m.note)}</div>`:''}
+            ${(m.note||m.actor)?`<div class="tl-note">${esc(m.note||m.actor)}</div>`:''}
           </div>
           <div class="tl-when">${fmtWhen(m.at)}</div>
         </div>`).join('')}</div>`
-      : '<div class="kempty">No dates recorded.</div>'}
+      : '<div class="kempty">No recorded activity on this request.</div>'}
     </div>`;
-
-  const activityBlock = (d.activity||[]).length ? `
-    <div class="panelcard"><div class="seclbl" style="margin-top:0">Full activity log</div>
-      <table><tbody>${d.activity.map(a=>`<tr>
-        <td style="white-space:nowrap;color:var(--text-3);width:150px">${esc(a.t)}</td>
-        <td><i class="ti ${kindIcon[a.kind]||'ti-point'}" style="color:var(--text-3);font-size:15px;vertical-align:-2px;margin-right:6px"></i>${esc(a.action)}</td>
-        <td style="color:var(--text-2)">${esc(a.actor)}</td></tr>`).join('')}</tbody></table>
-    </div>` : '';
 
   const backTo = role()==='supplier' ? "go('mybids')" : "go('rfqs')";
   const backLbl = role()==='supplier' ? 'My bids' : 'My RFQs';
@@ -437,7 +430,7 @@ async function openArchivedRfq(id){
       <div style="font-size:15px">${esc(d.reqs||'—')}</div>
       ${d.signedNda?'<div class="hint" style="margin-top:10px"><i class="ti ti-file-check" style="vertical-align:-2px"></i> You signed the NDA for this request; vault access expired at bid close.</div>':''}
     </div>
-    ${timelineBlock}${bidBlock}${orderBlock}${addendaBlock}${activityBlock}`;
+    ${bidBlock}${orderBlock}${addendaBlock}${activityBlock}`;
   go('opportunity');
 }
 

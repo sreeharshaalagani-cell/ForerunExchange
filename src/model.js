@@ -22,7 +22,7 @@ const now = () => Date.now();
 async function init() {
   await db.init();
   state = await db.load();
-  if (!state || !state.__seeded || state.version !== 4) { state = seed(); await db.save(state); }
+  if (!state || !state.__seeded || state.version !== 5) { state = seed(); await db.save(state); }
   console.log(`[model] state ready (${db.kind}) — companies: ${state.companies.length}, users: ${state.users.length}`);
 }
 async function persist() { await db.save(state); }
@@ -54,7 +54,7 @@ function actorName(u) {
 }
 function audit(u, action, target, kind, extraCompanyIds) {
   const ids = new Set([u.companyId, ...(extraCompanyIds || [])]);
-  state.audit.unshift({ t: stamp(), companyIds: [...ids], actor: actorName(u), action, target: target || '', kind: kind || 'evt' });
+  state.audit.unshift({ t: stamp(), atMs: now(), companyIds: [...ids], actor: actorName(u), action, target: target || '', kind: kind || 'evt' });
 }
 function notify(companyId, role, icon, text, link) {
   state.notifications.unshift({ id: ++state.seq, companyId, role: role || null, icon, text, when: 'just now', unread: true, link: link || null });
@@ -295,6 +295,18 @@ ops.rfqDetail = async (u, { rfqId }) => {
     if (r.signedOffAt) t.push(milestone('signoff', 'Award signed off', r.signedOffAt, 'Cleared for PO'));
     return t.filter(Boolean).sort((a, b) => a.at - b.at);
   }
+  /* One activity list: lifecycle milestones plus audit rows that are not
+   * already represented as a milestone (vault views, addenda, exports…). */
+  function mergeActivity(milestones) {
+    const covered = new Set(['bid', 'nda', 'decline', 'award']);
+    const extra = state.audit
+      .filter(a => a.target === rfqId && a.companyIds.includes(u.companyId))
+      .filter(a => !covered.has(a.kind))
+      .map(a => ({ key: a.kind || 'evt', label: a.action, at: a.atMs || null, note: '', actor: a.actor }));
+    return milestones.concat(extra)
+      .filter(m => m.at)
+      .sort((a, b) => a.at - b.at);
+  }
 
   if (isSupplier(u)) {
     const myBid = state.bids.find(b => b.rfqId === rfqId && b.supplierCompanyId === u.companyId);
@@ -322,7 +334,7 @@ ops.rfqDetail = async (u, { rfqId }) => {
       orders: myOrders.map(o => ({ id: o.id, stage: o.stage, qty: o.qty, price: o.price, due: o.due,
                                    tracking: o.tracking, delayed: o.delayed, delayReason: o.delayReason })),
       addenda: state.addenda[rfqId] || [],
-      timeline: timelineFor({
+      activity: mergeActivity(timelineFor({
         label: 'Your bid',
         ndaAt: (state.ndas.find(n => n.rfqId === rfqId && n.supplierCompanyId === u.companyId) || {}).atMs,
         submittedAt: myBid ? (myBid.submittedAt || myBid.at) : null,
@@ -330,8 +342,7 @@ ops.rfqDetail = async (u, { rfqId }) => {
         declinedAt: myDecline ? myDecline.atMs : null,
         declineReason: myDecline ? myDecline.reason : '',
         decisionNote: myOrders.length ? 'Awarded to you' : 'Awarded to another supplier'
-      }),
-      activity: state.audit.filter(a => a.target === rfqId && a.companyIds.includes(u.companyId))
+      }))
     } };
   }
 
@@ -351,15 +362,14 @@ ops.rfqDetail = async (u, { rfqId }) => {
                  .map(o => ({ id: o.id, supplier: supName(o.supplierCompanyId), stage: o.stage, qty: o.qty,
                               price: see ? o.price : null, due: o.due, tracking: o.tracking, delayed: o.delayed })),
     addenda: state.addenda[rfqId] || [],
-    timeline: timelineFor({
+    activity: mergeActivity(timelineFor({
       label: 'First bid',
       submittedAt: rfqBids(rfqId).length ? Math.min(...rfqBids(rfqId).map(b => b.submittedAt || b.at)) : null,
       revisedAt: rfqBids(rfqId).some(b => b.revisedAt)
         ? Math.max(...rfqBids(rfqId).filter(b => b.revisedAt).map(b => b.revisedAt)) : null,
       decisionNote: state.orders.filter(o => o.rfqId === rfqId)
         .map(o => supName(o.supplierCompanyId)).join(', ')
-    }),
-    activity: state.audit.filter(a => a.target === rfqId && a.companyIds.includes(u.companyId))
+    }))
   } };
 };
 

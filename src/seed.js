@@ -150,9 +150,16 @@ function seed() {
     b.revisedAt = b.revised ? b.at : null;
   });
   declines.forEach(d => { d.atMs = now - 2 * D; });
+  // give seeded audit rows real timestamps (newest first) and a matching label
+  audit.forEach((a, i) => {
+    a.atMs = now - (i + 1) * 7 * H;
+    const dt = new Date(a.atMs);
+    a.t = dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' · ' +
+          dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+  });
 
   return {
-    __seeded: true, version: 4, seq: 2000,
+    __seeded: true, version: 5, seq: 2000,
     companies, users, supplierProfiles, rfqs, bids, declines, addenda, orders, reviews, threads,
     notifications, audit,
     savedByUser: { u_acme: ['AI-076'] },
