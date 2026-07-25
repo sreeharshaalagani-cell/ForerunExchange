@@ -101,13 +101,13 @@ function seed() {
 
   const orders = [
     { id: 'ORD-1001', rfqId: 'HB-211', buyerCompanyId: 'c_north', supplierCompanyId: 'c_acme', title: 'Heater bracket', cat: 'sheet', qty: 20, price: 540,
-      stage: 'shipped', due: 'Jul 14', tracking: '7712 3480 1123', delayed: false, delayReason: '', buyer: 'Sam Ortiz', engineer: 'Marcus Vogel', product: 'Etch chamber' },
+      stage: 'shipped', dueAt: now + 3 * D, tracking: '7712 3480 1123', delayed: false, delayReason: '', buyer: 'Sam Ortiz', engineer: 'Marcus Vogel', product: 'Etch chamber' },
     { id: 'ORD-1002', rfqId: 'EA-204R', buyerCompanyId: 'c_north', supplierCompanyId: 'c_titan', title: 'Electrode assembly rework', cat: 'rework', qty: 8, price: 1310,
-      stage: 'manufacturing', due: 'Jul 10', tracking: null, delayed: true, delayReason: 'Raw material lead time slipped 4 days; new ship date Jul 16.', buyer: 'Lena Park', engineer: 'Marcus Vogel', product: 'Etch chamber' },
+      stage: 'manufacturing', dueAt: now - 2 * D, tracking: null, delayed: true, delayReason: 'Raw material lead time slipped 4 days; new ship date about a week out.', buyer: 'Lena Park', engineer: 'Marcus Vogel', product: 'Etch chamber' },
     { id: 'ORD-1003', rfqId: 'GM-401', buyerCompanyId: 'c_north', supplierCompanyId: 'c_flowtek', title: 'Gas manifold (pilot)', cat: 'gas', qty: 6, price: 920,
-      stage: 'delivered', due: 'Jul 2', tracking: '5561 9902 7781', delayed: false, delayReason: '', buyer: 'Sam Ortiz', engineer: 'Priya Rao', product: 'Deposition module' },
+      stage: 'delivered', dueAt: now - 10 * D, tracking: '5561 9902 7781', delayed: false, delayReason: '', buyer: 'Sam Ortiz', engineer: 'Priya Rao', product: 'Deposition module' },
     { id: 'ORD-1004', rfqId: 'SVX-290', buyerCompanyId: 'c_north', supplierCompanyId: 'c_acme', title: 'Slit valve plate (pilot)', cat: 'cnc', qty: 12, price: 1650,
-      stage: 'manufacturing', due: 'Jul 20', tracking: null, delayed: false, delayReason: '', buyer: 'Sam Ortiz', engineer: 'Priya Rao', product: 'Litho stage' }
+      stage: 'manufacturing', dueAt: now + 5 * D, tracking: null, delayed: false, delayReason: '', buyer: 'Sam Ortiz', engineer: 'Priya Rao', product: 'Litho stage' }
   ];
 
   const reviews = [

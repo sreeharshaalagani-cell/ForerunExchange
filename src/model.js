@@ -74,6 +74,13 @@ const windowOpen = r => r.status === 'open' && r.closesAt > now();
 function rfqBids(id) { return state.bids.filter(b => b.rfqId === id); }
 function bidPrice(b, r) { return b.unit * r.qty + (b.ship || 0); }
 
+function orderView(o) {
+  const dueAt = o.dueAt || null;
+  const late = o.delayed || (!!dueAt && dueAt < now() && o.stage !== 'delivered');
+  const due = dueAt ? new Date(dueAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : (o.due || 'TBD');
+  return { ...o, due, late };
+}
+
 /* ---------------- scorecard (computed) ---------------- */
 function supplierScore(cid) {
   const sp = supProfile(cid); if (!sp) return { score: null, jobs: 0, ontime: null };
@@ -81,7 +88,9 @@ function supplierScore(cid) {
   const jobs = sp.baseJobs + revs.length;
   const sum = (sp.baseScore || 0) * sp.baseJobs + revs.reduce((a, v) => a + v.rating, 0);
   const score = jobs ? Math.round((sum / jobs) * 10) / 10 : null;
-  return { score, jobs, ontime: sp.ontime };
+  // priorJobs/priorScore let the UI explain that Overall is a weighted blend of
+  // pre-platform history and on-platform reviews (S3).
+  return { score, jobs, ontime: sp.ontime, priorJobs: sp.baseJobs, priorScore: sp.baseScore || null };
 }
 
 /* ---------------- auth & registration ---------------- */
@@ -98,6 +107,7 @@ function userForToken(token) { const id = sessions.get(token); return id ? userB
 
 async function registerBuyer({ companyName, name, email, password }) {
   if (!companyName || !name || !email || !password) throw err(400, 'All fields are required');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim())) throw err(400, 'Enter a valid email address');
   if (String(password).length < 8) throw err(400, 'Password must be at least 8 characters');
   if (userByEmail(email)) throw err(409, 'An account with this email already exists');
   const cid = 'c_' + (++state.seq);
@@ -113,6 +123,7 @@ async function registerBuyer({ companyName, name, email, password }) {
 
 async function registerSupplier({ companyName, name, email, password, cats, rnd, about, location }) {
   if (!companyName || !name || !email || !password) throw err(400, 'All fields are required');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim())) throw err(400, 'Enter a valid email address');
   if (String(password).length < 8) throw err(400, 'Password must be at least 8 characters');
   if (userByEmail(email)) throw err(409, 'An account with this email already exists');
   const catList = Array.isArray(cats) && cats.length ? cats : ['cnc'];
@@ -153,7 +164,7 @@ function bidView(b, r, see) {
 
 function rfqStatus(r) {
   if (r.status === 'draft') return ['Draft', 'st-muted'];
-  if (r.status === 'awarded') return ['Awarded', 'st-win'];
+  if (r.status === 'awarded') return r.signedOff === false ? ['Awarded · sign-off pending', 'st-warn'] : ['Awarded', 'st-win'];
   if (windowOpen(r)) return ['Open', 'st-good'];
   return ['Closed · review bids', 'st-warn'];
 }
@@ -176,7 +187,7 @@ function supplierBidStage(u, r, myBid) {
 
 function viewerState(u) {
   const see = canSeePrice(u);
-  const base = { me: me(u), settings: companySettings(isSupplier(u) ? u.companyId : u.companyId), profiles: state.profiles };
+  const base = { me: me(u), settings: companySettings(u.companyId), profiles: state.profiles, demo: { ephemeral: !process.env.DATABASE_URL && !process.env.DATA_DIR } };
 
   if (isSupplier(u)) {
     const sp = supProfile(u.companyId) || { cats: [] };
@@ -201,7 +212,7 @@ function viewerState(u) {
       return { id: r.id, title: r.title, cat: r.cat, price, lead: b.lead, stage: st.stage, status: st.status };
     }).filter(Boolean);
     const orders = state.orders.filter(o => o.supplierCompanyId === u.companyId)
-      .map(o => ({ ...o, buyerName: o.buyer, customer: supName(o.buyerCompanyId) }));
+      .map(o => ({ ...orderView(o), buyerName: o.buyer, customer: supName(o.buyerCompanyId) }));
     const threads = state.threads.filter(t => t.supplierCompanyId === u.companyId)
       .map(t => threadView(t, u));
     const sc = supplierScore(u.companyId);
@@ -214,7 +225,7 @@ function viewerState(u) {
       saved: state.savedByUser[u.id] || [],
       ndaSigned: state.ndas.filter(n => n.supplierCompanyId === u.companyId).map(n => n.rfqId),
       addenda: pickAddenda(opps.map(o => o.id)),
-      scorecard: { ...sc, feedback: state.reviews.filter(v => v.supplierCompanyId === u.companyId).map(v => ({ part: v.part || v.orderId, title: v.title, rating: v.rating, note: v.note })) },
+      scorecard: { ...sc, baseJobs: (supProfile(u.companyId)||{}).baseJobs || 0, baseScore: (supProfile(u.companyId)||{}).baseScore || 0, feedback: state.reviews.filter(v => v.supplierCompanyId === u.companyId).map(v => ({ part: v.part || v.orderId, title: v.title, rating: v.rating, note: v.note })) },
       companyProfile: { name: supName(u.companyId), cats: sp.cats, rnd: sp.rnd, ...( (state.profiles[sp.profileName]||{}).provided || {} ) },
       notifs: myNotifs(u), audit: myAudit(u),
       rfqs: [], bidsByRfq: {}, declined: {}, sups: [], users: [], groups: [] };
@@ -224,7 +235,7 @@ function viewerState(u) {
   const myRfqs = state.rfqs.filter(r => r.buyerCompanyId === u.companyId);
   const rfqs = myRfqs.map(r => ({ id: r.id, title: r.title, cat: r.cat, qty: r.qty, product: r.product,
     status: rfqStatus(r), bids: rfqBids(r.id).length, closes: r.status === 'awarded' ? 'awarded' : (windowOpen(r) ? humanize(r.closesAt - now()) : 'closed'),
-    open: windowOpen(r), awarded: r.status === 'awarded', draft: r.status === 'draft', autoExtend: r.autoExtend, engineer: r.engineer }));
+    open: windowOpen(r), awarded: r.status === 'awarded', signedOff: r.signedOff !== false, draft: r.status === 'draft', autoExtend: r.autoExtend, engineer: r.engineer }));
   const bidsByRfq = {};
   myRfqs.forEach(r => { bidsByRfq[r.id] = rfqBids(r.id).map(b => bidView(b, r, see)); });
   const declined = {};
@@ -234,7 +245,7 @@ function viewerState(u) {
     return { name: supName(cid), companyId: cid, cats: sp.cats, rnd: sp.rnd, score: sc.score, jobs: sc.jobs, ontime: sc.ontime };
   });
   const orders = state.orders.filter(o => o.buyerCompanyId === u.companyId)
-    .map(o => ({ ...o, price: see ? o.price : null, supplier: supName(o.supplierCompanyId) }));
+    .map(o => ({ ...orderView(o), price: see ? o.price : null, supplier: supName(o.supplierCompanyId) }));
   const threads = state.threads.filter(t => t.buyerCompanyId === u.companyId).map(t => threadView(t, u));
   return { ...base,
     rfqs, bidsByRfq, declined, sups, orders, threads,
@@ -305,7 +316,7 @@ ops.submitBid = async (u, { rfqId, unit, ship, incoterms, lead, notes }) => {
   audit(u, (revise ? 'Revised bid' : 'Submitted bid') + (extended ? ' · window auto-extended 10m' : ''), rfqId, 'bid', [r.buyerCompanyId]);
   notify(r.buyerCompanyId, null, 'ti-gavel', `${revise ? 'Revised' : 'New'} bid on ${r.title} (${rfqId}) from ${supName(u.companyId)}`, { view: 'rfq', arg: rfqId });
   await persist();
-  return { msg: (revise ? 'Bid revised — buyer notified' : 'Bid submitted — now in review') + (extended ? ' · anti-snipe extended the window 10 min' : '') };
+  return { msg: (revise ? 'Bid revised — buyer notified' : 'Bid submitted — you can revise it until the window closes') + (extended ? ' · anti-snipe extended the window 10 min' : '') };
 };
 
 ops.declineBid = async (u, { rfqId, reason }) => {
@@ -336,16 +347,28 @@ ops.updateCompanyProfile = async (u, body) => {
 };
 
 /* ----- shared chat ----- */
-ops.openThread = async (u, { rfqId }) => {
+ops.openThread = async (u, { rfqId, supplierCompanyId }) => {
   const r = rfqById(rfqId); if (!r) throw err(404, 'RFQ not found');
   let t;
-  if (isSupplier(u)) t = state.threads.find(x => x.rfqId === rfqId && x.supplierCompanyId === u.companyId);
-  else t = state.threads.find(x => x.rfqId === rfqId && x.buyerCompanyId === u.companyId);
-  if (!t && isSupplier(u)) {
-    t = { id: ++state.seq, rfqId, buyerCompanyId: r.buyerCompanyId, supplierCompanyId: u.companyId, unreadFor: null, msgs: [] };
-    state.threads.push(t);
+  if (isSupplier(u)) {
+    t = state.threads.find(x => x.rfqId === rfqId && x.supplierCompanyId === u.companyId);
+    if (!t) {
+      t = { id: ++state.seq, rfqId, buyerCompanyId: r.buyerCompanyId, supplierCompanyId: u.companyId, unreadFor: null, msgs: [] };
+      state.threads.push(t);
+    }
+  } else {
+    if (r.buyerCompanyId !== u.companyId) throw err(403, 'Not your RFQ');
+    const scid = supplierCompanyId || null;
+    t = state.threads.find(x => x.rfqId === rfqId && x.buyerCompanyId === u.companyId && (!scid || x.supplierCompanyId === scid));
+    if (!t && scid) {
+      const engaged = rfqBids(rfqId).some(b => b.supplierCompanyId === scid) || state.orders.some(o => o.rfqId === rfqId && o.supplierCompanyId === scid);
+      if (!engaged) throw err(400, 'That supplier has no bid or order on this RFQ yet');
+      t = { id: ++state.seq, rfqId, buyerCompanyId: u.companyId, supplierCompanyId: scid, unreadFor: null, msgs: [] };
+      state.threads.push(t);
+    }
   }
   if (!t) throw err(404, 'No conversation yet for this RFQ');
+  await persist();
   return { threadId: t.id };
 };
 
@@ -387,7 +410,7 @@ ops.createRfq = async (u, body) => {
     product: body.product || 'General', costCenter: body.costCenter || '', reqs: body.reqs || '',
     vaultLink: body.vaultLink || '', nda: ['category', 'drawing', 'none'].includes(body.nda) ? body.nda : 'category',
     autoExtend: body.autoExtend !== false, status: body.draft ? 'draft' : 'open',
-    closesAt: now() + windowDays * 24 * 3600e3, createdBy: u.id, engineer: body.engineer || u.name, createdAt: now() };
+    closesAt: now() + windowDays * 24 * 3600e3, createdBy: u.id, engineer: (body.engineer && String(body.engineer).trim()) || 'Unassigned', createdAt: now() };
   state.rfqs.unshift(r);
   audit(u, body.draft ? 'Saved RFQ draft' : 'Published RFQ', id, 'rfq');
   if (!body.draft) notifySuppliersOfRfq(r);
@@ -442,7 +465,7 @@ ops.award = async (u, { rfqId, mode, supplierCompanyId, alloc, ackFlags }) => {
   const mkOrder = (scid, qty, price, lead) => {
     const oid = 'ORD-' + (++state.seq);
     state.orders.push({ id: oid, rfqId: r.id, buyerCompanyId: u.companyId, supplierCompanyId: scid, title: r.title, cat: r.cat,
-      qty, price, stage: 'accepted', due: new Date(now() + (lead || 10) * 24 * 3600e3).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      qty, price, stage: 'accepted', dueAt: now() + (lead || 10) * 24 * 3600e3,
       tracking: null, delayed: false, delayReason: '', buyer: u.name, engineer: r.engineer, product: r.product });
   };
   if (mode === 'split') {
@@ -471,7 +494,7 @@ ops.award = async (u, { rfqId, mode, supplierCompanyId, alloc, ackFlags }) => {
     bids.filter(x => x.supplierCompanyId !== cid).forEach(x =>
       notify(x.supplierCompanyId, null, 'ti-x', `${r.title} (${rfqId}) was awarded to another supplier`, { view: 'mybids' }));
   }
-  r.status = 'awarded';
+  r.status = 'awarded'; r.signedOff = false;
   await persist();
   return { msg: mode === 'split' ? 'Split award sent for sign-off' : `${supName(supplierCompanyId)} awarded — sign-off requested, supplier notified` };
 };
@@ -543,6 +566,17 @@ ops.reorder = async (u, { orderId, mode }) => {
 };
 
 /* ----- notifications ----- */
+ops.signOffRfq = async (u, { rfqId }) => {
+  requireAward(u);
+  const r = rfqById(rfqId); if (!r || r.buyerCompanyId !== u.companyId) throw err(404, 'RFQ not found');
+  if (r.status !== 'awarded') throw err(400, 'RFQ is not awarded');
+  if (r.signedOff !== false) throw err(400, 'Sign-off already recorded');
+  r.signedOff = true;
+  audit(u, 'Recorded internal sign-off — PO can be issued', rfqId, 'award');
+  await persist();
+  return { msg: 'Sign-off recorded — PO can be issued' };
+};
+
 ops.readNotif = async (u, { id }) => {
   const n = state.notifications.find(x => x.id === id && x.companyId === u.companyId);
   if (n) n.unread = false;
@@ -558,7 +592,8 @@ ops.markAllRead = async (u) => {
 /* ----- admin ----- */
 ops.addUser = async (u, { name, email, role, group }) => {
   requireAdmin(u);
-  if (!email || !String(email).includes('@')) throw err(400, 'Valid email required');
+  if (!name || !String(name).trim()) throw err(400, 'Name is required');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim())) throw err(400, 'Enter a valid email address');
   if (userByEmail(email)) throw err(409, 'That email already has an account');
   const persona = { Admin: 'admin', Buyer: 'buyer', Engineer: 'engineer' }[role] || 'buyer';
   const temp = crypto.randomBytes(4).toString('hex');
@@ -571,7 +606,12 @@ ops.updateUserRole = async (u, { email, role }) => {
   requireAdmin(u);
   const x = userByEmail(email);
   if (!x || x.companyId !== u.companyId) throw err(404, 'User not found');
-  x.persona = { Admin: 'admin', Buyer: 'buyer', Engineer: 'engineer' }[role] || x.persona;
+  const newPersona = { Admin: 'admin', Buyer: 'buyer', Engineer: 'engineer' }[role] || x.persona;
+  if (x.persona === 'admin' && newPersona !== 'admin') {
+    const admins = state.users.filter(y => y.companyId === u.companyId && y.persona === 'admin');
+    if (admins.length <= 1) throw err(409, 'Cannot remove the last admin — make someone else an admin first.');
+  }
+  x.persona = newPersona;
   audit(u, `Changed ${email} role to ${role}`, '', 'evt');
   await persist();
   return { msg: 'Role updated' };

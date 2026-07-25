@@ -52,7 +52,7 @@ app.get('/api/state', requireAuth, (req, res) => res.json({ state: model.viewerS
 /* ---- operations (role authorization inside the model) ---- */
 const OPS = ['toggleSave', 'viewVault', 'signNda', 'submitBid', 'declineBid', 'updateCompanyProfile',
   'openThread', 'postMessage',
-  'createRfq', 'publishDraft', 'closeWindow', 'duplicateRfq', 'award',
+  'createRfq', 'publishDraft', 'closeWindow', 'duplicateRfq', 'award', 'signOffRfq',
   'advanceOrder', 'addTracking', 'reportDelay', 'reviewOrder', 'reorder',
   'readNotif', 'markAllRead',
   'addUser', 'updateUserRole', 'addGroup', 'updateSettings'];

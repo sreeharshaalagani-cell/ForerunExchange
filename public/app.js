@@ -56,10 +56,13 @@ const NAVKEY = {opportunity:'opportunities', bidcompare:'rfqs', createrfq:'creat
 let ME=null;
 let OPPS=[], MYBIDS=[], RFQS=[], BIDSBYRFQ={}, DECLINED={}, ADDENDA={}, SUPS=[], ORDERS=[],
     THREADS=[], USERS=[], GROUPS=[], SETTINGS={}, NOTIFS=[], AUDIT=[], PROFILES={}, SCORECARD=null, COMPANY_PROFILE=null,
-    QUALCATS=[], OUTSIDE={};
+    QUALCATS=[], OUTSIDE={}, DEMO={};
 let SAVED=new Set(), NDA_SIGNED=new Set();
 let BIDS=[]; // bids of the RFQ currently under review
 let VIEW='opportunities';
+let _initialView=(location.pathname.replace(/^\/+/,'').split('/')[0]||null);
+if(_initialView==='login') _initialView=null;
+window.addEventListener('popstate', e=>{ const v=(e.state&&e.state.view)||(location.pathname.replace(/^\/+/,'').split('/')[0]); if(ME&&v&&document.getElementById('view-'+v)) go(v,{push:false}); });
 
 function role(){ return ME ? ME.role : 'supplier'; }
 function persona(){ return ME ? ME.persona : 'supplier'; }
@@ -78,7 +81,8 @@ function applyState(s){
   ADDENDA=s.addenda||{}; SUPS=s.sups||[]; ORDERS=s.orders||[]; THREADS=s.threads||[];
   USERS=s.users||[]; GROUPS=s.groups||[]; SETTINGS=s.settings||{}; NOTIFS=s.notifs||[]; AUDIT=s.audit||[];
   PROFILES=s.profiles||{}; SCORECARD=s.scorecard||null; COMPANY_PROFILE=s.companyProfile||null;
-  QUALCATS=s.qualifiedCats||[]; OUTSIDE=s.outsideByCat||{};
+  QUALCATS=s.qualifiedCats||[]; OUTSIDE=s.outsideByCat||{}; DEMO=s.demo||{};
+  updateChrome();
   SAVED=new Set(s.saved||[]); NDA_SIGNED=new Set(s.ndaSigned||[]);
   document.getElementById('app').dataset.role=ME.role;
 }
@@ -96,7 +100,7 @@ async function act(name, body){
   const r=await api(name, body);
   if(r.state) applyState(r.state);
   updateBell(); renderNav();
-  if(r.error){ toast(r.error); return null; }
+  if(r.error){ toast(r.error,'error'); return null; }
   if(r.msg) toast(r.msg);
   return r;
 }
@@ -104,6 +108,7 @@ async function act(name, body){
 /* ---------------- auth: login & registration ---------------- */
 let authMode='signin';
 function showLogin(errMsg){
+  try{ history.replaceState({view:'login'}, '', '/login'); }catch(e){}
   document.getElementById('app').style.display='none';
   let el=document.getElementById('login');
   if(!el){ el=document.createElement('div'); el.id='login'; el.className='login-screen'; document.body.appendChild(el); }
@@ -115,8 +120,8 @@ function showLogin(errMsg){
   let form='';
   if(authMode==='signin'){
     form=`
-      <div class="field"><label>Email</label><input id="li-email" type="email" placeholder="you@company.com"></div>
-      <div class="field"><label>Password</label><input id="li-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')submitLogin()"></div>
+      <div class="field"><label>Email</label><input id="li-email" type="email" placeholder="you@company.com" required></div>
+      <div class="field"><label>Password</label><input id="li-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')submitLogin()" required></div>
       <button class="btn btn-primary" style="width:100%" onclick="submitLogin()">Sign in</button>
       <div class="login-demo">Demo accounts — password <b>demo1234</b></div>
       <div class="login-accts">
@@ -167,13 +172,20 @@ async function authRequest(path, body){
   enterApp();
   return {ok:true};
 }
-async function submitLogin(){ const r=await authRequest('login',{email:val('li-email'), password:val('li-pass')}); if(r.error) showLogin(r.error); }
+async function submitLogin(){
+  const email=val('li-email'), pass=val('li-pass');
+  if(!email) return showLogin('Email is required');
+  if(!pass) return showLogin('Password is required');
+  const r=await authRequest('login',{email, password:pass}); if(r.error) showLogin(r.error); }
 async function loginAs(email){ const r=await authRequest('login',{email, password:'demo1234'}); if(r.error) showLogin(r.error); }
+const EMAIL_RE=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 async function submitRegisterBuyer(){
+  if(!EMAIL_RE.test(val('rb-email'))) return showLogin('Enter a valid email address');
   const r=await authRequest('registerBuyer',{companyName:val('rb-company'), name:val('rb-name'), email:val('rb-email'), password:val('rb-pass')});
   if(r.error) showLogin(r.error);
 }
 async function submitRegisterSupplier(){
+  if(!EMAIL_RE.test(val('rs-email'))) return showLogin('Enter a valid email address');
   const cats=[...document.querySelectorAll('.rs-cat:checked')].map(c=>c.value);
   const r=await authRequest('registerSupplier',{companyName:val('rs-company'), name:val('rs-name'), email:val('rs-email'), password:val('rs-pass'), cats, rnd:document.getElementById('rs-rnd').checked});
   if(r.error) showLogin(r.error);
@@ -181,12 +193,26 @@ async function submitRegisterSupplier(){
 async function logout(){ try{ await fetch('/api/logout',{method:'POST'}); }catch(e){} ME=null; authMode='signin'; showLogin(); }
 function val(id){ const e=document.getElementById(id); return e?e.value.trim():''; }
 
-function enterApp(){
-  document.getElementById('ws-label').innerHTML=`<div class="ws-co">${esc(ME.company)}</div><div class="ws-role">${ME.role==='supplier'?'Supplier workspace':esc(ME.persona)+' · buyer workspace'}</div>`;
+let _lastUserId=null;
+function updateChrome(){
+  if(!ME) return;
+  const eph = DEMO.ephemeral ? '<div class="ws-role" style="color:var(--warning)">Demo instance — storage resets on redeploy</div>' : '';
+  document.getElementById('ws-label').innerHTML=`<div class="ws-co">${esc(ME.company)}</div><div class="ws-role">${ME.role==='supplier'?'Supplier workspace':esc(ME.persona)+' · buyer workspace'}</div>`+eph;
   document.getElementById('persona').textContent = ME.company+' — '+ME.name+' · '+ME.persona;
   document.getElementById('avatar').textContent = initials(ME.name);
+}
+function clearViewDom(){
+  ['opp-detail','tracking-body','messages-body','scorecard-body','company-body','admin-body','audit-body','bidcompare','supplier-profile','opp-feed','rfq-list','sup-list','mybids-kanban']
+    .forEach(id=>{ const e=document.getElementById(id); if(e) e.innerHTML=''; });
+}
+function enterApp(){
+  if(_lastUserId && _lastUserId!==ME.id) clearViewDom();
+  _lastUserId=ME.id;
+  updateChrome();
   renderNav(); renderLists(); updateBell();
-  go(role()==='supplier'?'opportunities':'rfqs');
+  const want=_initialView; _initialView=null;
+  const fallback=role()==='supplier'?'opportunities':'rfqs';
+  go(want && document.getElementById('view-'+want) ? want : fallback);
 }
 
 /* ---------------- nav / routing ---------------- */
@@ -198,8 +224,10 @@ function renderNav(){
     return `<a data-view="${it.v}" onclick="go('${it.v}')"><i class="ti ti-${it.i}"></i><span class="lbl">${it.l}</span>${badge}</a>`;
   }).join('');
 }
-function go(view){
+function go(view, opts){
   VIEW=view;
+  if(!opts || opts.push!==false){ try{ history.pushState({view}, '', '/'+view); }catch(e){} }
+  hideToast();
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
   const el = document.getElementById('view-'+view); if(el) el.classList.add('on');
   const navk = NAVKEY[view]||view;
@@ -209,7 +237,7 @@ function go(view){
   if(view==='opportunities'){ renderSuppKpis(); renderOppFilters(); renderOpps(); }
   if(view==='mybids') renderKanban();
   if(view==='rfqs'){ renderBuyerKpis(); renderRFQs(); }
-  if(view==='createrfq') fillCatSelect();
+  if(view==='createrfq'){ fillCatSelect(); resetRfqForm(); }
   if(view==='suppliers') renderSuppliers();
   if(view==='tracking') renderTracking();
   if(view==='messages') renderMessages();
@@ -219,7 +247,12 @@ function go(view){
   if(view==='audit') renderAudit();
   document.getElementById('notifs').classList.remove('on');
 }
-function toast(msg){ const t=document.getElementById('toast'); document.getElementById('toast-msg').textContent=msg; t.classList.add('show'); clearTimeout(window._tt); window._tt=setTimeout(()=>t.classList.remove('show'),3000); }
+function toast(msg, kind){ const t=document.getElementById('toast');
+  t.classList.toggle('error', kind==='error');
+  t.querySelector('i').className = kind==='error' ? 'ti ti-alert-circle' : 'ti ti-check';
+  document.getElementById('toast-msg').textContent=msg; t.classList.add('show');
+  clearTimeout(window._tt); window._tt=setTimeout(()=>t.classList.remove('show'), kind==='error'?4000:3000); }
+function hideToast(){ const t=document.getElementById('toast'); if(t){ t.classList.remove('show'); clearTimeout(window._tt); } }
 
 /* ---------------- notifications ---------------- */
 function updateBell(){ const c=NOTIFS.filter(n=>n.unread).length; const d=document.getElementById('bdot'); if(!d) return; d.textContent=c; d.style.display=c?'block':'none'; }
@@ -281,7 +314,7 @@ function renderOpps(){
 }
 function openOpp(id){
   const o = OPPS.find(x=>x.id===id);
-  if(!o){ toast('This opportunity is no longer open'); return; }
+  if(!o){ toast('This opportunity is no longer open','error'); return; }
   const el = document.getElementById('opp-detail');
   const ndaReq = o.nda && o.nda!=='none';
   const signed = NDA_SIGNED.has(o.id) || !ndaReq;
@@ -377,13 +410,13 @@ function renderScorecard(){
   document.getElementById('scorecard-body').innerHTML=`
     <div class="sec"><h3>Supplier scorecard</h3><span class="v">${esc(ME.company)} · computed from closed jobs</span></div>
     <div class="sc-grid">
-      <div class="sc"><div class="l">Overall</div><div class="v">${sc.score==null?'—':sc.score}</div><div class="bar"><span style="width:${sc.score?sc.score/5*100:0}%"></span></div></div>
+      <div class="sc"><div class="l">Overall</div><div class="v">${sc.score==null?'—':sc.score}</div><div class="bar"><span style="width:${sc.score?sc.score/5*100:0}%"></span></div>${sc.priorJobs?`<div class="hint" style="margin-top:8px">Weighted across ${plural(sc.priorJobs,'prior job')} (${sc.priorScore}★ on joining) + ${plural((sc.feedback||[]).length,'platform review')}</div>`:''}</div>
       <div class="sc"><div class="l">Jobs</div><div class="v">${sc.jobs}</div><div class="bar"><span style="width:${Math.min(100,sc.jobs)}%"></span></div></div>
       <div class="sc"><div class="l">On-time</div><div class="v">${sc.ontime!=null?sc.ontime+'%':'—'}</div><div class="bar"><span style="width:${sc.ontime||0}%"></span></div></div>
       <div class="sc"><div class="l">Reviews</div><div class="v">${(sc.feedback||[]).length}</div><div class="bar"><span style="width:${Math.min(100,(sc.feedback||[]).length*10)}%"></span></div></div>
     </div>
     <div class="panelcard"><div class="vault" style="border-color:var(--brand)"><div><div class="t">Why this matters</div><div class="n">Buyers rate every closed job on quality and spec conformance. Scores post here immediately and weigh into award decisions alongside price and lead time.</div></div></div></div>
-    <div class="sec"><h3>Recent job feedback</h3></div>
+    <div class="hint" style="margin:-6px 0 14px">${sc.baseJobs?`Overall blends ${sc.baseJobs} pre-platform jobs (avg ${sc.baseScore}) with ${(sc.feedback||[]).length} platform review${(sc.feedback||[]).length===1?'':'s'} — so a few 5★ reviews move it gradually.`:''}</div><div class="sec"><h3>Recent job feedback</h3></div>
     <div class="list">${fb}</div>`;
 }
 
@@ -435,7 +468,7 @@ function orderStepper(o){
   return `<div class="steps">` + STAGES.map((s,i)=>{
     const done = i<cur || (i===3 && o.stage==='delivered');
     const isCurr = i===cur && o.stage!=='delivered';
-    const late = o.delayed && i===cur;
+    const late = (o.delayed||o.late) && i===cur;
     const cls = late?'late':done?'done':isCurr?'curr':'';
     const seg = i<STAGES.length-1 ? `<span class="segline"></span>` : '';
     return `<div class="step ${i<cur?'done':''} ${cls}"><span class="dot">${(done||late)?`<i class="ti ${late?'ti-alert-triangle':'ti-check'}"></i>`:''}</span>${seg}</div>`;
@@ -446,18 +479,23 @@ function renderTracking(){
   const orders = ORDERS.slice();
   const counts = {
     all:orders.length,
-    manufacturing:orders.filter(o=>(o.stage==='manufacturing'||o.stage==='accepted')&&!o.delayed).length,
+    manufacturing:orders.filter(o=>(o.stage==='manufacturing'||o.stage==='accepted')&&!(o.delayed||o.late)).length,
     shipped:orders.filter(o=>o.stage==='shipped').length,
-    delayed:orders.filter(o=>o.delayed).length,
+    delayed:orders.filter(o=>(o.delayed||o.late)).length,
     delivered:orders.filter(o=>o.stage==='delivered').length
   };
   const tabs=[['all','All'],['manufacturing','In production'],['shipped','Shipped'],['delayed','Delayed'],['delivered','Delivered']];
   let filtered = orders;
-  if(trackTab==='delayed') filtered=orders.filter(o=>o.delayed);
-  else if(trackTab==='manufacturing') filtered=orders.filter(o=>(o.stage==='manufacturing'||o.stage==='accepted')&&!o.delayed);
+  if(trackTab==='delayed') filtered=orders.filter(o=>(o.delayed||o.late));
+  else if(trackTab==='manufacturing') filtered=orders.filter(o=>(o.stage==='manufacturing'||o.stage==='accepted')&&!(o.delayed||o.late));
   else if(trackTab!=='all') filtered=orders.filter(o=>o.stage===trackTab);
-  const byProduct = {};
-  filtered.forEach(o=>{ (byProduct[o.product||'General']=byProduct[o.product||'General']||[]).push(o); });
+  const byProduct = {}, displayName = {};
+  filtered.forEach(o=>{
+    const raw=(o.product||'General').trim();
+    const k=raw.toLowerCase();
+    if(!displayName[k]) displayName[k]=raw;
+    (byProduct[k]=byProduct[k]||[]).push(o);
+  });
   const head = isBuyer
     ? `<div class="sec"><h3>Where is every RFQ?</h3><span class="v">grouped by product · ${orders.length} active orders</span></div>`
     : `<div class="sec"><h3>Your won orders</h3><span class="v">update status &amp; add tracking</span></div>`;
@@ -475,7 +513,7 @@ function renderTracking(){
       const trackBtn = o.tracking
         ? `<span class="link" onclick="toast('Opening FedEx tracking ${esc(o.tracking)}')"><i class="ti ti-brand-fedex" style="font-size:14px;vertical-align:-2px"></i> ${esc(o.tracking)}</span>`
         : (isBuyer?'<span style="color:var(--faint);font-size:13.5px">no tracking yet</span>':`<button class="btn btn-sm" onclick="addTracking('${o.id}')">Add FedEx tracking</button>`);
-      const delay = o.delayed ? `<div class="banner" style="margin:10px 0 0"><i class="ti ti-clock-exclamation"></i><span><b>Delayed.</b> ${esc(o.delayReason)}</span></div>` : '';
+      const delay = o.delayed ? `<div class="banner" style="margin:10px 0 0"><i class="ti ti-clock-exclamation"></i><span><b>Delayed.</b> ${esc(o.delayReason)}</span></div>` : (o.late ? `<div class="banner" style="margin:10px 0 0"><i class="ti ti-clock-exclamation"></i><span><b>Past due.</b> Due date has passed without delivery.</span></div>` : '');
       let supActions='';
       if(!isBuyer){
         if(o.stage==='accepted') supActions=`<button class="btn btn-sm" onclick="advanceOrder('${o.id}')">Start production</button>`;
@@ -486,7 +524,7 @@ function renderTracking(){
       if(isBuyer && o.stage==='delivered' && ME.canAward) buyActions=`<button class="btn btn-sm btn-primary" onclick="qualityReview('${o.id}')">Close &amp; review</button> <button class="btn btn-sm" onclick="reorder('${o.id}')">Reorder</button>`;
       return `<div class="gantt-row">
         <div class="gr-head"><div><div class="gr-t">${esc(o.title)} <span class="pill st-muted">${o.id}</span></div><div class="gr-m">${tag(o.cat)} · qty <span class="val">${o.qty}</span> · ${who} · <span class="val">${money(o.price)}</span> · due <span class="val">${esc(o.due)}</span></div></div>
-        <div>${o.delayed?'<span class="pill st-danger">Late</span>':`<span class="pill ${o.stage==='delivered'?'st-win':o.stage==='shipped'?'st-info':'st-good'}">${STAGE_LBL[o.stage]}</span>`}</div></div>
+        <div>${(o.delayed||o.late)?'<span class="pill st-danger">Late</span>':`<span class="pill ${o.stage==='delivered'?'st-win':o.stage==='shipped'?'st-info':'st-good'}">${STAGE_LBL[o.stage]}</span>`}</div></div>
         ${orderStepper(o)}
         ${delay}
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px">
@@ -494,7 +532,7 @@ function renderTracking(){
         </div>
       </div>`;
     }).join('');
-    return isBuyer ? `<div class="seclbl" style="margin-top:6px"><i class="ti ti-folder" style="font-size:13.5px;vertical-align:-1px"></i> ${esc(prod)} · ${byProduct[prod].length}</div>${cards}` : cards;
+    return isBuyer ? `<div class="seclbl" style="margin-top:6px"><i class="ti ti-folder" style="font-size:13.5px;vertical-align:-1px"></i> ${esc(displayName[prod])} · ${byProduct[prod].length}</div>${cards}` : cards;
   }).join('') || '<div class="kempty">Nothing in this stage.</div>';
   document.getElementById('tracking-body').innerHTML = head + summary + tabbar + rows;
 }
@@ -537,10 +575,10 @@ async function doReorder(id,mode){ closeModal(); if(await act('reorder',{orderId
 /* ================= MESSAGES (both roles) ================= */
 let activeThread=null;
 function threadCounterpart(t){ return role()==='supplier' ? t.engineer : t.supplier; }
-async function openThreadFor(partId){
-  let t=THREADS.find(x=>x.part===partId);
+async function openThreadFor(partId, supplierCompanyId){
+  let t=THREADS.find(x=>x.part===partId && (!supplierCompanyId || x.supplierCompanyId===supplierCompanyId));
   if(!t){
-    const r=await act('openThread',{rfqId:partId});
+    const r=await act('openThread',{rfqId:partId, supplierCompanyId});
     if(!r) return;
     t=THREADS.find(x=>x.id===r.threadId)||THREADS.find(x=>x.part===partId);
   }
@@ -574,15 +612,23 @@ function renderMessages(){
         <div class="thhead"><div class="tn">${esc(threadCounterpart(t))}</div><div class="tp">${esc(t.partTitle)} · ${t.part} · ${esc(t.company)}</div></div>
         <div class="thbody" id="thbody"><div class="sysmsg">Conversation on part ${t.part}</div>${bubbles}</div>
         ${addendumUI}
-        <div class="composer"><input id="chat-in" type="text" placeholder="Type a message…" onkeydown="if(event.key==='Enter')sendMsg()"><button class="btn btn-primary" onclick="sendMsg()">Send</button></div>
+        <form class="composer" onsubmit="event.preventDefault();sendMsg()"><input id="chat-in" type="text" placeholder="Type a message…" autocomplete="off"><button type="submit" class="btn btn-primary">Send</button></form>
       </div>
     </div>`;
   const b=document.getElementById('thbody'); if(b) b.scrollTop=b.scrollHeight;
 }
+let _sending=false;
 async function sendMsg(){
-  const v=val('chat-in'); if(!v) return;
+  if(_sending) return;                            // guard double-fire (B16)
+  const inp=document.getElementById('chat-in');
+  const v=(inp&&inp.value||'').trim(); if(!v) return;
   const addendum = role()==='buyer' && document.getElementById('post-addendum') && document.getElementById('post-addendum').checked;
-  if(await act('postMessage',{threadId:activeThread, text:v, addendum})) renderMessages();
+  _sending=true;
+  if(inp) inp.value='';                           // clear immediately for instant feedback
+  const ok = await act('postMessage',{threadId:activeThread, text:v, addendum});
+  _sending=false;
+  if(ok) renderMessages();
+  else { const again=document.getElementById('chat-in'); if(again) again.value=v; }  // restore on failure
 }
 
 /* ================= BUYER ================= */
@@ -590,7 +636,7 @@ function renderBuyerKpis(){
   const open=RFQS.filter(r=>r.open).length;
   const awaiting=RFQS.filter(r=>!r.open&&!r.awarded&&!r.draft).length;
   const inProd=ORDERS.filter(o=>o.stage!=='delivered').length;
-  const late=ORDERS.filter(o=>o.delayed).length;
+  const late=ORDERS.filter(o=>(o.delayed||o.late)).length;
   const spend=ORDERS.reduce((a,o)=>a+(o.price||0),0);
   const awaitingRfq=RFQS.find(r=>!r.open&&!r.awarded&&!r.draft);
   document.getElementById('buyer-kpis').innerHTML=`
@@ -603,11 +649,22 @@ function renderRFQs(){
   document.getElementById('rfq-list').innerHTML = RFQS.map(r=>`<div class="li" onclick="openRFQ('${r.id}')"><div><div class="lt">${esc(r.title)}</div><div class="lm">${CATS[r.cat]?.label||r.cat} · ${r.id} · ${esc(r.product||'')}</div></div><div class="lr"><span>${plural(r.bids,"bid")}</span><span>${r.open?r.closes:''}</span><span class="pill ${r.status[1]}">${r.status[0]}</span></div></div>`).join('')
     || '<div class="li"><div class="lm">No requests yet — create your first RFQ.</div></div>';
 }
+function resetRfqForm(){
+  ['f-title','f-part','f-qty','f-product','f-cc','f-reqs','f-vault'].forEach(id=>{const e=document.getElementById(id); if(e) e.value='';});
+  const w=document.getElementById('f-window'); if(w) w.value='3';
+  const n=document.getElementById('f-nda'); if(n) n.value='category';
+  fillEngSelect();
+}
+function fillEngSelect(){
+  const e=document.getElementById('f-eng'); if(!e) return;
+  const engs=USERS.filter(u=>u.role==='Engineer');
+  e.innerHTML='<option value="">Unassigned</option>'+engs.map(u=>`<option value="${esc(u.name)}">${esc(u.name)}${u.group?' — '+esc(u.group):''}</option>`).join('');
+}
 function fillCatSelect(){ const cs=document.getElementById('f-cat'); if(cs && !cs.options.length) cs.innerHTML=Object.keys(CATS).map(k=>`<option value="${k}">${CATS[k].label}</option>`).join(''); }
 async function submitRfq(draft){
   const body={ title:val('f-title'), partNumber:val('f-part'), cat:val('f-cat')||'cnc', qty:val('f-qty'),
     product:val('f-product'), costCenter:val('f-cc'), reqs:val('f-reqs'), vaultLink:val('f-vault'),
-    windowDays:val('f-window'), nda:val('f-nda'), draft:!!draft };
+    windowDays:val('f-window'), nda:val('f-nda'), engineer:val('f-eng'), draft:!!draft };
   const r=await act('createRfq', body);
   if(r){ ['f-title','f-part','f-qty','f-product','f-cc','f-reqs','f-vault'].forEach(id=>{const e=document.getElementById(id); if(e) e.value='';}); renderRFQs(); go('rfqs'); }
 }
@@ -620,8 +677,16 @@ let currentRFQ=null, selectedBid=null, splitMode=false, splitAlloc={};
 function supplierFlagsByName(name){ const p=PROFILES[name]; return p ? p.research.flags : []; }
 function openRFQ(id){
   const r = RFQS.find(x=>x.id===id);
-  if(!r){ toast('RFQ not found'); return; }
-  if(r.awarded){ toast('Already awarded — see Tracking'); go('tracking'); return; }
+  if(!r){ toast('RFQ not found','error'); return; }
+  if(r.awarded){
+    if(!r.signedOff && ME.canAward){
+      openModal(`<h3>${esc(r.title)} — awarded, sign-off pending</h3>
+        <div class="msub">The award is complete but internal sign-off has not been recorded. The PO should only be issued after sign-off.</div>
+        <div class="actions"><button class="btn" onclick="closeModal()">Later</button><button class="btn btn-primary" onclick="doSignOff('${r.id}')">Record sign-off</button></div>`);
+      return;
+    }
+    toast(r.signedOff?'Already awarded — see Tracking':'Awarded — awaiting internal sign-off'); go('tracking'); return;
+  }
   if(r.draft){ publishDraftModal(r); return; }
   currentRFQ=r; BIDS=BIDSBYRFQ[id]||[]; selectedBid=null; splitMode=false; splitAlloc={};
   renderBidCompare(); go('bidcompare');
@@ -631,6 +696,7 @@ function publishDraftModal(r){
     <div class="field" style="max-width:200px"><label>Bid window</label><select id="pd-window"><option value="3">3 days</option><option value="2">2 days</option><option value="5">5 days</option></select></div>
     <div class="actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="doPublishDraft('${r.id}')">Publish RFQ</button></div>`);
 }
+async function doSignOff(id){ if(await act('signOffRfq',{rfqId:id})){ closeModal(); renderRFQs(); renderBuyerKpis(); } }
 async function doPublishDraft(id){ if(await act('publishDraft',{rfqId:id, windowDays:val('pd-window')})){ closeModal(); renderRFQs(); } }
 function renderBidRows(){
   const r=currentRFQ, qty=r.qty||1;
@@ -675,20 +741,20 @@ function renderBidCompare(){
       <button class="btn btn-primary" ${(r.open||!canAwardMe)?'disabled':''} onclick="awardConfirm()">${canAwardMe?'Award &amp; request sign-off':'Award (buyers only)'}</button></div>`;
 }
 async function closeWindowNow(id){ const r=await act('closeWindow',{rfqId:id}); if(r){ openRFQ(id); } }
-function selectBid(cid){ selectedBid=cid; renderBidCompare(); }
+function selectBid(cid){ if(!ME.canAward){ toast('Only buyers or admins can award','error'); return; } selectedBid=cid; renderBidCompare(); }
 function setSplit(cid,v){ splitAlloc[cid]=Math.max(0, parseInt(v)||0); }
 function awardConfirm(){
   const r=currentRFQ, qty=r.qty||1;
   if(splitMode){
     const parts=Object.entries(splitAlloc).filter(([,q])=>q>0);
-    if(!parts.length){ toast('Allocate quantity to at least one supplier'); return; }
+    if(!parts.length){ toast('Allocate quantity to at least one supplier','error'); return; }
     const total=parts.reduce((a,[,q])=>a+q,0);
-    if(total!==qty){ toast(`Split must sum to ${qty} (currently ${total})`); return; }
+    if(total!==qty){ toast(`Split must sum to ${qty} (currently ${total})`,'error'); return; }
     const rows=parts.map(([cid,q])=>{const b=BIDS.find(x=>x.supplierCompanyId===cid); return `<div class="sumrow"><span>${esc(b?b.supplier:cid)} · ${q} units</span><span class="sv">${money(b&&b.unit!=null?b.unit*q:null)}</span></div>`;}).join('')+`<div class="sumrow"><span>Total qty</span><span class="sv">${qty}</span></div>`;
     openAwardModal(`Split award — ${esc(r.title)}`, rows, parts.map(([cid])=>{const b=BIDS.find(x=>x.supplierCompanyId===cid); return b?b.supplier:null;}).filter(n=>n&&supplierFlagsByName(n).length));
     return;
   }
-  if(!selectedBid){ toast('Select a supplier row to award'); return; }
+  if(!selectedBid){ toast('Select a supplier row to award','error'); return; }
   const b=BIDS.find(x=>x.supplierCompanyId===selectedBid);
   const prices=BIDS.map(x=>x.price).filter(p=>p!=null); const lowest=prices.length?Math.min(...prices):null;
   const delta=(b&&b.price!=null&&lowest!=null)?b.price-lowest:null;
@@ -725,10 +791,14 @@ async function doAward(){
   if(await act('award', body)){ closeModal(); renderRFQs(); go('rfqs'); }
 }
 function exportBids(){
+  // Price columns come from the server already masked (null) for engineers who
+  // lack pricing visibility — the export cannot leak what was never sent (E3).
+  const see=canSeePrice(), M=v=>see?(v==null?'':v):'masked';
   const r=currentRFQ, rows=[['Supplier','Unit','Qty','Shipping','Incoterms','Total','Lead(days)','Score']];
-  BIDS.forEach(b=>rows.push([b.supplier,b.unit,(r.qty||1),b.ship,b.incoterms,b.price,b.lead,b.score]));
+  BIDS.forEach(b=>rows.push([b.supplier,M(b.unit),(r.qty||1),M(b.ship),b.incoterms,M(b.price),b.lead,b.score]));
   (DECLINED[r.id]||[]).forEach(d=>rows.push([d.supplier,'no-bid','','','','','',d.reason]));
-  downloadCSV(`${r.id}-bids.csv`, rows); toast('Bid tabulation exported (CSV)');
+  downloadCSV(`${r.id}-bids.csv`, rows);
+  toast(see?'Bid tabulation exported (CSV)':'Exported — pricing columns masked for your role');
 }
 function downloadCSV(name, rows){
   const csv=rows.map(r=>r.map(c=>`"${String(c==null?'':c).replace(/"/g,'""')}"`).join(',')).join('\n');
@@ -786,7 +856,7 @@ function openSupplier(name, ret){
         </div>
         <div class="rcard">
           ${(bid&&ME.canAward&&currentRFQ&&!currentRFQ.open)?`<button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="selectedBid='${bid.supplierCompanyId}';splitMode=false;go('bidcompare');renderBidCompare();awardConfirm()">Accept this bid</button>`:''}
-          ${(currentRFQ)?`<button class="btn" style="width:100%;margin-bottom:8px" onclick="openThreadFor('${currentRFQ.id}')"><i class="ti ti-message-2" style="font-size:14px;vertical-align:-2px"></i> Message</button>`:''}
+          ${(currentRFQ)?`<button class="btn" style="width:100%;margin-bottom:8px" onclick="openThreadFor('${currentRFQ.id}','${bid?bid.supplierCompanyId:''}')"><i class="ti ti-message-2" style="font-size:14px;vertical-align:-2px"></i> Message</button>`:''}
           <button class="btn" style="width:100%" onclick="go('${profileReturn}')">Back</button>
         </div>
       </div>
@@ -821,6 +891,8 @@ function addUser(){
    <div class="actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveUser()">Create invite</button></div>`);
 }
 async function saveUser(){
+  if(!val('u-name')) return toast('Name is required','error');
+  if(!EMAIL_RE.test(val('u-email'))) return toast('Enter a valid email address','error');
   const r=await act('addUser',{name:val('u-name'), email:val('u-email'), role:val('u-role'), group:val('u-group')});
   if(r){
     renderAdmin();
@@ -855,12 +927,14 @@ function renderLists(){
   else { renderBuyerKpis(); renderRFQs(); renderSuppliers(); fillCatSelect(); }
 }
 async function boot(){
+  const wantsLogin = location.pathname.replace(/\/+$/,'') === '/login';
   let d;
   try{
     const r=await fetch('/api/state');
     if(r.status===401){ showLogin(); return; }
     d=await r.json();
   }catch(e){ showLogin('Could not reach the server'); return; }
+  if(wantsLogin){ showLogin(); return; }   // /login always shows the login form
   applyState(d.state);
   document.getElementById('app').style.display='';
   enterApp();

@@ -605,3 +605,17 @@ tr.bidrow.sel td:first-child{ box-shadow:inset 3px 0 0 var(--primary); }
 .selradio{ width:20px; height:20px; }
 .confbar span,.sc .bar span{ background:var(--primary); }
 .chart .bar{ background:var(--primary); }
+
+/* ---- QA fixes (Jul 2026 bug report) ---- */
+/* S1/E1: disabled controls unmistakably disabled */
+input:disabled, select:disabled, textarea:disabled{
+  background:var(--surface-2); color:var(--text-3); border-color:var(--border-soft);
+  cursor:not-allowed; -webkit-text-fill-color:var(--text-3);
+}
+.btn:disabled,.btn[disabled]{
+  opacity:1; background:var(--surface-2); border-color:var(--border-soft);
+  color:var(--text-3); cursor:not-allowed; pointer-events:none;
+}
+.btn-primary:disabled{ background:var(--surface-2); border-color:var(--border-soft); color:var(--text-3); }
+/* B9: error toasts look like errors */
+.toast.error{ background:var(--danger); color:#fff; }
