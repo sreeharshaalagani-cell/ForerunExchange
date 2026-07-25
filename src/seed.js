@@ -73,6 +73,15 @@ function seed() {
     { id: 'CT-450', buyerCompanyId: 'c_orion', title: 'Cable tray weldment', cat: 'sheet', qty: 10, product: 'Frame', costCenter: 'OM-FRAME-2',
       reqs: 'Aluminum 5052. TIG welded. Powder coat.', vaultLink: 'scv://orion-vault/rfq/CT-450',
       nda: 'none', autoExtend: true, status: 'open', closesAt: now + 5 * D, createdBy: 'u_sam', engineer: 'Priya Rao', createdAt: now - 1 * D },
+    { id: 'HB-211', buyerCompanyId: 'c_north', title: 'Heater bracket', cat: 'sheet', qty: 20, product: 'Etch chamber', costCenter: 'RND-ETCH-118',
+      reqs: '304 SS bracket, bead-blast finish.', vaultLink: 'scv://northvale-vault/rfq/HB-211',
+      nda: 'category', autoExtend: true, status: 'awarded', closesAt: now - 12 * D, createdBy: 'u_sam', engineer: 'Marcus Vogel', createdAt: now - 18 * D },
+    { id: 'SVX-290', buyerCompanyId: 'c_north', title: 'Slit valve plate (pilot)', cat: 'cnc', qty: 12, product: 'Litho stage', costCenter: 'RND-LITHO-204',
+      reqs: 'A2 tool steel pilot batch ahead of SV-300.', vaultLink: 'scv://northvale-vault/rfq/SVX-290',
+      nda: 'category', autoExtend: true, status: 'awarded', closesAt: now - 9 * D, createdBy: 'u_sam', engineer: 'Priya Rao', createdAt: now - 15 * D },
+    { id: 'GM-401', buyerCompanyId: 'c_north', title: 'Gas manifold (pilot)', cat: 'gas', qty: 6, product: 'Deposition module', costCenter: 'RND-DEP-330',
+      reqs: '316L electropolished pilot manifold.', vaultLink: 'scv://northvale-vault/rfq/GM-401',
+      nda: 'category', autoExtend: true, status: 'awarded', closesAt: now - 20 * D, createdBy: 'u_sam', engineer: 'Priya Rao', createdAt: now - 26 * D },
     { id: 'EA-205R', buyerCompanyId: 'c_orion', title: 'Electrode assembly rework (B)', cat: 'rework', qty: 8, product: 'Etch legacy', costCenter: 'OM-ETCH-1',
       reqs: 'Re-machine seat and re-plate. Existing parts supplied by buyer.', vaultLink: 'scv://orion-vault/rfq/EA-205R',
       nda: 'none', autoExtend: true, status: 'open', closesAt: now + 4 * D + 6 * H, createdBy: 'u_sam', engineer: 'Priya Rao', createdAt: now - 1 * D }
@@ -89,6 +98,14 @@ function seed() {
     { id: 'b8', rfqId: 'LP-088', supplierCompanyId: 'c_acme', unit: 68, ship: 60, incoterms: 'FOB Origin', lead: 8, notes: '', revised: false, at: now - 5 * H },
     { id: 'b9', rfqId: 'LP-088', supplierCompanyId: 'c_titan', unit: 64, ship: 60, incoterms: 'DAP', lead: 7, notes: '', revised: false, at: now - 4 * H }
   ];
+
+  bids.push(
+    { id: 'b10', rfqId: 'HB-211',  supplierCompanyId: 'c_acme',    unit: 25,  ship: 40, incoterms: 'FOB Origin', lead: 6,  notes: '', revised: false, at: now - 13 * D },
+    { id: 'b11', rfqId: 'HB-211',  supplierCompanyId: 'c_nord',    unit: 27,  ship: 45, incoterms: 'FOB Origin', lead: 9,  notes: '', revised: false, at: now - 13 * D },
+    { id: 'b12', rfqId: 'SVX-290', supplierCompanyId: 'c_acme',    unit: 134, ship: 42, incoterms: 'FOB Origin', lead: 7,  notes: '', revised: false, at: now - 10 * D },
+    { id: 'b13', rfqId: 'SVX-290', supplierCompanyId: 'c_west',    unit: 139, ship: 50, incoterms: 'EXW',        lead: 12, notes: '', revised: false, at: now - 10 * D },
+    { id: 'b14', rfqId: 'GM-401',  supplierCompanyId: 'c_flowtek', unit: 150, ship: 20, incoterms: 'FOB Origin', lead: 11, notes: '', revised: false, at: now - 21 * D }
+  );
 
   const declines = [
     { rfqId: 'SV-300', supplierCompanyId: null, supplierName: 'Coastal CNC', reason: 'Capacity — no open slot before your need-by date' },
@@ -159,7 +176,7 @@ function seed() {
   });
 
   return {
-    __seeded: true, version: 5, seq: 2000,
+    __seeded: true, version: 6, seq: 2000,
     companies, users, supplierProfiles, rfqs, bids, declines, addenda, orders, reviews, threads,
     notifications, audit,
     savedByUser: { u_acme: ['AI-076'] },

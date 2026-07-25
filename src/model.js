@@ -22,7 +22,7 @@ const now = () => Date.now();
 async function init() {
   await db.init();
   state = await db.load();
-  if (!state || !state.__seeded || state.version !== 5) { state = seed(); await db.save(state); }
+  if (!state || !state.__seeded || state.version !== 6) { state = seed(); await db.save(state); }
   console.log(`[model] state ready (${db.kind}) — companies: ${state.companies.length}, users: ${state.users.length}`);
 }
 async function persist() { await db.save(state); }
@@ -211,6 +211,33 @@ function viewerState(u) {
       }
       return { id: r.id, title: r.title, cat: r.cat, price, lead: b.lead, stage: st.stage, status: st.status };
     }).filter(Boolean);
+
+    /* The Won lane is driven by orders and completed jobs — the record of what
+     * was actually awarded — not by bid bookkeeping alone. An order (or a closed,
+     * reviewed job) always means a win, even if the bid row or RFQ is missing. */
+    const seenBid = new Set(mybids.map(m => m.id));
+    const myOrders = state.orders.filter(o => o.supplierCompanyId === u.companyId);
+    const wonTotal = key => myOrders.filter(o => (o.rfqId || o.id) === key)
+                                    .reduce((a, o) => a + (o.price || 0), 0);
+    myOrders.forEach(o => {
+      const key = o.rfqId || o.id;
+      const hit = mybids.find(m => m.id === key);
+      if (hit) { hit.stage = 'won'; hit.status = ['Won', 'st-win']; hit.price = wonTotal(key) || hit.price; }
+      else if (!seenBid.has(key)) {
+        seenBid.add(key);
+        const rr = rfqById(key);
+        mybids.push({ id: key, title: o.title, cat: o.cat, price: wonTotal(key), lead: null,
+                      stage: 'won', status: ['Won', 'st-win'], archived: !rr });
+      }
+    });
+    state.reviews.filter(v => v.supplierCompanyId === u.companyId).forEach(v => {
+      const key = v.part || v.orderId;
+      if (seenBid.has(key)) return;
+      seenBid.add(key);
+      mybids.push({ id: key, title: v.title, cat: null, price: null, lead: null,
+                    stage: 'won', status: ['Completed', 'st-win'], archived: !rfqById(key) });
+    });
+
     const orders = state.orders.filter(o => o.supplierCompanyId === u.companyId)
       .map(o => ({ ...orderView(o), buyerName: o.buyer, customer: supName(o.buyerCompanyId) }));
     const threads = state.threads.filter(t => t.supplierCompanyId === u.companyId)

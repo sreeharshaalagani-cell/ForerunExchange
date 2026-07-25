@@ -465,7 +465,7 @@ async function submitBid(id){
 
 function renderKanban(){
   const savedItems = OPPS.filter(o=>SAVED.has(o.id) && !o.hasMyBid).map(o=>({id:o.id, title:o.title, cat:o.cat, sub:`${o.closes} · ${plural(o.bids,"bid")}`, saved:true}));
-  const mk = key => MYBIDS.filter(b=>b.stage===key).map(b=>({id:b.id, title:b.title, cat:b.cat, sub:`<span class="val">${money(b.price)}</span> · <span class="val">${b.lead}d</span>`, pill:b.status}));
+  const mk = key => MYBIDS.filter(b=>b.stage===key).map(b=>({id:b.id, title:b.title, cat:b.cat, sub:`${b.price!=null?'<span class="val">'+money(b.price)+'</span>':'<span style="color:var(--text-3)">closed job</span>'}${b.lead?' · <span class="val">'+b.lead+'d</span>':''}`, pill:b.status}));
   const stages = [
     {label:'Saved', dot:'var(--warn)', items:savedItems},
     {label:'Submitted', dot:'var(--brand)', items:mk('active')},
