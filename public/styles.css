@@ -619,3 +619,17 @@ input:disabled, select:disabled, textarea:disabled{
 .btn-primary:disabled{ background:var(--surface-2); border-color:var(--border-soft); color:var(--text-3); }
 /* B9: error toasts look like errors */
 .toast.error{ background:var(--danger); color:#fff; }
+
+/* ---- archived RFQ: key-dates timeline ---- */
+.tl{display:flex; flex-direction:column;}
+.tl-item{display:flex; align-items:flex-start; gap:14px; position:relative; padding:0 0 20px;}
+.tl-item.last{padding-bottom:0;}
+.tl-item::before{content:''; position:absolute; left:15px; top:30px; bottom:0; width:2px; background:var(--border);}
+.tl-item.last::before{display:none;}
+.tl-dot{width:32px; height:32px; border-radius:var(--r-pill); background:var(--primary-tint);
+        display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:16px; z-index:1;}
+.tl-body{flex:1; min-width:0; padding-top:5px;}
+.tl-label{font-size:15px; font-weight:var(--fw-semibold); color:var(--ink);}
+.tl-note{font-size:13px; color:var(--text-3); margin-top:2px;}
+.tl-when{font-size:13px; color:var(--text-2); white-space:nowrap; padding-top:7px; text-align:right;}
+@media (max-width:560px){ .tl-item{flex-wrap:wrap;} .tl-when{width:100%; text-align:left; padding-left:46px; padding-top:2px;} }

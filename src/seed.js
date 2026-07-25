@@ -140,8 +140,19 @@ function seed() {
     { t: 'Jul 10 · 11:05', companyIds: ['c_north'], actor: 'Sam Ortiz (Buyer)', action: 'Published RFQ', target: 'VF-6061-204', kind: 'rfq' }
   ];
 
+  // lifecycle timestamps so the archived-RFQ timeline has real dates
+  rfqs.forEach(r => {
+    r.publishedAt = r.createdAt;
+    if (r.status === 'awarded') { r.awardedAt = r.closesAt + 6 * H; r.signedOff = true; r.signedOffAt = r.closesAt + 8 * H; }
+  });
+  bids.forEach(b => {
+    b.submittedAt = b.revised ? b.at - 1 * D : b.at;
+    b.revisedAt = b.revised ? b.at : null;
+  });
+  declines.forEach(d => { d.atMs = now - 2 * D; });
+
   return {
-    __seeded: true, version: 3, seq: 2000,
+    __seeded: true, version: 4, seq: 2000,
     companies, users, supplierProfiles, rfqs, bids, declines, addenda, orders, reviews, threads,
     notifications, audit,
     savedByUser: { u_acme: ['AI-076'] },

@@ -22,7 +22,7 @@ const now = () => Date.now();
 async function init() {
   await db.init();
   state = await db.load();
-  if (!state || !state.__seeded || state.version !== 3) { state = seed(); await db.save(state); }
+  if (!state || !state.__seeded || state.version !== 4) { state = seed(); await db.save(state); }
   console.log(`[model] state ready (${db.kind}) — companies: ${state.companies.length}, users: ${state.users.length}`);
 }
 async function persist() { await db.save(state); }
@@ -277,6 +277,25 @@ ops.rfqDetail = async (u, { rfqId }) => {
   if (!r) throw err(404, 'RFQ not found');
   const see = canSeePrice(u);
 
+  /* Lifecycle milestones with real timestamps — bid open, submission,
+   * revision, decision — rather than only free-text audit lines. */
+  const milestone = (key, label, at, note) => (at ? { key, label, at, note: note || '' } : null);
+  function timelineFor(scope) {
+    const t = [];
+    t.push(milestone('opened', 'Bid window opened', r.publishedAt || r.createdAt,
+      r.status === 'draft' ? 'Draft — not yet published' : ''));
+    if (scope.ndaAt) t.push(milestone('nda', 'NDA signed', scope.ndaAt, 'Drawing access unlocked'));
+    if (scope.submittedAt) t.push(milestone('submitted', scope.label + ' submitted', scope.submittedAt));
+    if (scope.revisedAt) t.push(milestone('revised', scope.label + ' revised', scope.revisedAt, 'Latest terms used for evaluation'));
+    if (scope.declinedAt) t.push(milestone('declined', 'Declined (no-bid)', scope.declinedAt, scope.declineReason));
+    if (r.closesAt <= now() || r.status === 'awarded') {
+      t.push(milestone('closed', 'Bid window closed', Math.min(r.closesAt, r.awardedAt || r.closesAt)));
+    }
+    if (r.awardedAt) t.push(milestone('decision', 'Decision — awarded', r.awardedAt, scope.decisionNote || ''));
+    if (r.signedOffAt) t.push(milestone('signoff', 'Award signed off', r.signedOffAt, 'Cleared for PO'));
+    return t.filter(Boolean).sort((a, b) => a.at - b.at);
+  }
+
   if (isSupplier(u)) {
     const myBid = state.bids.find(b => b.rfqId === rfqId && b.supplierCompanyId === u.companyId);
     const myDecline = state.declines.find(d => d.rfqId === rfqId && d.supplierCompanyId === u.companyId);
@@ -303,6 +322,15 @@ ops.rfqDetail = async (u, { rfqId }) => {
       orders: myOrders.map(o => ({ id: o.id, stage: o.stage, qty: o.qty, price: o.price, due: o.due,
                                    tracking: o.tracking, delayed: o.delayed, delayReason: o.delayReason })),
       addenda: state.addenda[rfqId] || [],
+      timeline: timelineFor({
+        label: 'Your bid',
+        ndaAt: (state.ndas.find(n => n.rfqId === rfqId && n.supplierCompanyId === u.companyId) || {}).atMs,
+        submittedAt: myBid ? (myBid.submittedAt || myBid.at) : null,
+        revisedAt: myBid ? myBid.revisedAt : null,
+        declinedAt: myDecline ? myDecline.atMs : null,
+        declineReason: myDecline ? myDecline.reason : '',
+        decisionNote: myOrders.length ? 'Awarded to you' : 'Awarded to another supplier'
+      }),
       activity: state.audit.filter(a => a.target === rfqId && a.companyIds.includes(u.companyId))
     } };
   }
@@ -323,6 +351,14 @@ ops.rfqDetail = async (u, { rfqId }) => {
                  .map(o => ({ id: o.id, supplier: supName(o.supplierCompanyId), stage: o.stage, qty: o.qty,
                               price: see ? o.price : null, due: o.due, tracking: o.tracking, delayed: o.delayed })),
     addenda: state.addenda[rfqId] || [],
+    timeline: timelineFor({
+      label: 'First bid',
+      submittedAt: rfqBids(rfqId).length ? Math.min(...rfqBids(rfqId).map(b => b.submittedAt || b.at)) : null,
+      revisedAt: rfqBids(rfqId).some(b => b.revisedAt)
+        ? Math.max(...rfqBids(rfqId).filter(b => b.revisedAt).map(b => b.revisedAt)) : null,
+      decisionNote: state.orders.filter(o => o.rfqId === rfqId)
+        .map(o => supName(o.supplierCompanyId)).join(', ')
+    }),
     activity: state.audit.filter(a => a.target === rfqId && a.companyIds.includes(u.companyId))
   } };
 };
@@ -348,7 +384,7 @@ ops.signNda = async (u, { oppId }) => {
   requireSupplier(u);
   const r = rfqById(oppId); if (!r) throw err(404, 'RFQ not found');
   if (!state.ndas.some(n => n.rfqId === oppId && n.supplierCompanyId === u.companyId)) {
-    state.ndas.push({ rfqId: oppId, supplierCompanyId: u.companyId, by: u.name, at: stamp() });
+    state.ndas.push({ rfqId: oppId, supplierCompanyId: u.companyId, by: u.name, at: stamp(), atMs: now() });
   }
   audit(u, 'Signed NDA', oppId, 'nda', [r.buyerCompanyId]);
   await persist();
@@ -367,8 +403,8 @@ ops.submitBid = async (u, { rfqId, unit, ship, incoterms, lead, notes }) => {
   if (!(ld > 0)) throw err(400, 'Lead time is required');
   let bid = state.bids.find(b => b.rfqId === rfqId && b.supplierCompanyId === u.companyId);
   const revise = !!bid;
-  if (bid) Object.assign(bid, { unit: un, ship: Number(ship) || 0, incoterms: incoterms || bid.incoterms, lead: ld, notes: notes || '', revised: true, at: now() });
-  else state.bids.push({ id: 'b_' + (++state.seq), rfqId, supplierCompanyId: u.companyId, unit: un, ship: Number(ship) || 0, incoterms: incoterms || 'FOB Origin', lead: ld, notes: notes || '', revised: false, at: now() });
+  if (bid) Object.assign(bid, { unit: un, ship: Number(ship) || 0, incoterms: incoterms || bid.incoterms, lead: ld, notes: notes || '', revised: true, at: now(), revisedAt: now() });
+  else state.bids.push({ id: 'b_' + (++state.seq), rfqId, supplierCompanyId: u.companyId, unit: un, ship: Number(ship) || 0, incoterms: incoterms || 'FOB Origin', lead: ld, notes: notes || '', revised: false, at: now(), submittedAt: now() });
   // anti-sniping: a bid in the final 10 minutes auto-extends the window
   let extended = false;
   if (r.autoExtend && r.closesAt - now() < 10 * 60e3) { r.closesAt = now() + 10 * 60e3; extended = true; }
@@ -381,7 +417,7 @@ ops.submitBid = async (u, { rfqId, unit, ship, incoterms, lead, notes }) => {
 ops.declineBid = async (u, { rfqId, reason }) => {
   requireSupplier(u);
   const r = rfqById(rfqId); if (!r) throw err(404, 'RFQ not found');
-  state.declines.push({ rfqId, supplierCompanyId: u.companyId, supplierName: supName(u.companyId), reason: reason || 'No-bid' });
+  state.declines.push({ rfqId, supplierCompanyId: u.companyId, supplierName: supName(u.companyId), reason: reason || 'No-bid', atMs: now() });
   audit(u, 'Declined (no-bid): ' + (reason || ''), rfqId, 'decline', [r.buyerCompanyId]);
   notify(r.buyerCompanyId, null, 'ti-ban', `${supName(u.companyId)} declined ${rfqId}: ${reason || 'no-bid'}`, { view: 'rfq', arg: rfqId });
   await persist();
@@ -468,7 +504,7 @@ ops.createRfq = async (u, body) => {
   const r = { id, buyerCompanyId: u.companyId, title: String(body.title).trim(), cat: body.cat || 'cnc', qty,
     product: body.product || 'General', costCenter: body.costCenter || '', reqs: body.reqs || '',
     vaultLink: body.vaultLink || '', nda: ['category', 'drawing', 'none'].includes(body.nda) ? body.nda : 'category',
-    autoExtend: body.autoExtend !== false, status: body.draft ? 'draft' : 'open',
+    autoExtend: body.autoExtend !== false, status: body.draft ? 'draft' : 'open', publishedAt: body.draft ? null : now(),
     closesAt: now() + windowDays * 24 * 3600e3, createdBy: u.id, engineer: (body.engineer && String(body.engineer).trim()) || 'Unassigned', createdAt: now() };
   state.rfqs.unshift(r);
   audit(u, body.draft ? 'Saved RFQ draft' : 'Published RFQ', id, 'rfq');
@@ -488,7 +524,7 @@ ops.publishDraft = async (u, { rfqId, windowDays }) => {
   requireBuyerSide(u);
   const r = rfqById(rfqId); if (!r || r.buyerCompanyId !== u.companyId) throw err(404, 'RFQ not found');
   if (r.status !== 'draft') throw err(400, 'Not a draft');
-  r.status = 'open'; r.closesAt = now() + (Number(windowDays) || 3) * 24 * 3600e3;
+  r.status = 'open'; r.publishedAt = now(); r.closesAt = now() + (Number(windowDays) || 3) * 24 * 3600e3;
   audit(u, 'Published RFQ', rfqId, 'rfq');
   notifySuppliersOfRfq(r);
   await persist();
@@ -553,7 +589,7 @@ ops.award = async (u, { rfqId, mode, supplierCompanyId, alloc, ackFlags }) => {
     bids.filter(x => x.supplierCompanyId !== cid).forEach(x =>
       notify(x.supplierCompanyId, null, 'ti-x', `${r.title} (${rfqId}) was awarded to another supplier`, { view: 'mybids' }));
   }
-  r.status = 'awarded'; r.signedOff = false;
+  r.status = 'awarded'; r.signedOff = false; r.awardedAt = now();
   await persist();
   return { msg: mode === 'split' ? 'Split award sent for sign-off' : `${supName(supplierCompanyId)} awarded — sign-off requested, supplier notified` };
 };
@@ -630,7 +666,7 @@ ops.signOffRfq = async (u, { rfqId }) => {
   const r = rfqById(rfqId); if (!r || r.buyerCompanyId !== u.companyId) throw err(404, 'RFQ not found');
   if (r.status !== 'awarded') throw err(400, 'RFQ is not awarded');
   if (r.signedOff !== false) throw err(400, 'Sign-off already recorded');
-  r.signedOff = true;
+  r.signedOff = true; r.signedOffAt = now();
   audit(u, 'Recorded internal sign-off — PO can be issued', rfqId, 'award');
   await persist();
   return { msg: 'Sign-off recorded — PO can be issued' };
