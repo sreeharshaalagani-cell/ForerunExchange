@@ -1,6 +1,6 @@
 'use strict';
 /*
- * Forerun Exchange — application server.
+ * xCaliper — application server.
  * Auth + registration + validated, role-authorized REST endpoints.
  * All business logic lives in src/model.js.
  */
@@ -23,7 +23,7 @@ function requireAuth(req, res, next) {
   req.user = u; next();
 }
 
-app.get('/api/health', (req, res) => res.json({ ok: true, service: 'forerun-exchange', time: new Date().toISOString() }));
+app.get('/api/health', (req, res) => res.json({ ok: true, service: 'xcaliper', time: new Date().toISOString() }));
 
 /* ---- auth & registration ---- */
 app.post('/api/login', (req, res) => {
@@ -82,5 +82,5 @@ app.get('*', (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 model.init().then(() => {
-  app.listen(PORT, () => console.log(`Forerun Exchange listening on :${PORT}`));
+  app.listen(PORT, () => console.log(`xCaliper listening on :${PORT}`));
 }).catch(e => { console.error('Failed to initialize:', e); process.exit(1); });

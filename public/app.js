@@ -1,5 +1,5 @@
 /* ============================================================
-   Forerun Exchange — API-driven client.
+   xCaliper — API-driven client.
    All state comes from the server, scoped to the signed-in user.
    Functionality is role-driven and mirrors server-side authorization:
      supplier — browse/bid/decline/NDA, own orders, scorecard, company profile
@@ -147,7 +147,7 @@ function showLogin(errMsg){
   }
   el.innerHTML=`
     <div class="login-card">
-      <div class="login-brand"><span class="lg">F</span><span>Forerun Exchange</span></div>
+      <div class="login-brand"><span class="lg">X</span><span>xCaliper</span></div>
       <div class="login-sub">Reverse-auction procurement for semiconductor R&amp;D</div>
       ${tabs}
       ${errMsg?`<div class="login-err"><i class="ti ti-alert-circle" style="vertical-align:-2px"></i> ${esc(errMsg)}</div>`:''}
@@ -343,7 +343,7 @@ function signNDA(id){
   openModal(`
     <h3>Sign NDA to view drawing</h3>
     <div class="msub">${esc(o.customer)} requires a ${kind} NDA before this drawing unlocks.</div>
-    <div class="rcard" style="max-height:150px;overflow:auto;font-size:13.5px;color:var(--muted)">This Non-Disclosure Agreement covers all technical data, drawings, and specifications accessed through Forerun Exchange for ${esc(o.customer)}${o.nda==='drawing'?` — specifically part ${o.id}`:` in the ${CATS[o.cat]?.label} category`}. Confidential information may not be shared, reproduced, or used outside the scope of quoting and fulfilling this work…</div>
+    <div class="rcard" style="max-height:150px;overflow:auto;font-size:13.5px;color:var(--muted)">This Non-Disclosure Agreement covers all technical data, drawings, and specifications accessed through xCaliper for ${esc(o.customer)}${o.nda==='drawing'?` — specifically part ${o.id}`:` in the ${CATS[o.cat]?.label} category`}. Confidential information may not be shared, reproduced, or used outside the scope of quoting and fulfilling this work…</div>
     <label style="margin-top:12px"><input type="checkbox" id="nda-ck" style="width:auto;margin-right:8px" onchange="document.getElementById('nda-go').disabled=!this.checked">I have read and agree on behalf of ${esc(ME.company)}.</label>
     <div class="actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="nda-go" disabled onclick="confirmNda('${o.id}')">Accept &amp; unlock</button></div>`);
 }
@@ -769,7 +769,7 @@ function openSupplier(name, ret){
           <div class="seclbl">Certifications (claimed)</div><div class="chips">${chips(p.certs)}</div>
         </div>
         <div class="block agent">
-          <span class="blabel bl-agent"><i class="ti ti-sparkles"></i> Forerun Research Agent</span>
+          <span class="blabel bl-agent"><i class="ti ti-sparkles"></i> xCaliper Research Agent</span>
           <div style="font-size:14.5px;margin-bottom:10px">${esc(r.summary)}</div>
           <div class="conf">Confidence<span class="confbar"><span style="width:${r.confidence}%"></span></span>${r.confidence}%</div>
           <div style="margin-top:12px">${findings}</div>
@@ -847,7 +847,7 @@ function renderAudit(){
     <div class="banner info"><i class="ti ti-lock"></i><span>Every drawing view, bid, NDA, addendum and award involving your company is recorded server-side — timestamped, attributable, exportable.</span></div>
     <div class="list" style="padding:0"><table><thead><tr><th>When</th><th>Action</th><th>Actor</th><th>RFQ / part</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
-function exportAudit(){ const rows=[['When','Action','Actor','Target','Kind']]; AUDIT.forEach(a=>rows.push([a.t,a.action,a.actor,a.target,a.kind])); downloadCSV('forerun-audit.csv', rows); toast('Audit trail exported (CSV)'); }
+function exportAudit(){ const rows=[['When','Action','Actor','Target','Kind']]; AUDIT.forEach(a=>rows.push([a.t,a.action,a.actor,a.target,a.kind])); downloadCSV('xcaliper-audit.csv', rows); toast('Audit trail exported (CSV)'); }
 
 /* ---------------- boot ---------------- */
 function renderLists(){

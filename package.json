@@ -1,8 +1,8 @@
 {
-  "name": "forerun-exchange",
+  "name": "xcaliper",
   "version": "2.0.0",
   "private": true,
-  "description": "Forerun Exchange — a reverse-auction procurement marketplace for semiconductor R&D parts.",
+  "description": "xCaliper — a reverse-auction procurement marketplace for semiconductor R&D parts.",
   "engines": {
     "node": ">=18"
   },

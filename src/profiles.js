@@ -9,8 +9,8 @@ module.exports = {
        { key: 'Certifications', status: 'verified', detail: 'ISO 9001:2015 and AS9100D confirmed active with registrar (exp. 2026).', source: 'NSF-ISR registry' },
        { key: 'Financial stability', status: 'strong', detail: '15+ years operating; no liens or bankruptcies on record.', source: 'D&B summary' },
        { key: 'Denied-party screening', status: 'clear', detail: 'No matches on OFAC / BIS / DDTC lists.', source: 'Consolidated Screening List' },
-       { key: 'Compliance history', status: 'clear', detail: 'No quality disputes or compliance actions found.', source: 'Forerun history' },
-       { key: 'Delivery performance', status: 'strong', detail: '96% on-time across 41 platform orders.', source: 'Forerun history' },
+       { key: 'Compliance history', status: 'clear', detail: 'No quality disputes or compliance actions found.', source: 'xCaliper history' },
+       { key: 'Delivery performance', status: 'strong', detail: '96% on-time across 41 platform orders.', source: 'xCaliper history' },
        { key: 'Corporate & ownership', status: 'clear', detail: 'US-incorporated, US-owned. No deemed-export exposure indicated.', source: 'CA SoS filings' }
      ], flags: [] } },
  'Nord Fab': { id: 'SUP-0014', cats: ['sheet', 'cnc'], score: 4.1,
@@ -21,8 +21,8 @@ module.exports = {
        { key: 'Certifications', status: 'verified', detail: 'ISO 9001:2015 confirmed active (exp. 2025).', source: 'registrar lookup' },
        { key: 'Financial stability', status: 'attention', detail: 'Founded 2015; thin public financials and limited credit history. Not adverse, but unestablished.', source: 'D&B summary' },
        { key: 'Denied-party screening', status: 'clear', detail: 'No denied-party matches.', source: 'Consolidated Screening List' },
-       { key: 'Compliance history', status: 'clear', detail: 'No disputes found.', source: 'Forerun history' },
-       { key: 'Delivery performance', status: 'attention', detail: '88% on-time across 12 orders; two recent late deliveries.', source: 'Forerun history' },
+       { key: 'Compliance history', status: 'clear', detail: 'No disputes found.', source: 'xCaliper history' },
+       { key: 'Delivery performance', status: 'attention', detail: '88% on-time across 12 orders; two recent late deliveries.', source: 'xCaliper history' },
        { key: 'Corporate & ownership', status: 'clear', detail: 'US-incorporated, US-owned.', source: 'OR SoS filings' }
      ], flags: ['Lower on-time rate and limited track record — confirm capacity for the quantity before awarding.'] } },
  'Titan Machining': { id: 'SUP-0003', cats: ['cnc', 'rework'], score: 4.8,
@@ -33,8 +33,8 @@ module.exports = {
        { key: 'Certifications', status: 'verified', detail: 'ISO 9001:2015 and AS9100D active; ITAR registration confirmed with DDTC.', source: 'DDTC + registrar' },
        { key: 'Financial stability', status: 'strong', detail: '20+ years; healthy credit profile, no adverse filings.', source: 'D&B summary' },
        { key: 'Denied-party screening', status: 'clear', detail: 'No denied-party matches.', source: 'Consolidated Screening List' },
-       { key: 'Compliance history', status: 'clear', detail: 'No disputes; ITAR-compliant handling on record.', source: 'Forerun history' },
-       { key: 'Delivery performance', status: 'strong', detail: '97% on-time across 58 orders.', source: 'Forerun history' },
+       { key: 'Compliance history', status: 'clear', detail: 'No disputes; ITAR-compliant handling on record.', source: 'xCaliper history' },
+       { key: 'Delivery performance', status: 'strong', detail: '97% on-time across 58 orders.', source: 'xCaliper history' },
        { key: 'Corporate & ownership', status: 'clear', detail: 'US-incorporated, US-owned; cleared for controlled technical data.', source: 'TX SoS filings' }
      ], flags: [] } },
  'Westline Tool': { id: 'SUP-0021', cats: ['cnc'], score: 3.9,
@@ -45,8 +45,8 @@ module.exports = {
        { key: 'Certifications', status: 'flag', detail: 'Claimed ISO 9001:2015 appears LAPSED — registrar shows certificate expired 2024 and not renewed.', source: 'registrar lookup' },
        { key: 'Financial stability', status: 'attention', detail: 'Adequate but modest; one tax lien resolved 2023.', source: 'D&B summary' },
        { key: 'Denied-party screening', status: 'clear', detail: 'No denied-party matches.', source: 'Consolidated Screening List' },
-       { key: 'Compliance history', status: 'attention', detail: 'One quality dispute on platform (2024), resolved with rework.', source: 'Forerun history' },
-       { key: 'Delivery performance', status: 'attention', detail: '90% on-time across 19 orders.', source: 'Forerun history' },
+       { key: 'Compliance history', status: 'attention', detail: 'One quality dispute on platform (2024), resolved with rework.', source: 'xCaliper history' },
+       { key: 'Delivery performance', status: 'attention', detail: '90% on-time across 19 orders.', source: 'xCaliper history' },
        { key: 'Corporate & ownership', status: 'flag', detail: 'Records indicate ~30% ownership by an overseas parent. Sharing controlled technical data may trigger deemed-export review.', source: 'AZ SoS + corporate filings' }
      ], flags: ['ISO certificate appears lapsed — confirm current quality system before award.', 'Partial foreign ownership — assess deemed-export exposure before sharing controlled drawings.'] } },
  'Lumen Quartz': { id: 'SUP-0009', cats: ['quartz'], score: 4.5,
@@ -57,7 +57,7 @@ module.exports = {
        { key: 'Certifications', status: 'verified', detail: 'ISO 9001:2015 active.', source: 'registrar lookup' },
        { key: 'Financial stability', status: 'strong', detail: 'Stable; no adverse filings.', source: 'D&B summary' },
        { key: 'Denied-party screening', status: 'clear', detail: 'No matches.', source: 'Consolidated Screening List' },
-       { key: 'Delivery performance', status: 'strong', detail: '94% on-time across 27 orders.', source: 'Forerun history' },
+       { key: 'Delivery performance', status: 'strong', detail: '94% on-time across 27 orders.', source: 'xCaliper history' },
        { key: 'Corporate & ownership', status: 'clear', detail: 'US-incorporated, US-owned.', source: 'CA SoS filings' }
      ], flags: [] } },
  'Flowtek Lines': { id: 'SUP-0017', cats: ['gas'], score: 4.3,
@@ -68,7 +68,7 @@ module.exports = {
        { key: 'Certifications', status: 'verified', detail: 'ISO 9001:2015 active; ASME B31.3 process qualified.', source: 'registrar lookup' },
        { key: 'Financial stability', status: 'strong', detail: 'Stable; no adverse filings.', source: 'D&B summary' },
        { key: 'Denied-party screening', status: 'clear', detail: 'No matches.', source: 'Consolidated Screening List' },
-       { key: 'Delivery performance', status: 'strong', detail: '95% on-time across 33 orders.', source: 'Forerun history' },
+       { key: 'Delivery performance', status: 'strong', detail: '95% on-time across 33 orders.', source: 'xCaliper history' },
        { key: 'Corporate & ownership', status: 'clear', detail: 'US-incorporated, US-owned.', source: 'OR SoS filings' }
      ], flags: [] } }
 };

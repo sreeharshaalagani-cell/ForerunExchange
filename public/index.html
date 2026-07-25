@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Forerun Exchange</title>
-<meta name="description" content="Forerun Exchange — reverse-auction procurement for semiconductor R&D parts.">
+<title>xCaliper</title>
+<meta name="description" content="xCaliper — reverse-auction procurement for semiconductor R&D parts.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -16,7 +16,7 @@
 <div class="app" id="app" data-role="supplier" style="display:none">
   <aside class="side">
     <div class="shead">
-      <div class="brand"><span class="lg">F</span><span class="nm">Forerun</span></div>
+      <div class="brand"><span class="lg">X</span><span class="nm">xCaliper</span></div>
       <button class="cbtn" onclick="document.getElementById('app').classList.toggle('collapsed')" aria-label="Toggle navigation"><i class="ti ti-chevron-left"></i></button>
     </div>
     <div class="ws" id="ws-label"></div>
@@ -88,7 +88,7 @@
           </div>
           <div class="field"><label>Requirements</label><textarea id="f-reqs" placeholder="Tolerances, materials, finish, test requirements…"></textarea></div>
           <div class="row2">
-            <div class="field"><label>Drawing (vault link — IP stays in your vault)</label><input id="f-vault" type="text" placeholder="scv://your-vault/rfq/…"><div class="hint">Forerun stores only the part number &amp; link — never the drawing file.</div></div>
+            <div class="field"><label>Drawing (vault link — IP stays in your vault)</label><input id="f-vault" type="text" placeholder="scv://your-vault/rfq/…"><div class="hint">xCaliper stores only the part number &amp; link — never the drawing file.</div></div>
             <div class="field"><label>Bid window</label><select id="f-window"><option value="3">3 days</option><option value="2">2 days</option><option value="5">5 days</option><option value="7">7 days</option></select></div>
           </div>
           <div class="field"><label>NDA required to view drawing</label>

@@ -1,4 +1,4 @@
-# Forerun Exchange
+# xCaliper
 
 A reverse-auction procurement marketplace for **semiconductor R&D parts**. Buyers post RFQs, pre-qualified suppliers bid competitively, and the platform handles award, tracking, quality scorecards, chat, and a full audit trail — while drawings/IP stay in the customer's own vault.
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Forerun Exchange — prototype</title>
+<title>xCaliper — prototype</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
@@ -318,7 +318,7 @@
 <div class="app" id="app" data-role="supplier" data-persona="buyer">
   <aside class="side">
     <div class="shead">
-      <div class="brand"><span class="lg">F</span><span class="nm">Forerun</span></div>
+      <div class="brand"><span class="lg">X</span><span class="nm">xCaliper</span></div>
       <button class="cbtn" onclick="document.getElementById('app').classList.toggle('collapsed')" aria-label="Toggle navigation"><i class="ti ti-chevron-left"></i></button>
     </div>
     <div class="roletoggle">
@@ -421,7 +421,7 @@
           </div>
           <div class="field"><label>Requirements</label><textarea>Tolerance ±0.05mm on bore ID. Hard anodized. Test batch ahead of production qualification.</textarea></div>
           <div class="row2">
-            <div class="field"><label>Drawing (vault link — IP stays in your vault)</label><input type="text" value="scv://northvale-vault/rfq/VF-6061-204"><div class="hint">Forerun stores only the part number &amp; link — never the drawing file.</div></div>
+            <div class="field"><label>Drawing (vault link — IP stays in your vault)</label><input type="text" value="scv://northvale-vault/rfq/VF-6061-204"><div class="hint">xCaliper stores only the part number &amp; link — never the drawing file.</div></div>
             <div class="field"><label>Bid window</label><select><option>3 days</option><option>2 days</option><option>5 days</option></select></div>
           </div>
           <div class="field"><label>NDA required to view drawing</label>
@@ -594,8 +594,8 @@ const PROFILES = {
        {key:'Certifications', status:'verified', detail:'ISO 9001:2015 and AS9100D confirmed active with registrar (exp. 2026).', source:'NSF-ISR registry'},
        {key:'Financial stability', status:'strong', detail:'15+ years operating; no liens or bankruptcies on record.', source:'D&B summary'},
        {key:'Denied-party screening', status:'clear', detail:'No matches on OFAC / BIS / DDTC lists.', source:'Consolidated Screening List'},
-       {key:'Compliance history', status:'clear', detail:'No quality disputes or compliance actions found.', source:'Forerun history'},
-       {key:'Delivery performance', status:'strong', detail:'96% on-time across 41 platform orders.', source:'Forerun history'},
+       {key:'Compliance history', status:'clear', detail:'No quality disputes or compliance actions found.', source:'xCaliper history'},
+       {key:'Delivery performance', status:'strong', detail:'96% on-time across 41 platform orders.', source:'xCaliper history'},
        {key:'Corporate & ownership', status:'clear', detail:'US-incorporated, US-owned. No deemed-export exposure indicated.', source:'CA SoS filings'}
      ], flags:[]}},
  'Nord Fab':{ id:'SUP-0014', cats:['sheet','cnc'], score:4.1,
@@ -606,8 +606,8 @@ const PROFILES = {
        {key:'Certifications', status:'verified', detail:'ISO 9001:2015 confirmed active (exp. 2025).', source:'registrar lookup'},
        {key:'Financial stability', status:'attention', detail:'Founded 2015; thin public financials and limited credit history. Not adverse, but unestablished.', source:'D&B summary'},
        {key:'Denied-party screening', status:'clear', detail:'No denied-party matches.', source:'Consolidated Screening List'},
-       {key:'Compliance history', status:'clear', detail:'No disputes found.', source:'Forerun history'},
-       {key:'Delivery performance', status:'attention', detail:'88% on-time across 12 orders; two recent late deliveries.', source:'Forerun history'},
+       {key:'Compliance history', status:'clear', detail:'No disputes found.', source:'xCaliper history'},
+       {key:'Delivery performance', status:'attention', detail:'88% on-time across 12 orders; two recent late deliveries.', source:'xCaliper history'},
        {key:'Corporate & ownership', status:'clear', detail:'US-incorporated, US-owned.', source:'OR SoS filings'}
      ], flags:['Lower on-time rate and limited track record — confirm capacity for the quantity before awarding.']}},
  'Titan Machining':{ id:'SUP-0003', cats:['cnc','rework'], score:4.8,
@@ -618,8 +618,8 @@ const PROFILES = {
        {key:'Certifications', status:'verified', detail:'ISO 9001:2015 and AS9100D active; ITAR registration confirmed with DDTC.', source:'DDTC + registrar'},
        {key:'Financial stability', status:'strong', detail:'20+ years; healthy credit profile, no adverse filings.', source:'D&B summary'},
        {key:'Denied-party screening', status:'clear', detail:'No denied-party matches.', source:'Consolidated Screening List'},
-       {key:'Compliance history', status:'clear', detail:'No disputes; ITAR-compliant handling on record.', source:'Forerun history'},
-       {key:'Delivery performance', status:'strong', detail:'97% on-time across 58 orders.', source:'Forerun history'},
+       {key:'Compliance history', status:'clear', detail:'No disputes; ITAR-compliant handling on record.', source:'xCaliper history'},
+       {key:'Delivery performance', status:'strong', detail:'97% on-time across 58 orders.', source:'xCaliper history'},
        {key:'Corporate & ownership', status:'clear', detail:'US-incorporated, US-owned; cleared for controlled technical data.', source:'TX SoS filings'}
      ], flags:[]}},
  'Westline Tool':{ id:'SUP-0021', cats:['cnc'], score:3.9,
@@ -630,8 +630,8 @@ const PROFILES = {
        {key:'Certifications', status:'flag', detail:'Claimed ISO 9001:2015 appears LAPSED — registrar shows certificate expired 2024 and not renewed.', source:'registrar lookup'},
        {key:'Financial stability', status:'attention', detail:'Adequate but modest; one tax lien resolved 2023.', source:'D&B summary'},
        {key:'Denied-party screening', status:'clear', detail:'No denied-party matches.', source:'Consolidated Screening List'},
-       {key:'Compliance history', status:'attention', detail:'One quality dispute on platform (2024), resolved with rework.', source:'Forerun history'},
-       {key:'Delivery performance', status:'attention', detail:'90% on-time across 19 orders.', source:'Forerun history'},
+       {key:'Compliance history', status:'attention', detail:'One quality dispute on platform (2024), resolved with rework.', source:'xCaliper history'},
+       {key:'Delivery performance', status:'attention', detail:'90% on-time across 19 orders.', source:'xCaliper history'},
        {key:'Corporate & ownership', status:'flag', detail:'Records indicate ~30% ownership by an overseas parent. Sharing controlled technical data may trigger deemed-export review.', source:'AZ SoS + corporate filings'}
      ], flags:['ISO certificate appears lapsed — confirm current quality system before award.','Partial foreign ownership — assess deemed-export exposure before sharing controlled drawings.']}},
  'Lumen Quartz':{ id:'SUP-0009', cats:['quartz'], score:4.5,
@@ -642,7 +642,7 @@ const PROFILES = {
        {key:'Certifications', status:'verified', detail:'ISO 9001:2015 active.', source:'registrar lookup'},
        {key:'Financial stability', status:'strong', detail:'Stable; no adverse filings.', source:'D&B summary'},
        {key:'Denied-party screening', status:'clear', detail:'No matches.', source:'Consolidated Screening List'},
-       {key:'Delivery performance', status:'strong', detail:'94% on-time across 27 orders.', source:'Forerun history'},
+       {key:'Delivery performance', status:'strong', detail:'94% on-time across 27 orders.', source:'xCaliper history'},
        {key:'Corporate & ownership', status:'clear', detail:'US-incorporated, US-owned.', source:'CA SoS filings'}
      ], flags:[]}},
  'Flowtek Lines':{ id:'SUP-0017', cats:['gas'], score:4.3,
@@ -653,7 +653,7 @@ const PROFILES = {
        {key:'Certifications', status:'verified', detail:'ISO 9001:2015 active; ASME B31.3 process qualified.', source:'registrar lookup'},
        {key:'Financial stability', status:'strong', detail:'Stable; no adverse filings.', source:'D&B summary'},
        {key:'Denied-party screening', status:'clear', detail:'No matches.', source:'Consolidated Screening List'},
-       {key:'Delivery performance', status:'strong', detail:'95% on-time across 33 orders.', source:'Forerun history'},
+       {key:'Delivery performance', status:'strong', detail:'95% on-time across 33 orders.', source:'xCaliper history'},
        {key:'Corporate & ownership', status:'clear', detail:'US-incorporated, US-owned.', source:'OR SoS filings'}
      ], flags:[]}}
 };
@@ -847,7 +847,7 @@ function signNDA(id){
   openModal(`
     <h3>Sign NDA to view drawing</h3>
     <div class="msub">${o.customer||'Customer'} requires a ${kind} NDA before this drawing unlocks.</div>
-    <div class="rcard" style="max-height:150px;overflow:auto;font-size:12px;color:var(--muted)">This Non-Disclosure Agreement covers all technical data, drawings, and specifications accessed through Forerun Exchange for ${o.customer||'the customer'}${o.nda==='drawing'?` — specifically part ${o.id}`:` in the ${CATS[o.cat]?.label} category`}. Confidential information may not be shared, reproduced, or used outside the scope of quoting and fulfilling this work…</div>
+    <div class="rcard" style="max-height:150px;overflow:auto;font-size:12px;color:var(--muted)">This Non-Disclosure Agreement covers all technical data, drawings, and specifications accessed through xCaliper for ${o.customer||'the customer'}${o.nda==='drawing'?` — specifically part ${o.id}`:` in the ${CATS[o.cat]?.label} category`}. Confidential information may not be shared, reproduced, or used outside the scope of quoting and fulfilling this work…</div>
     <label style="margin-top:12px"><input type="checkbox" id="nda-ck" style="width:auto;margin-right:8px" onchange="document.getElementById('nda-go').disabled=!this.checked">I have read and agree on behalf of Acme Precision.</label>
     <div class="actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="nda-go" disabled onclick="NDA_SIGNED.add('${o.id}');closeModal();openOpp('${o.id}');toast('NDA signed · drawing unlocked')">Accept &amp; unlock</button></div>`);
 }
@@ -1254,7 +1254,7 @@ function openSupplier(name, ret){
           <div class="seclbl">Certifications (claimed)</div><div class="chips">${chips(p.certs)}</div>
         </div>
         <div class="block agent">
-          <span class="blabel bl-agent"><i class="ti ti-sparkles"></i> Forerun Research Agent</span>
+          <span class="blabel bl-agent"><i class="ti ti-sparkles"></i> xCaliper Research Agent</span>
           <div style="font-size:13.5px;margin-bottom:10px">${r.summary}</div>
           <div class="conf">Confidence<span class="confbar"><span style="width:${r.confidence}%"></span></span>${r.confidence}%</div>
           <div style="margin-top:12px">${findings}</div>
@@ -1324,7 +1324,7 @@ function renderAudit(){
     <div class="banner info"><i class="ti ti-lock"></i><span>Every drawing view, bid, NDA, addendum and award is recorded — timestamped, attributable, and exportable for procurement compliance.</span></div>
     <div class="list" style="padding:0"><table><thead><tr><th>When</th><th>Action</th><th>Actor</th><th>RFQ / part</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
-function exportAudit(){ const rows=[['When','Action','Actor','Target','Kind']]; AUDIT.forEach(a=>rows.push([a.t,a.action,a.actor,a.target,a.kind])); downloadCSV('forerun-audit.csv', rows); toast('Audit trail exported (CSV)'); }
+function exportAudit(){ const rows=[['When','Action','Actor','Target','Kind']]; AUDIT.forEach(a=>rows.push([a.t,a.action,a.actor,a.target,a.kind])); downloadCSV('xcaliper-audit.csv', rows); toast('Audit trail exported (CSV)'); }
 
 /* ---------------- init ---------------- */
 function renderLists(){ renderOppFilters(); renderOpps(); renderKanban(); renderRFQs(); renderSuppliers(); renderSuppFeedback(); }
