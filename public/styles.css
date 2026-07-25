@@ -633,3 +633,24 @@ input:disabled, select:disabled, textarea:disabled{
 .tl-note{font-size:13px; color:var(--text-3); margin-top:2px;}
 .tl-when{font-size:13px; color:var(--text-2); white-space:nowrap; padding-top:7px; text-align:right;}
 @media (max-width:560px){ .tl-item{flex-wrap:wrap;} .tl-when{width:100%; text-align:left; padding-left:46px; padding-top:2px;} }
+
+/* ---- My bids kanban: visible dividers between swim lanes ---- */
+.kanban{ gap:0; align-items:stretch; }   /* equal-height lanes so dividers run full board height */
+.kcol{ background:transparent; padding:0 16px; border-right:1px solid var(--border); min-width:0; min-height:320px; }
+.kcol:first-child{ padding-left:0; }
+.kcol:last-child{ border-right:none; padding-right:0; }
+/* lane header sits above a rule so each lane reads as its own column */
+.khead{ padding:0 2px 10px; margin-bottom:14px; border-bottom:1px solid var(--border); }
+.kcol .kempty{ padding:14px 2px; text-align:left; }
+
+/* stacked layouts: swap vertical rules for horizontal ones */
+@media (max-width:820px){
+  .kcol:nth-child(2n){ border-right:none; padding-right:0; }
+  .kcol:nth-child(2n+1){ padding-left:0; }
+  .kcol{ padding-bottom:18px; margin-bottom:18px; border-bottom:1px solid var(--border); }
+  .kcol:nth-last-child(-n+2){ border-bottom:none; margin-bottom:0; padding-bottom:0; }
+}
+@media (max-width:640px){
+  .kcol{ border-right:none; padding:0 0 18px; margin-bottom:18px; border-bottom:1px solid var(--border); }
+  .kcol:last-child{ border-bottom:none; margin-bottom:0; padding-bottom:0; }
+}
