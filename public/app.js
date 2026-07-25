@@ -314,7 +314,7 @@ function renderOpps(){
 }
 function openOpp(id){
   const o = OPPS.find(x=>x.id===id);
-  if(!o){ toast('This opportunity is no longer open','error'); return; }
+  if(!o){ openArchivedRfq(id); return; }   // closed/awarded → read-only history view
   const el = document.getElementById('opp-detail');
   const ndaReq = o.nda && o.nda!=='none';
   const signed = NDA_SIGNED.has(o.id) || !ndaReq;
@@ -358,6 +358,66 @@ function openOpp(id){
   }
   go('opportunity');
 }
+/* Read-only view of an RFQ whose window has closed (or that was awarded).
+   Suppliers keep access to the request, their own bid, the outcome and the
+   history; competitor bids are never shown. */
+async function openArchivedRfq(id){
+  const r = await api('rfqDetail',{rfqId:id});
+  if(r && r.state) applyState(r.state);
+  if(!r || r.error || !r.detail){ toast((r&&r.error)||'Request not available','error'); return; }
+  const d=r.detail;
+  const outcomePill = {'Won':'st-win','Not awarded':'st-danger','In review':'st-info','Declined (no-bid)':'st-muted','Bid submitted':'st-good','Awarded':'st-win','Open':'st-good'}[d.outcome]||'st-muted';
+  const kindIcon={bid:'ti-gavel', view:'ti-eye', nda:'ti-file-check', addendum:'ti-speakerphone', rfq:'ti-file-text', award:'ti-award', decline:'ti-ban', export:'ti-download', evt:'ti-point'};
+
+  const bidBlock = d.myBid ? `
+    <div class="panelcard">
+      <div class="seclbl" style="margin-top:0">Your bid${d.myBid.revised?' (revised)':''}</div>
+      <div class="rf"><span>Unit price</span><span class="val">$${d.myBid.unit}</span></div>
+      <div class="rf"><span>Shipping (${esc(d.myBid.incoterms)})</span><span class="val">$${d.myBid.ship||0}</span></div>
+      <div class="rf"><span>Total (× ${d.qty})</span><span class="val">$${Number(d.myBid.total).toLocaleString()}</span></div>
+      <div class="rf"><span>Lead time</span><span class="val">${d.myBid.lead} days</span></div>
+      ${d.myBid.notes?`<div class="rf"><span>Notes</span><span>${esc(d.myBid.notes)}</span></div>`:''}
+    </div>` : (d.myDecline ? `
+    <div class="panelcard"><div class="seclbl" style="margin-top:0">You declined this request</div>
+      <div style="font-size:15px">${esc(d.myDecline)}</div></div>` : '');
+
+  const orderBlock = (d.orders||[]).length ? `
+    <div class="panelcard">
+      <div class="seclbl" style="margin-top:0">Resulting order${d.orders.length>1?'s':''}</div>
+      ${d.orders.map(o=>`<div class="rf"><span>${o.id} · qty ${o.qty}${o.tracking?' · '+esc(o.tracking):''}</span>
+        <span class="pill ${o.delayed?'st-danger':o.stage==='delivered'?'st-win':'st-good'}">${o.delayed?'Late':(STAGE_LBL[o.stage]||o.stage)}</span></div>`).join('')}
+      <div class="actions" style="margin-top:12px"><button class="btn btn-sm" onclick="go('tracking')">Open in tracking</button></div>
+    </div>` : '';
+
+  const addendaBlock = (d.addenda||[]).length ? `
+    <div class="panelcard"><div class="seclbl" style="margin-top:0"><i class="ti ti-speakerphone" style="font-size:13px;vertical-align:-1px"></i> Addenda issued during the window</div>
+      ${d.addenda.map(a=>`<div class="addendum"><div class="aq">Q: ${esc(a.q)}</div><div class="aa">A: ${esc(a.a)}</div><div class="at">${esc(a.at)}</div></div>`).join('')}</div>` : '';
+
+  const activityBlock = `
+    <div class="panelcard"><div class="seclbl" style="margin-top:0">Activity on this request</div>
+      ${(d.activity||[]).length ? `<table><tbody>${d.activity.map(a=>`<tr>
+        <td style="white-space:nowrap;color:var(--text-3);width:150px">${esc(a.t)}</td>
+        <td><i class="ti ${kindIcon[a.kind]||'ti-point'}" style="color:var(--text-3);font-size:15px;vertical-align:-2px;margin-right:6px"></i>${esc(a.action)}</td>
+        <td style="color:var(--text-2)">${esc(a.actor)}</td></tr>`).join('')}</tbody></table>`
+        : '<div class="kempty">No recorded activity for your company on this request.</div>'}
+    </div>`;
+
+  const backTo = role()==='supplier' ? "go('mybids')" : "go('rfqs')";
+  const backLbl = role()==='supplier' ? 'My bids' : 'My RFQs';
+  document.getElementById('opp-detail').innerHTML = `
+    <span class="back" onclick="${backTo}"><i class="ti ti-arrow-left"></i> ${backLbl}</span>
+    <div class="sec"><h3>${esc(d.title)}</h3><span class="v"><span class="pill ${outcomePill}">${esc(d.outcome)}</span></span></div>
+    <div class="meta-row">${tag(d.cat)}${d.customer?cotag(esc(d.customer)):''}<span>${d.id}</span><span>Qty ${d.qty}</span>${d.product?`<span>${esc(d.product)}</span>`:''}<span>${plural(d.bidCount,'bid')} received</span></div>
+    <div class="banner info"><i class="ti ti-lock"></i><span><b>Read-only.</b> The bid window is ${esc(d.closesLabel)} — this is the archived record of the request, your submission and its history.</span></div>
+    <div class="panelcard">
+      <div class="seclbl" style="margin-top:0">Requirements</div>
+      <div style="font-size:15px">${esc(d.reqs||'—')}</div>
+      ${d.signedNda?'<div class="hint" style="margin-top:10px"><i class="ti ti-file-check" style="vertical-align:-2px"></i> You signed the NDA for this request; vault access expired at bid close.</div>':''}
+    </div>
+    ${bidBlock}${orderBlock}${addendaBlock}${activityBlock}`;
+  go('opportunity');
+}
+
 function calcTotal(qty){
   const num = el => parseFloat((document.getElementById(el).value||'').replace(/[^0-9.]/g,''))||0;
   const t = num('bid-unit')*qty + num('bid-ship');

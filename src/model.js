@@ -268,6 +268,65 @@ function myAudit(u) { return state.audit.filter(a => a.companyIds.includes(u.com
 /* ---------------- operations ---------------- */
 const ops = {};
 
+/* Read-only detail for an RFQ the caller took part in — used when a bid window
+ * has closed so suppliers can still review the request, their own bid, the
+ * outcome and the history instead of hitting a dead end. Competitor bids are
+ * never included; the winner is only named to the supplier that won. */
+ops.rfqDetail = async (u, { rfqId }) => {
+  const r = rfqById(rfqId);
+  if (!r) throw err(404, 'RFQ not found');
+  const see = canSeePrice(u);
+
+  if (isSupplier(u)) {
+    const myBid = state.bids.find(b => b.rfqId === rfqId && b.supplierCompanyId === u.companyId);
+    const myDecline = state.declines.find(d => d.rfqId === rfqId && d.supplierCompanyId === u.companyId);
+    const myOrders = state.orders.filter(o => o.rfqId === rfqId && o.supplierCompanyId === u.companyId);
+    const signedNda = state.ndas.some(n => n.rfqId === rfqId && n.supplierCompanyId === u.companyId);
+    if (!myBid && !myDecline && !myOrders.length && !signedNda) throw err(403, 'You did not take part in this request');
+
+    let outcome = 'Closed';
+    if (myOrders.length) outcome = 'Won';
+    else if (r.status === 'awarded') outcome = 'Not awarded';
+    else if (!windowOpen(r)) outcome = 'In review';
+    else if (myBid) outcome = 'Bid submitted';
+    else if (myDecline) outcome = 'Declined (no-bid)';
+
+    return { detail: {
+      readOnly: true, role: 'supplier',
+      id: r.id, title: r.title, cat: r.cat, qty: r.qty, reqs: r.reqs, nda: r.nda,
+      customer: supName(r.buyerCompanyId), product: r.product,
+      closed: !windowOpen(r), closesLabel: windowOpen(r) ? humanize(r.closesAt - now()) : 'closed',
+      status: rfqStatus(r), outcome, bidCount: rfqBids(rfqId).length, signedNda,
+      myBid: myBid ? { unit: myBid.unit, ship: myBid.ship, incoterms: myBid.incoterms, lead: myBid.lead,
+                       total: bidPrice(myBid, r), notes: myBid.notes || '', revised: !!myBid.revised } : null,
+      myDecline: myDecline ? myDecline.reason : null,
+      orders: myOrders.map(o => ({ id: o.id, stage: o.stage, qty: o.qty, price: o.price, due: o.due,
+                                   tracking: o.tracking, delayed: o.delayed, delayReason: o.delayReason })),
+      addenda: state.addenda[rfqId] || [],
+      activity: state.audit.filter(a => a.target === rfqId && a.companyIds.includes(u.companyId))
+    } };
+  }
+
+  /* buyer-side: own company's RFQs only */
+  if (r.buyerCompanyId !== u.companyId) throw err(403, 'Not your RFQ');
+  return { detail: {
+    readOnly: true, role: 'buyer',
+    id: r.id, title: r.title, cat: r.cat, qty: r.qty, reqs: r.reqs, nda: r.nda,
+    customer: supName(r.buyerCompanyId), product: r.product, engineer: r.engineer,
+    closed: !windowOpen(r), closesLabel: windowOpen(r) ? humanize(r.closesAt - now()) : 'closed',
+    status: rfqStatus(r), outcome: r.status === 'awarded' ? 'Awarded' : (windowOpen(r) ? 'Open' : 'Closed'),
+    bidCount: rfqBids(rfqId).length,
+    bids: rfqBids(rfqId).map(b => bidView(b, r, see)),
+    declines: state.declines.filter(d => d.rfqId === rfqId)
+                 .map(d => ({ supplier: d.supplierName || supName(d.supplierCompanyId), reason: d.reason })),
+    orders: state.orders.filter(o => o.rfqId === rfqId)
+                 .map(o => ({ id: o.id, supplier: supName(o.supplierCompanyId), stage: o.stage, qty: o.qty,
+                              price: see ? o.price : null, due: o.due, tracking: o.tracking, delayed: o.delayed })),
+    addenda: state.addenda[rfqId] || [],
+    activity: state.audit.filter(a => a.target === rfqId && a.companyIds.includes(u.companyId))
+  } };
+};
+
 /* ----- supplier ops ----- */
 ops.toggleSave = async (u, { oppId }) => {
   requireSupplier(u);

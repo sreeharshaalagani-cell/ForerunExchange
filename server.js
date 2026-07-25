@@ -50,7 +50,7 @@ app.post('/api/registerSupplier', (req, res) => register('supplier', req, res));
 app.get('/api/state', requireAuth, (req, res) => res.json({ state: model.viewerState(req.user) }));
 
 /* ---- operations (role authorization inside the model) ---- */
-const OPS = ['toggleSave', 'viewVault', 'signNda', 'submitBid', 'declineBid', 'updateCompanyProfile',
+const OPS = ['rfqDetail', 'toggleSave', 'viewVault', 'signNda', 'submitBid', 'declineBid', 'updateCompanyProfile',
   'openThread', 'postMessage',
   'createRfq', 'publishDraft', 'closeWindow', 'duplicateRfq', 'award', 'signOffRfq',
   'advanceOrder', 'addTracking', 'reportDelay', 'reviewOrder', 'reorder',
